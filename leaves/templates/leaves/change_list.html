@@ -1,0 +1,207 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/admin/leaves.css' %}">
+{% endblock %}
+
+{% block result_list %}
+<div class="lv-wrap">
+
+  {% if summary %}
+    <style>
+      .lv-summary{ margin: 10px 0 18px; }
+      .lv-kpis{
+        display:grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .lv-kpi{
+        border: 1px solid rgba(0,0,0,.07);
+        border-radius: 16px;
+        background: rgba(255,255,255,.92);
+        padding: 12px 14px;
+        box-shadow: 0 10px 20px rgba(0,0,0,.05);
+      }
+      .lv-kpi .k{ font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: rgba(24,24,24,.55); }
+      .lv-kpi .v{ margin-top: 6px; font-size: 18px; font-weight: 950; color: #181818; }
+      .lv-kpi.ok{ background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.18); }
+      .lv-kpi.bad{ background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.18); }
+      .lv-kpi.pending{ background: rgba(255,102,0,.08); border-color: rgba(255,102,0,.18); }
+
+      .lv-tables{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 10px; }
+      .lv-table-card{ border: 1px solid rgba(0,0,0,.07); border-radius: 16px; background: rgba(255,255,255,.92); padding: 12px 14px; box-shadow: 0 10px 20px rgba(0,0,0,.05); }
+      .lv-table-card .t-title{ font-weight: 900; margin-bottom: 8px; color: #181818; }
+      .lv-table{
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        border: 1px solid rgba(0,0,0,.06);
+        border-radius: 12px;
+        overflow:hidden;
+        background: rgba(255,255,255,.9);
+      }
+      .lv-table th, .lv-table td{ padding: 9px 10px; border-bottom: 1px solid rgba(0,0,0,.05); font-size: 12px; }
+      .lv-table th{ background: rgba(0,0,0,.03); font-weight: 900; text-transform: uppercase; font-size: 10px; letter-spacing: .06em; color: #334155; text-align:left; }
+      .lv-table tr:last-child td{ border-bottom: none; }
+      .lv-table .num{ text-align:right; font-variant-numeric: tabular-nums; }
+      .lv-table .empty{ padding: 12px; color: rgba(24,24,24,.55); text-align:center; font-weight: 800; }
+
+      @media (max-width: 1100px){
+        .lv-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .lv-tables{ grid-template-columns: 1fr; }
+      }
+      @media (max-width: 700px){
+        .lv-kpis{ grid-template-columns: 1fr; }
+      }
+    </style>
+    <div class="lv-summary">
+      <div class="lv-head">
+        <div class="h">Leave Requests Overview</div>
+        <div class="p">Month-wise and year-wise totals for received, approved, and rejected leaves.</div>
+      </div>
+
+      <div class="lv-kpis">
+        <div class="lv-kpi">
+          <div class="k">Total Requests</div>
+          <div class="v">{{ summary.total }}</div>
+        </div>
+        <div class="lv-kpi ok">
+          <div class="k">Approved</div>
+          <div class="v">{{ summary.approved }}</div>
+        </div>
+        <div class="lv-kpi bad">
+          <div class="k">Rejected</div>
+          <div class="v">{{ summary.rejected }}</div>
+        </div>
+        <div class="lv-kpi pending">
+          <div class="k">Pending</div>
+          <div class="v">{{ summary.pending }}</div>
+        </div>
+      </div>
+
+      <div class="lv-tables">
+        <div class="lv-table-card">
+          <div class="t-title">Month Wise</div>
+          <table class="lv-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="num">Received</th>
+                <th class="num">Approved</th>
+                <th class="num">Rejected</th>
+                <th class="num">Pending</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in month_rows %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td class="num">{{ row.total }}</td>
+                  <td class="num">{{ row.approved }}</td>
+                  <td class="num">{{ row.rejected }}</td>
+                  <td class="num">{{ row.pending }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="empty">No monthly data.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="lv-table-card">
+          <div class="t-title">Year Wise</div>
+          <table class="lv-table">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th class="num">Received</th>
+                <th class="num">Approved</th>
+                <th class="num">Rejected</th>
+                <th class="num">Pending</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in year_rows %}
+                <tr>
+                  <td>{{ row.year }}</td>
+                  <td class="num">{{ row.total }}</td>
+                  <td class="num">{{ row.approved }}</td>
+                  <td class="num">{{ row.rejected }}</td>
+                  <td class="num">{{ row.pending }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="empty">No yearly data.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- keep default admin search + filters -->
+  {{ block.super }}
+
+  <div class="lv-grid">
+    {% for obj in cl.result_list %}
+      <div class="lv-card">
+
+        <div class="lv-top">
+          <div class="lv-avatar">
+            {{ obj.employee.full_name|default:obj.employee.email|slice:":1"|upper }}
+          </div>
+
+          <div class="lv-meta">
+            <div class="lv-name">{{ obj.employee.full_name|default:"—" }}</div>
+            <div class="lv-mail">{{ obj.employee.email }}</div>
+          </div>
+
+          <div class="lv-badge {{ obj.status|lower }}">
+            {{ obj.status }}
+          </div>
+        </div>
+
+        <div class="lv-body">
+          <div class="lv-row">
+            <div class="k">Dates</div>
+            <div class="v">{{ obj.start_date }} → {{ obj.end_date }}</div>
+          </div>
+
+          <div class="lv-row">
+            <div class="k">Reason</div>
+            <div class="v">{{ obj.reason|default:"No reason provided" }}</div>
+          </div>
+
+          <div class="lv-row split">
+            <div>
+              <div class="k">PM</div>
+              <div class="mini {{ obj.pm_status|lower }}">{{ obj.pm_status }}</div>
+            </div>
+            <div>
+              <div class="k">Admin</div>
+              <div class="mini {{ obj.admin_status|lower }}">{{ obj.admin_status }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="lv-actions">
+          <a class="btn" href="../leaverequest/{{ obj.pk }}/change/">Open</a>
+
+          <!-- show approve/reject to PM/Admin/Superuser only -->
+          {% if request.user.is_superuser or request.user.role == "admin" or request.user.role == "pm" %}
+            <a class="btn ok" href="../leaverequest/{{ obj.pk }}/approve/">Approve</a>
+            <a class="btn bad" href="../leaverequest/{{ obj.pk }}/reject/">Reject</a>
+          {% endif %}
+        </div>
+
+      </div>
+    {% empty %}
+      <div class="lv-empty">No leave requests found.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% endblock %}

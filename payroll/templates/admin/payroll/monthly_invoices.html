@@ -1,0 +1,236 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block content %}
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f7f8fc;
+    --card: rgba(255,255,255,.92);
+    --text:#0f172a;
+    --muted:#64748b;
+    --line: rgba(15,23,42,.10);
+    --primary:#ff6600;
+  }
+  body{ font-family:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important; }
+  #content{ background: var(--bg); }
+  .wrap{
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 10px 28px;
+  }
+  .panel{
+    border:1px solid var(--line);
+    border-radius: 16px;
+    background: var(--card);
+    box-shadow: 0 16px 30px rgba(2,6,23,.08);
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .title{
+    font-size: 1.4rem;
+    font-weight: 900;
+    margin: 0 0 6px;
+  }
+  .sub{ color: var(--muted); margin:0 0 12px; }
+  .filters{
+    display:grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 12px;
+    align-items:end;
+  }
+  .filters label{ font-weight: 900; color:#0b1220; font-size:.85rem; }
+  .filters input, .filters select{
+    width:100%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    border:1px solid rgba(15,23,42,.12);
+    background:#fff;
+  }
+  .btn{
+    padding: 10px 14px;
+    border-radius: 12px;
+    border:1px solid rgba(15,23,42,.12);
+    background:#fff;
+    font-weight: 900;
+    cursor:pointer;
+    text-decoration:none;
+    color:#0b1220;
+  }
+  .btn.primary{
+    background: rgba(255,102,0,.14);
+    border-color: rgba(255,102,0,.35);
+  }
+  .tbl{
+    width:100%;
+    border-collapse: separate;
+    border-spacing:0;
+    border:1px solid var(--line);
+    border-radius: 12px;
+    overflow:hidden;
+    background:#fff;
+  }
+  .tbl th, .tbl td{
+    padding: 10px 12px;
+    border-bottom:1px solid rgba(15,23,42,.06);
+    font-size:.9rem;
+  }
+  .tbl th{
+    background: rgba(15,23,42,.03);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-size:.75rem;
+    text-align: left;
+  }
+  .tbl tr:last-child td{ border-bottom:none; }
+  .num{ text-align:right; font-variant-numeric: tabular-nums; }
+  .section-title{
+    font-weight: 900;
+    margin: 14px 0 8px;
+  }
+  @media (max-width: 900px){
+    .filters{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="title">Monthly Invoices</div>
+    <p class="sub">Filter by month and employee to view salary + payments + expenses, then export invoice.</p>
+    <form method="get" class="filters">
+      <div>
+        <label>Month</label>
+        <input type="month" name="month" value="{{ month_start|date:'Y-m' }}">
+      </div>
+      <div>
+        <label>Employee</label>
+        <select name="employee">
+          <option value="">All employees</option>
+          {% for emp in employees %}
+            <option value="{{ emp.id }}" {% if selected_employee and emp.id == selected_employee.id %}selected{% endif %}>
+              {{ emp.full_name|default:emp.email }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <button class="btn" type="submit">Apply</button>
+        {% if export_url %}
+          <a class="btn primary" href="{{ export_url }}">Export invoice</a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <div class="panel">
+    <div class="section-title">Monthly Summary ({{ month_start|date:"F Y" }})</div>
+    <table class="tbl">
+      <thead>
+        <tr>
+          <th>Employee</th>
+          <th class="num">Salary PKR</th>
+          <th class="num">Paid PKR</th>
+          <th class="num">Expenses PKR</th>
+          <th class="num">Due PKR</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in summary_rows %}
+          <tr>
+            <td>{{ row.employee.full_name|default:row.employee.email }}</td>
+            <td class="num">{{ row.salary_pkr|floatformat:0|intcomma }}</td>
+            <td class="num">{{ row.paid_pkr|floatformat:0|intcomma }}</td>
+            <td class="num">{{ row.exp_pkr|floatformat:0|intcomma }}</td>
+            <td class="num">{{ row.due_pkr|floatformat:0|intcomma }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No data.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% if selected_employee %}
+    <div class="panel">
+      <div class="section-title">Salary Entries</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Month</th>
+            <th>Paid By</th>
+            <th class="num">PKR</th>
+            <th class="num">USD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in salary_entries %}
+            <tr>
+              <td>{{ s.salary_month }}</td>
+              <td>{% if s.paid_by %}{{ s.paid_by.full_name|default:s.paid_by.email }}{% else %}-{% endif %}</td>
+              <td class="num">{{ s.monthly_salary_pkr|floatformat:0|intcomma }}</td>
+              <td class="num">{{ s.monthly_salary_usd|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">No salary entries for this month.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Payments</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Paid By</th>
+            <th class="num">PKR</th>
+            <th class="num">USD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payment_entries %}
+            <tr>
+              <td>{{ p.date_paid }}</td>
+              <td>{% if p.paid_by %}{{ p.paid_by.full_name|default:p.paid_by.email }}{% else %}-{% endif %}</td>
+              <td class="num">{{ p.amount_pkr|floatformat:0|intcomma }}</td>
+              <td class="num">{{ p.amount_usd|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4">No payments for this month.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel">
+      <div class="section-title">Expenses</div>
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Paid By</th>
+            <th>Category</th>
+            <th class="num">PKR</th>
+            <th class="num">USD</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in expense_entries %}
+            <tr>
+              <td>{{ e.date }}</td>
+              <td>{% if e.paid_by %}{{ e.paid_by.full_name|default:e.paid_by.email }}{% else %}-{% endif %}</td>
+              <td>{{ e.get_category_display }}</td>
+              <td class="num">{{ e.amount_pkr|floatformat:0|intcomma }}</td>
+              <td class="num">{{ e.amount_usd|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="5">No expenses for this month.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

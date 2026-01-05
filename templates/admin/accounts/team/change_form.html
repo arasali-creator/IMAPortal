@@ -1,0 +1,391 @@
+{% extends "admin/change_form.html" %}
+{% load i18n static %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg: #f7f8fc;
+    --card: rgba(255,255,255,.92);
+    --text:#0f172a;
+    --muted:#64748b;
+    --line: rgba(15,23,42,.10);
+
+    --primary:#ff6600;
+    --base:#181818;
+
+    --shadow: 0 18px 40px rgba(2, 6, 23, .08);
+    --shadow2: 0 10px 26px rgba(2, 6, 23, .06);
+    --radius: 18px;
+  }
+
+  body{
+    font-family:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important;
+  }
+  #content{
+    background: var(--bg);
+  }
+
+  .team-hero{
+    border-radius: var(--radius);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(900px 220px at 20% 10%, rgba(255,102,0,.14), transparent 60%),
+      radial-gradient(900px 220px at 80% 0%, rgba(24,24,24,.10), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,.88), rgba(255,255,255,.65));
+    box-shadow: var(--shadow);
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .team-hero-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .team-title{
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--base);
+  }
+  .team-sub{
+    margin-top: 6px;
+    color: var(--muted);
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  .team-tags{
+    margin-top: 10px;
+    display:flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .team-tag{
+    display:inline-flex;
+    align-items:center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.12);
+    background: rgba(255,255,255,.75);
+    font-weight: 900;
+    font-size: .82rem;
+    color: var(--base);
+  }
+
+  .team-layout{
+    display:grid;
+    grid-template-columns: 360px minmax(0, 1fr);
+    gap: 16px;
+    align-items:start;
+  }
+  .team-side{
+    display:flex;
+    flex-direction:column;
+    gap: 14px;
+    position: sticky;
+    top: 10px;
+  }
+  .team-side-card{
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 18px;
+    background: rgba(255,255,255,.92);
+    box-shadow: var(--shadow2);
+    padding: 14px;
+  }
+  .team-side-title{
+    font-weight: 900;
+    font-size: .85rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .member-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .member-card{
+    border: 1px solid rgba(15,23,42,.10);
+    border-radius: 14px;
+    padding: 10px;
+    background: rgba(255,255,255,.9);
+    box-shadow: 0 10px 22px rgba(2,6,23,.05);
+  }
+  .member-top{
+    display:flex;
+    align-items:center;
+    gap: 8px;
+  }
+  .member-avatar{
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: rgba(255,102,0,.12);
+    border: 1px solid rgba(255,102,0,.22);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight: 900;
+    color: var(--base);
+    overflow:hidden;
+  }
+  .member-avatar img{
+    width:100%;
+    height:100%;
+    object-fit: cover;
+  }
+  .member-name{
+    font-weight: 900;
+    font-size: .9rem;
+    color: var(--base);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .member-email{
+    font-size: .78rem;
+    color: var(--muted);
+    font-weight: 700;
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Form cards */
+  .team-form-wrap fieldset{
+    border: 1px solid rgba(15,23,42,.10) !important;
+    border-radius: 18px !important;
+    background: rgba(255,255,255,.92) !important;
+    box-shadow: 0 18px 40px rgba(2,6,23,.08) !important;
+    overflow: hidden !important;
+    margin-bottom: 16px !important;
+  }
+  .team-form-wrap fieldset > h2,
+  .team-form-wrap fieldset > legend{
+    margin: 0 !important;
+    padding: 12px 16px !important;
+    font-weight: 900 !important;
+    color: #ffffff !important;
+    background: linear-gradient(90deg, #ff6600, #ff7a1a) !important;
+    border-bottom: 1px solid rgba(15,23,42,.08) !important;
+    letter-spacing: .02em !important;
+    text-transform: uppercase !important;
+    font-size: .85rem !important;
+  }
+  .team-form-wrap fieldset div.aligned{
+    display:grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap:16px !important;
+    padding:16px !important;
+    background: transparent !important;
+  }
+  .team-form-wrap fieldset div.aligned > div.field-row.form-row{
+    margin: 0 !important;
+  }
+  .team-form-wrap fieldset div.aligned .field-line{
+    background: rgba(255,255,255,.96) !important;
+    border: 1px solid rgba(0,0,0,.08) !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    box-shadow: 0 12px 24px rgba(0,0,0,.06) !important;
+    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+  }
+  .team-form-wrap fieldset div.aligned .field-line:hover{
+    transform: translateY(-1px);
+    border-color: rgba(255,102,0,.22) !important;
+    box-shadow: 0 14px 28px rgba(0,0,0,.08) !important;
+  }
+  .team-form-wrap fieldset div.aligned label{
+    font-weight: 900 !important;
+    color: rgba(22,22,22,.75) !important;
+    margin-bottom: 10px !important;
+  }
+  .team-form-wrap fieldset div.aligned input[type="text"],
+  .team-form-wrap fieldset div.aligned input[type="email"],
+  .team-form-wrap fieldset div.aligned input[type="password"],
+  .team-form-wrap fieldset div.aligned input[type="number"],
+  .team-form-wrap fieldset div.aligned input[type="tel"],
+  .team-form-wrap fieldset div.aligned input[type="url"],
+  .team-form-wrap fieldset div.aligned input[type="date"],
+  .team-form-wrap fieldset div.aligned input[type="datetime-local"],
+  .team-form-wrap fieldset div.aligned select,
+  .team-form-wrap fieldset div.aligned textarea{
+    width:100% !important;
+    max-width:100% !important;
+    border-radius:14px !important;
+    border:1px solid rgba(0,0,0,.12) !important;
+    background:#fff !important;
+    padding:12px 12px !important;
+    box-shadow:none !important;
+  }
+  .team-form-wrap fieldset div.aligned input:focus,
+  .team-form-wrap fieldset div.aligned select:focus,
+  .team-form-wrap fieldset div.aligned textarea:focus{
+    outline:none !important;
+    border-color: rgba(255,102,0,.55) !important;
+    box-shadow: 0 0 0 4px rgba(255,102,0,.18) !important;
+  }
+  .team-form-wrap fieldset div.aligned > div.field-row.form-row:has(textarea),
+  .team-form-wrap fieldset div.aligned > div.field-row.form-row:has(input[type="file"]){
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Members selector: full width + modern layout */
+  .team-form-wrap .field-members,
+  .team-form-wrap .field-members .related-widget-wrapper{
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+  .team-form-wrap .field-members .selector{
+    width: 100% !important;
+    max-width: 100% !important;
+    display: grid !important;
+    grid-template-columns: 1fr 46px 1fr !important;
+    gap: 12px !important;
+    align-items: center !important;
+  }
+  .team-form-wrap .field-members .selector-available,
+  .team-form-wrap .field-members .selector-chosen{
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 1px solid rgba(15,23,42,.10) !important;
+    border-radius: 14px !important;
+    background: rgba(255,255,255,.92) !important;
+    box-shadow: 0 10px 22px rgba(2,6,23,.05) !important;
+    overflow: hidden !important;
+  }
+  .team-form-wrap .field-members .selector h2{
+    margin: 0 !important;
+    padding: 10px 12px !important;
+    font-weight: 900 !important;
+    font-size: .82rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: .06em !important;
+    color: var(--muted) !important;
+    background: rgba(15,23,42,.03) !important;
+    border-bottom: 1px solid rgba(15,23,42,.08) !important;
+  }
+  .team-form-wrap .field-members .selector .selector-filter{
+    padding: 10px 12px !important;
+  }
+  .team-form-wrap .field-members .selector .selector-filter input{
+    width: 100% !important;
+    border-radius: 12px !important;
+    border: 1px solid rgba(0,0,0,.12) !important;
+    padding: 10px 12px !important;
+  }
+  .team-form-wrap .field-members .selector select{
+    width: 100% !important;
+    min-width: 0 !important;
+    border: 0 !important;
+    padding: 8px !important;
+    height: 220px !important;
+    background: transparent !important;
+  }
+  .team-form-wrap .field-members .selector-chooser{
+    width: 46px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    align-items: center !important;
+  }
+  .team-form-wrap .field-members .selector-chooser li a{
+    border-radius: 12px !important;
+    border: 1px solid rgba(15,23,42,.12) !important;
+    background: rgba(255,255,255,.9) !important;
+    box-shadow: 0 8px 16px rgba(2,6,23,.06) !important;
+  }
+  .team-form-wrap .field-members .selector-chooser li a:hover{
+    border-color: rgba(255,102,0,.35) !important;
+    box-shadow: 0 12px 22px rgba(255,102,0,.12) !important;
+  }
+
+  @media (max-width: 900px){
+    .team-form-wrap .field-members .selector{
+      grid-template-columns: 1fr !important;
+    }
+    .team-form-wrap .field-members .selector-chooser{
+      flex-direction: row !important;
+      width: 100% !important;
+      justify-content: center !important;
+    }
+  }
+
+  @media (max-width: 1200px){
+    .team-layout{ grid-template-columns: 1fr; }
+    .team-side{ position: static; }
+    .member-grid{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+  @media (max-width: 900px){
+    .member-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 700px){
+    .team-form-wrap fieldset div.aligned{ grid-template-columns: 1fr !important; }
+    .member-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+
+{% if original %}
+  <div class="team-hero">
+    <div class="team-hero-top">
+      <div>
+        <div class="team-title">{{ original.name|default:"Team" }}</div>
+        <div class="team-sub">
+          Project Manager: {{ original.project_manager.get_full_name|default:original.project_manager|default:"N/A" }}
+        </div>
+        <div class="team-tags">
+          <span class="team-tag">Members: {{ original.members.count|default:0 }}</span>
+          <span class="team-tag">PM: {{ original.project_manager.get_role_display|default:"PM" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<div class="team-form-wrap">
+  <div class="team-layout">
+    <aside class="team-side">
+      <div class="team-side-card">
+        <div class="team-side-title">Team Members</div>
+        <div class="member-grid">
+          {% if original %}
+            {% for m in original.members.all %}
+              <div class="member-card">
+                <div class="member-top">
+                  <div class="member-avatar">
+                    {% if m.profile_picture %}
+                      <img src="{{ m.profile_picture.url }}" alt="{{ m.get_full_name }}">
+                    {% else %}
+                      <span>{{ m.get_full_name|slice:":1"|upper }}</span>
+                    {% endif %}
+                  </div>
+                  <div style="min-width:0;">
+                    <div class="member-name">{{ m.get_full_name|default:m.email }}</div>
+                    <div class="member-email">{{ m.email|default:"" }}</div>
+                  </div>
+                </div>
+              </div>
+            {% empty %}
+              <div class="member-card">No members yet.</div>
+            {% endfor %}
+          {% else %}
+            <div class="member-card">Create the team to view members.</div>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+
+    <div class="team-form-main">
+      {{ block.super }}
+    </div>
+  </div>
+</div>
+{% endblock %}

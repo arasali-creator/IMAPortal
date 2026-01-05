@@ -1,0 +1,13 @@
+{
+  "dependencies": {
+    "@tailwindcss/cli": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}
+{
+  "scripts": {
+    "tailwind:watch": "npx tailwindcss -i styles.css -o your_project/static/css/styles.css --minify --watch",
+    "tailwind:build": "npx tailwindcss -i styles.css -o your_project/static/css/styles.css --minify"
+  }
+  // rest of configuration
+}

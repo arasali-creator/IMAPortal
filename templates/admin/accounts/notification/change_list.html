@@ -1,0 +1,268 @@
+{% extends "admin/change_list.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .notif-wrap {
+      margin: 10px 0 16px;
+      background: linear-gradient(120deg, rgba(255,102,0,.14), rgba(255,255,255,0));
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      padding: 16px 18px;
+      box-shadow: 0 12px 24px rgba(0,0,0,.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .notif-wrap:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: #ff6600;
+    }
+    .notif-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 14px;
+    }
+    .notif-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #181818;
+      letter-spacing: .01em;
+    }
+    .notif-sub {
+      color: rgba(24,24,24,.6);
+      font-size: 12px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+    .notif-kpis {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .notif-kpi {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,.95);
+      box-shadow: 0 8px 18px rgba(0,0,0,.05);
+    }
+    .notif-kpi .k { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; font-weight: 800; color: rgba(24,24,24,.55); }
+    .notif-kpi .v { margin-top: 6px; font-size: 18px; font-weight: 950; color: #181818; }
+    .notif-kpi.unread { border-color: rgba(255,102,0,.25); background: rgba(255,102,0,.08); }
+    .notif-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+    .notif-legend .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: rgba(0,0,0,.05);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 900;
+      color: #1f2937;
+    }
+    .notif-legend .tag .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: #64748b;
+    }
+    .notif-legend .tag.added .dot { background: #22c55e; }
+    .notif-legend .tag.updated .dot { background: #ff6600; }
+    .notif-legend .tag.deleted .dot { background: #ef4444; }
+    .notif-legend .tag.unread .dot { background: #ff6600; }
+
+    .mark-all-read {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #ff7a1a, #ff6600);
+      border: 1px solid #ff6600;
+      color: #fff;
+      font-weight: 900;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      box-shadow: 0 6px 14px rgba(255,102,0,.22);
+      margin-left: 10px;
+    }
+    .mark-all-read:before,
+    .mark-all-read:after {
+      content: none !important;
+    }
+    .mark-all-read:hover {
+      background: linear-gradient(135deg, #ff8a33, #f05f00);
+      border-color: #f05f00;
+      color: #fff;
+    }
+    .notif-table-wrap {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 20px rgba(0,0,0,.05);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(255,255,255,.92));
+    }
+    #result_list {
+      border: 0;
+      border-collapse: separate;
+      border-spacing: 0 8px;
+    }
+    #result_list thead th {
+      background: rgba(0,0,0,.03);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #475569;
+      padding: 12px 14px;
+    }
+    #result_list tbody td {
+      padding: 14px 14px;
+      border-bottom: 0;
+      vertical-align: middle;
+      font-size: 13px;
+      background: #fff;
+    }
+    #result_list tbody tr {
+      transition: none;
+    }
+    #result_list tbody tr:hover {
+      background: transparent !important;
+    }
+    #result_list tbody tr:hover td {
+      background: #fff !important;
+      box-shadow: none !important;
+    }
+    #result_list tbody tr td:first-child {
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+    #result_list tbody tr td:last-child {
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+    #result_list tbody tr:has(.notif-status.unread) td {
+      box-shadow: inset 4px 0 0 rgba(255,102,0,.55);
+    }
+    #result_list tbody tr:has(.notif-status.unread) td:first-child {
+      border-top-left-radius: 12px;
+      border-bottom-left-radius: 12px;
+    }
+    #result_list tbody tr:has(.notif-status.unread) td:last-child {
+      border-top-right-radius: 12px;
+      border-bottom-right-radius: 12px;
+    }
+    #result_list tbody tr:has(.notif-status.read) td {
+      box-shadow: inset 4px 0 0 rgba(34,197,94,.45);
+    }
+    .field-read_status {
+      font-weight: 800;
+    }
+    .notif-status {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: rgba(0,0,0,.06);
+    }
+    .notif-status.unread { background: rgba(255,102,0,.14); color: #9a3412; }
+    .notif-status.read { background: rgba(34,197,94,.12); color: #166534; }
+    .field-action_label span {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      background: rgba(0,0,0,.06);
+    }
+    .notif-pill.added { background: rgba(34,197,94,.12); color: #166534; }
+    .notif-pill.updated { background: rgba(255,102,0,.14); color: #9a3412; }
+    .notif-pill.deleted { background: rgba(239,68,68,.12); color: #991b1b; }
+    .field-object_link a {
+      font-weight: 800;
+      color: #1f2937;
+      text-decoration: none;
+    }
+    .field-object_link a:hover { color: #ff6600; }
+    .field-mark_read_link .button {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 800;
+      border: 1px solid rgba(0,0,0,.12);
+      background: #fff;
+    }
+    @media (max-width: 900px) {
+      .notif-kpis { grid-template-columns: 1fr; }
+      #result_list thead { display: none; }
+      #result_list tbody td { display: block; width: 100%; }
+      #result_list tbody tr { display: block; border-bottom: 1px solid rgba(0,0,0,.08); }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="notif-wrap">
+    <div class="notif-head">
+      <div>
+        <div class="notif-title">Notifications</div>
+        <div class="notif-sub">Recent admin activity synced from the system log (last 30 days).</div>
+      </div>
+    </div>
+
+    <div class="notif-kpis">
+      <div class="notif-kpi">
+        <div class="k">Total</div>
+        <div class="v">{{ notif_total|default:0 }}</div>
+      </div>
+      <div class="notif-kpi unread">
+        <div class="k">Unread</div>
+        <div class="v">{{ notif_unread|default:0 }}</div>
+      </div>
+      <div class="notif-kpi">
+        <div class="k">Read</div>
+        <div class="v">{{ notif_read|default:0 }}</div>
+      </div>
+    </div>
+    <div class="notif-legend">
+      <div class="tag added"><span class="dot"></span> Added</div>
+      <div class="tag updated"><span class="dot"></span> Updated</div>
+      <div class="tag deleted"><span class="dot"></span> Deleted</div>
+      <div class="tag unread"><span class="dot"></span> Unread</div>
+    </div>
+  </div>
+
+  <div class="notif-table-wrap">
+    {{ block.super }}
+  </div>
+{% endblock %}
+
+{% block object-tools %}
+  {{ block.super }}
+  {% if mark_all_read_url %}
+    <li>
+      <a class="button mark-all-read" href="{{ mark_all_read_url }}">Mark all as read</a>
+    </li>
+  {% endif %}
+{% endblock %}

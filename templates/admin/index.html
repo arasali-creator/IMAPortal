@@ -1,0 +1,559 @@
+{% extends "admin/base_site.html" %}
+{% load static humanize %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&display=swap" rel="stylesheet">
+
+<style>
+  /* ===========================
+     SCOPED STYLES (NO SIDEBAR HIT)
+     Everything lives under .portal-dashboard
+     =========================== */
+
+  .portal-dashboard{
+    --primary:#ff6600;
+    --base:#181818;
+
+    --text: rgba(15, 23, 42, .92);
+    --muted: rgba(15, 23, 42, .58);
+    --line: rgba(15, 23, 42, .10);
+
+    --card: rgba(255,255,255,.88);
+    --card2: rgba(255,255,255,.78);
+
+    --shadow: 0 16px 44px rgba(2, 6, 23, .10);
+    --shadow2: 0 10px 26px rgba(2, 6, 23, .08);
+    --radius: 18px;
+
+    font-family:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important;
+    color: var(--text);
+  }
+
+  /* container only (no global padding) */
+  .portal-dashboard .wrap{
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+
+  .portal-dashboard .hero{
+    border-radius: calc(var(--radius) + 4px);
+    border: 1px solid var(--line);
+    background:
+      radial-gradient(900px 260px at 18% 10%, rgba(255,102,0,.14), transparent 60%),
+      radial-gradient(900px 260px at 82% 0%, rgba(24,24,24,.10), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,.90), rgba(255,255,255,.72));
+    box-shadow: var(--shadow);
+    overflow:hidden;
+  }
+
+  .portal-dashboard .hero-top{
+    padding: 18px;
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:14px;
+    flex-wrap:wrap;
+    border-bottom: 1px solid rgba(15,23,42,.08);
+  }
+
+  .portal-dashboard .title{
+    margin:0;
+    font-size: 1.45rem;
+    font-weight: 950;
+    letter-spacing: -.03em;
+  }
+  .portal-dashboard .subtitle{
+    margin: 8px 0 0 0;
+    color: var(--muted);
+    font-size: .98rem;
+    max-width: 82ch;
+  }
+
+  .portal-dashboard .rate-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    padding: 9px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,102,0,.22);
+    background: rgba(255,102,0,.10);
+    color: #111827;
+    font-weight: 900;
+    font-size: .86rem;
+    white-space:nowrap;
+  }
+  .portal-dashboard .dot{
+    width: 9px;
+    height: 9px;
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow: 0 0 0 6px rgba(255,102,0,.15);
+  }
+
+  /* Quick links */
+  .portal-dashboard .quick{
+    padding: 14px 18px 18px 18px;
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+  }
+
+  .portal-dashboard .qcard{
+    grid-column: span 4;
+    display:flex;
+    align-items:center;
+    gap: 12px;
+    padding: 14px;
+    border-radius: var(--radius);
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.82);
+    box-shadow: var(--shadow2);
+    text-decoration:none !important;
+    color: #0f172a !important;
+    transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .portal-dashboard .qcard:hover{
+    transform: translateY(-2px);
+    border-color: rgba(255,102,0,.24);
+    box-shadow: 0 18px 40px rgba(2,6,23,.12);
+  }
+
+  .portal-dashboard .ico{
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: 1px solid rgba(255,102,0,.22);
+    background: rgba(255,102,0,.10);
+    display:grid;
+    place-items:center;
+    flex:0 0 auto;
+  }
+  .portal-dashboard .ico svg{
+    width: 22px;
+    height: 22px;
+    stroke: var(--primary);
+    stroke-width: 2;
+    fill: none;
+  }
+
+  .portal-dashboard .qtitle{
+    margin:0;
+    font-size: 1.02rem;
+    font-weight: 950;
+    letter-spacing: -.01em;
+  }
+  .portal-dashboard .qsub{
+    margin: 4px 0 0 0;
+    font-size: .88rem;
+    color: rgba(15,23,42,.60);
+  }
+  .portal-dashboard .qmeta{
+    margin-left:auto;
+    font-size: .82rem;
+    font-weight: 900;
+    color: rgba(15,23,42,.50);
+    white-space:nowrap;
+  }
+
+  /* KPIs */
+  .portal-dashboard .grid{
+    margin-top: 14px;
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+  }
+  .portal-dashboard .card{
+    border-radius: var(--radius);
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.84);
+    box-shadow: var(--shadow2);
+    overflow:hidden;
+  }
+
+  .portal-dashboard .kpi{
+    grid-column: span 3;
+    padding: 14px;
+  }
+  .portal-dashboard .k-label{
+    color: rgba(15,23,42,.55);
+    font-weight: 950;
+    text-transform: uppercase;
+    font-size: .74rem;
+    letter-spacing: .08em;
+  }
+  .portal-dashboard .k-value{
+    margin-top: 6px;
+    font-size: 1.35rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
+  }
+  .portal-dashboard .k-hint{
+    margin-top: 6px;
+    font-size: .88rem;
+    color: rgba(15,23,42,.50);
+  }
+  .portal-dashboard .accent{ color: var(--primary); }
+
+  /* Charts */
+  .portal-dashboard .panel{
+    grid-column: span 6;
+    padding: 14px;
+  }
+  .portal-dashboard .panel h3{
+    margin:0 0 6px 0;
+    font-size: 1.05rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
+  }
+  .portal-dashboard .mini{
+    margin:0 0 10px 0;
+    color: rgba(15,23,42,.55);
+    font-size: .88rem;
+  }
+  .portal-dashboard .chart-wrap{
+    height: 220px;
+  }
+  .portal-dashboard .chart-wrap canvas{ max-height: 220px; }
+
+  /* Tables */
+  .portal-dashboard .tables{
+    margin-top: 14px;
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 12px;
+  }
+  .portal-dashboard .table-card{
+    grid-column: span 6;
+    padding: 14px;
+  }
+  .portal-dashboard .table-title{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:12px;
+    margin-bottom: 10px;
+  }
+  .portal-dashboard .table-title h3{
+    margin:0;
+    font-size: 1.05rem;
+    font-weight: 950;
+    letter-spacing: -.02em;
+  }
+  .portal-dashboard .pill{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 7px 11px;
+    border-radius: 999px;
+    border: 1px solid rgba(255,102,0,.22);
+    background: rgba(255,102,0,.10);
+    color: #111827;
+    font-weight: 950;
+    font-size: .82rem;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+
+  .portal-dashboard table{
+    width:100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow:hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.85);
+  }
+  .portal-dashboard thead th{
+    padding: 11px 12px;
+    text-align:left;
+    font-size:.78rem;
+    letter-spacing:.07em;
+    text-transform: uppercase;
+    color: rgba(15,23,42,.65);
+    background: rgba(15,23,42,.03);
+    border-bottom: 1px solid rgba(15,23,42,.08);
+    font-weight: 950;
+  }
+  .portal-dashboard tbody td{
+    padding: 11px 12px;
+    border-bottom: 1px solid rgba(15,23,42,.06);
+    font-size:.92rem;
+    color: rgba(15,23,42,.88);
+  }
+  .portal-dashboard tbody tr:hover td{ background: rgba(255,102,0,.06); }
+  .portal-dashboard tbody tr:last-child td{ border-bottom:none; }
+  .portal-dashboard .num{ text-align:right; white-space:nowrap; font-variant-numeric: tabular-nums; }
+  .portal-dashboard .empty{
+    text-align:center;
+    padding: 16px;
+    color: rgba(15,23,42,.55);
+    font-style: italic;
+  }
+
+  @media(max-width:1100px){
+    .portal-dashboard .qcard{ grid-column: span 12; }
+    .portal-dashboard .kpi{ grid-column: span 6; }
+    .portal-dashboard .panel{ grid-column: span 12; }
+    .portal-dashboard .table-card{ grid-column: span 12; }
+  }
+  @media(max-width:640px){
+    .portal-dashboard .kpi{ grid-column: span 12; }
+  }
+</style>
+
+<div class="portal-dashboard">
+  <div class="wrap">
+
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h2 class="title">Office Portal Overview</h2>
+          <p class="subtitle">
+            A quick snapshot of employees, attendance, payroll, payments and office expenses.
+          </p>
+        </div>
+
+        {% if rate %}
+          <div class="rate-badge"><span class="dot"></span> USD→PKR: {{ rate|floatformat:4 }}</div>
+        {% endif %}
+      </div>
+
+      <div class="quick">
+        <a class="qcard" href="{% url 'admin:accounts_employee_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Employees</div>
+            <div class="qsub">Manage profiles, roles & access</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+
+        <a class="qcard" href="{% url 'admin:attendance_attendance_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M12 8v5l3 2"/><path d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Attendance</div>
+            <div class="qsub">Logs, check-in/out, hours</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+
+        <a class="qcard" href="{% url 'admin:payroll_globalsetting_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Set Dollar Rate</div>
+            <div class="qsub">USD→PKR conversion settings</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+
+        <a class="qcard" href="{% url 'admin:payroll_employeesalary_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9"/><path d="M7 10h10"/><path d="M7 14h6"/><path d="M7 18h10"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Employee Salaries</div>
+            <div class="qsub">Monthly salary records</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+
+        <a class="qcard" href="{% url 'admin:payroll_salarypayment_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M3 7h18"/><path d="M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/><path d="M9 11h6"/><path d="M9 15h6"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Salary Payments</div>
+            <div class="qsub">Paid, pending & references</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+
+        <a class="qcard" href="{% url 'admin:payroll_expense_changelist' %}">
+          <div class="ico">
+            <svg viewBox="0 0 24 24"><path d="M21 8V7a2 2 0 0 0-2-2H7L5 3H3"/><path d="M21 8H7"/><path d="M7 8l-2 12h14l2-12"/><path d="M9 12h6"/></svg>
+          </div>
+          <div>
+            <div class="qtitle">Office Expenses</div>
+            <div class="qsub">Categories & spend trends</div>
+          </div>
+          <div class="qmeta">Open</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- KPIs (safe defaults) -->
+    <div class="grid">
+      <div class="card kpi">
+        <div class="k-label">Employees</div>
+        <div class="k-value">{{ employees_count|default:"—" }}</div>
+        <div class="k-hint">Total registered employees</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k-label">Attendance Today</div>
+        <div class="k-value">{{ attendance_today|default:"—" }}</div>
+        <div class="k-hint">Check-ins recorded today</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k-label">Payments This Month</div>
+        <div class="k-value accent">
+          {% if payments_month_total %}{{ payments_month_total|floatformat:0|intcomma }}{% else %}—{% endif %}
+        </div>
+        <div class="k-hint">Total PKR paid this month</div>
+      </div>
+
+      <div class="card kpi">
+        <div class="k-label">Expenses This Month</div>
+        <div class="k-value">
+          {% if expenses_month_total %}{{ expenses_month_total|floatformat:0|intcomma }}{% else %}—{% endif %}
+        </div>
+        <div class="k-hint">Total PKR expenses this month</div>
+      </div>
+
+      <div class="card panel">
+        <h3>6-Month Trend</h3>
+        <p class="mini">Payroll payments vs office expenses (PKR).</p>
+        <div class="chart-wrap">
+          <canvas id="trendChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card panel">
+        <h3>Expense Categories</h3>
+        <p class="mini">This month split by category (PKR).</p>
+        <div class="chart-wrap">
+          <canvas id="catChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="tables">
+      <div class="card table-card">
+        <div class="table-title">
+          <h3>Recent Employees</h3>
+          <a class="pill" href="{% url 'admin:accounts_employee_changelist' %}">View all</a>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Department</th>
+              <th>Role</th>
+              <th class="num">Joined</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_employees %}
+              {% for emp in recent_employees %}
+              <tr>
+                <td>{{ emp.name }}</td>
+                <td>{{ emp.email }}</td>
+                <td>{{ emp.department }}</td>
+                <td>{{ emp.role }}</td>
+                <td class="num">{{ emp.date_joined|date:"M d, Y" }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="empty">No recent employees found</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card table-card">
+        <div class="table-title">
+          <h3>Recent Attendance</h3>
+          <a class="pill" href="{% url 'admin:attendance_attendance_changelist' %}">View all</a>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Date</th>
+              <th class="num">Check-In</th>
+              <th class="num">Check-Out</th>
+              <th class="num">Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if recent_attendance %}
+              {% for log in recent_attendance %}
+              <tr>
+                <td>{{ log.employee }}</td>
+                <td>{{ log.date|date:"M d, Y" }}</td>
+                <td class="num">{{ log.check_in }}</td>
+                <td class="num">{{ log.check_out }}</td>
+                <td class="num">{{ log.hours_worked }}</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr><td colspan="5" class="empty">No attendance records found</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Safe defaults if context not passed yet
+  const trendLabels = {{ trend_labels|default:"[]"|safe }};
+  const trendPayroll = {{ payroll_series|default:"[]"|safe }};
+  const trendExpenses = {{ expense_series|default:"[]"|safe }};
+
+  const catLabels = {{ cat_labels|default:"[]"|safe }};
+  const catSeries = {{ cat_series|default:"[]"|safe }};
+
+  // Trend chart
+  const t = document.getElementById("trendChart");
+  if (t && trendLabels.length && (trendPayroll.length || trendExpenses.length)) {
+    new Chart(t, {
+      type: "line",
+      data: {
+        labels: trendLabels,
+        datasets: [
+          { label: "Payments (PKR)", data: trendPayroll, tension: 0.35, borderWidth: 2 },
+          { label: "Expenses (PKR)", data: trendExpenses, tension: 0.35, borderWidth: 2 },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        scales: {
+          y: { ticks: { callback: (v)=> Number(v).toLocaleString() } }
+        }
+      }
+    });
+  }
+
+  // Category chart
+  const c = document.getElementById("catChart");
+  if (c && catLabels.length && catSeries.length) {
+    new Chart(c, {
+      type: "doughnut",
+      data: { labels: catLabels, datasets: [{ data: catSeries }] },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom" } },
+        cutout: "70%"
+      }
+    });
+  }
+</script>
+{% endblock %}

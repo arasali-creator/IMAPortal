@@ -1,0 +1,249 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+  <div class="att-dashboard">
+<a href="/admin/attendance/attendance/monthly/"
+     class="att-link">
+    View Monthly Attendance
+  </a>
+    {% if att_summary %}
+      <style>
+        .att-summary-block{ margin: 12px 0 18px; }
+        .att-kpis{
+          display:grid;
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          gap: 12px;
+          margin-bottom: 12px;
+        }
+        .att-kpi{
+          border: 1px solid rgba(0,0,0,.08);
+          border-radius: 16px;
+          background: rgba(255,255,255,.92);
+          padding: 12px 14px;
+          box-shadow: 0 10px 20px rgba(0,0,0,.05);
+        }
+        .att-kpi .k{ font-size: 11px; font-weight: 900; text-transform: uppercase; letter-spacing: .06em; color: rgba(24,24,24,.55); }
+        .att-kpi .v{ margin-top: 6px; font-size: 18px; font-weight: 950; color: #181818; }
+        .att-kpi.ok{ background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.18); }
+        .att-kpi.bad{ background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.18); }
+        .att-kpi.warn{ background: rgba(255,102,0,.08); border-color: rgba(255,102,0,.18); }
+
+        .att-tables{ display:grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .att-table-card{ border: 1px solid rgba(0,0,0,.08); border-radius: 16px; background: rgba(255,255,255,.92); padding: 12px 14px; box-shadow: 0 10px 20px rgba(0,0,0,.05); }
+        .att-table-card .t-title{ font-weight: 900; margin-bottom: 8px; color: #181818; }
+        .att-table{
+          width: 100%;
+          border-collapse: separate;
+          border-spacing: 0;
+          border: 1px solid rgba(0,0,0,.06);
+          border-radius: 12px;
+          overflow:hidden;
+          background: rgba(255,255,255,.9);
+        }
+        .att-table th, .att-table td{ padding: 9px 10px; border-bottom: 1px solid rgba(0,0,0,.05); font-size: 12px; }
+        .att-table th{ background: rgba(0,0,0,.03); font-weight: 900; text-transform: uppercase; font-size: 10px; letter-spacing: .06em; color: #334155; text-align:left; }
+        .att-table tr:last-child td{ border-bottom: none; }
+        .att-table .num{ text-align:right; font-variant-numeric: tabular-nums; }
+        .att-table .empty{ padding: 12px; color: rgba(24,24,24,.55); text-align:center; font-weight: 800; }
+
+        @media (max-width: 1100px){
+          .att-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+          .att-tables{ grid-template-columns: 1fr; }
+        }
+        @media (max-width: 700px){
+          .att-kpis{ grid-template-columns: 1fr; }
+        }
+      </style>
+      <div class="att-summary-block">
+        <div class="att-kpis">
+          <div class="att-kpi ok">
+            <div class="k">Present</div>
+            <div class="v">{{ att_summary.present }}</div>
+          </div>
+          <div class="att-kpi bad">
+            <div class="k">Absent</div>
+            <div class="v">{{ att_summary.absent }}</div>
+          </div>
+          <div class="att-kpi warn">
+            <div class="k">On Leave</div>
+            <div class="v">{{ att_summary.on_leave }}</div>
+          </div>
+        </div>
+
+        <div class="att-tables">
+          <div class="att-table-card">
+            <div class="t-title">Month Wise</div>
+            <table class="att-table">
+              <thead>
+                <tr>
+                  <th>Month</th>
+                <th class="num">Present</th>
+                <th class="num">Absent</th>
+                <th class="num">On Leave</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in att_month_rows %}
+                <tr>
+                  <td>{{ row.label }}</td>
+                  <td class="num">{{ row.present }}</td>
+                  <td class="num">{{ row.absent }}</td>
+                  <td class="num">{{ row.on_leave }}</td>
+                </tr>
+                {% empty %}
+                  <tr><td colspan="4" class="empty">No monthly data.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+
+          <div class="att-table-card">
+            <div class="t-title">Year Wise</div>
+            <table class="att-table">
+              <thead>
+                <tr>
+                  <th>Year</th>
+                <th class="num">Present</th>
+                <th class="num">Absent</th>
+                <th class="num">On Leave</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in att_year_rows %}
+                <tr>
+                  <td>{{ row.year }}</td>
+                  <td class="num">{{ row.present }}</td>
+                  <td class="num">{{ row.absent }}</td>
+                  <td class="num">{{ row.on_leave }}</td>
+                </tr>
+                {% empty %}
+                  <tr><td colspan="4" class="empty">No yearly data.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    {% endif %}
+    <!-- Summary cards -->
+    <div class="att-summary">
+      <div class="att-scard">
+        <div class="k">Today</div>
+        <div class="v">{{ today }}</div>
+        <div class="s">Late after {{ late_after }}</div>
+      </div>
+
+      <div class="att-scard ok">
+        <div class="k">Present</div>
+        <div class="v">{{ present_count }}</div>
+        <div class="s">out of {{ total_employees }}</div>
+      </div>
+
+      <div class="att-scard warn">
+        <div class="k">Late</div>
+        <div class="v">{{ late_count }}</div>
+        <div class="s">checked in after cutoff</div>
+      </div>
+
+      <div class="att-scard bad">
+        <div class="k">Pending checkout</div>
+        <div class="v">{{ pending_checkout_count }}</div>
+        <div class="s">still working / forgot checkout</div>
+      </div>
+
+      <div class="att-scard">
+        <div class="k">Avg hours (completed)</div>
+        <div class="v">{{ avg_hours_worked }}</div>
+        <div class="s">only checked-out entries</div>
+      </div>
+    </div>
+<div class="att-cards-wrap">
+    <!-- Employee cards -->
+    <div class="att-cards-head">
+      <div>
+        <div class="h">Today’s Attendance</div>
+        <div class="p">One card per employee (latest entry today)</div>
+      </div>
+     
+    </div>
+
+    <div class="att-cards">
+      {% for a in todays_cards %}
+        <div class="att-card">
+          <div class="top">
+            <div class="avatar">
+              {{ a.employee.full_name|default:a.employee.email|slice:":1"|upper }}
+            </div>
+
+            <div class="meta">
+              <div class="name">{{ a.employee.full_name|default:"—" }}</div>
+              <div class="email">{{ a.employee.email }}</div>
+            </div>
+
+            {% if a.check_out %}
+              <div class="badge ok">Completed</div>
+            {% else %}
+              <div class="badge warn">In progress</div>
+            {% endif %}
+          </div>
+
+          <div class="grid">
+            <div class="cell ats">
+              <div class="k">Check in</div>
+              <div class="v">{{ a.check_in|date:"M d, Y" }} · {{ a.check_in|time:"h:i A" }}</div>
+            </div>
+            <div class="cell ats">
+              <div class="k">Check out</div>
+              <div class="v">{% if a.check_out %}{{ a.check_out|time:"h:i A" }}{% else %}—{% endif %}</div>
+            </div>
+            
+          </div>
+
+          <div class="actions">
+            <a class="btn" href="/admin/accounts/employee/{{ a.employee.id }}/change/">Open profile</a>
+            <a class="btn primary"
+   href="{% url 'admin:attendance_employee_detail' a.employee_id %}?year={{ today.year }}&month={{ today.month }}">
+   Open attendance
+</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="att-empty">No attendance records found for today.</div>
+      {% endfor %}
+    </div>
+</div>
+    <!-- Optional Absent preview -->
+   <div class="att-absent">
+  <div class="abs-head">
+    <div>
+      <div class="h2">Absent (Today)</div>
+      <div class="p2">Employees with no check-in today (showing first 12)</div>
+    </div>
+
+    <div class="abs-chip">
+      <span class="dot"></span>
+      <span class="t">Absent</span>
+    </div>
+  </div>
+
+  <div class="abs-grid">
+    {% for emp in absent_employees %}
+      <div class="abs-card">
+        <div class="abs-avatar">
+          {{ emp.full_name|default:emp.email|slice:":1"|upper }}
+        </div>
+
+        <div class="abs-meta">
+          <div class="abs-name">{{ emp.full_name|default:"—" }}</div>
+          <div class="abs-mail">{{ emp.email }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+    <!-- Keep default admin output (search/filter/table) -->
+    {{ block.super }}
+  </div>
+{% endblock %}

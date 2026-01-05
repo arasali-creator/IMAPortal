@@ -1,0 +1,285 @@
+
+
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls static %}
+
+{% block result_list %}
+<style>
+          @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+ body {
+        margin: 0;
+        font-family: "Outfit", Arial, sans-serif;
+        background: #f9f9f9; 
+      }
+  :root{
+    --p:#ff6600;           /* primary */
+    --s:#181818;           /* secondary */
+    --cream:#fbf7f1;       /* card base */
+    --cream2:#fffaf4;      /* card highlight */
+    --line:rgba(20,20,20,.10);
+    --text:#161616;
+    --muted:rgba(22,22,22,.65);
+  }
+
+  /* 3-grid layout */
+  .emp-grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:18px;
+    margin-top: 14px;
+  }
+
+  /* Card – soft cream like your reference image */
+  .emp-card{
+    position:relative;
+    border-radius: 18px;
+    overflow:hidden;
+    
+    box-shadow:
+      0 14px 28px rgba(0,0,0,.08),
+      0 2px 6px rgba(0,0,0,.04);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+  }
+  .emp-card:hover{
+    transform: translateY(-3px);
+    border-color: rgba(255,102,0,.22);
+    box-shadow:
+      0 18px 42px rgba(0,0,0,.12),
+      0 3px 10px rgba(0,0,0,.06);
+  }
+
+  /* Inner padding */
+  .emp-inner{
+    padding: 18px;
+  }
+
+  /* Top row (avatar + name) */
+  .emp-top{
+    display:flex;
+    align-items:center;
+    gap:14px;
+  }
+
+  .emp-avatar{
+    width:54px;
+    height:54px;
+    border-radius: 14px;
+    overflow:hidden;
+    flex: 0 0 auto;
+
+    display:grid;
+    place-items:center;
+    font-weight: 900;
+    color: #fff;
+
+    background:
+      radial-gradient(220px 120px at 30% 20%, rgba(255,255,255,.25), transparent 65%),
+      linear-gradient(135deg, #ff7a1a, #ff6600);
+    box-shadow: 0 10px 18px rgba(255,102,0,.22);
+  }
+  .emp-avatar img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+  }
+
+  .emp-title{ min-width:0; }
+  .emp-name{
+    font-weight: 800;
+    font-size: 16px;
+    color: var(--text);
+    line-height: 1.15;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .emp-sub{
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+    word-break: break-word;
+  }
+
+  /* Divider */
+  .divider{
+    height: 1px;
+    background: rgba(0,0,0,.08);
+    margin: 14px 0;
+  }
+
+  /* Detail rows (like form rows in your reference) */
+  .rows{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(0,0,0,.06);
+  }
+  .k{
+    font-size: 12px;
+    color: rgba(22,22,22,.60);
+    font-weight: 600;
+  }
+  .v{
+    font-size: 12px;
+    color: rgba(22,22,22,.85);
+    font-weight: 700;
+    max-width: 60%;
+    text-align:right;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* status chips */
+  .chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-top: 12px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 7px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,.08);
+    background: rgba(255,255,255,.65);
+    color: rgba(22,22,22,.80);
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:99px;
+    background: rgba(22,22,22,.35);
+  }
+  .dot.ok{ background:#22c55e; }
+  .dot.no{ background:#ef4444; }
+  .chip.role{
+    border-color: rgba(255,102,0,.22);
+    background: rgba(255,102,0,.12);
+    color: rgba(22,22,22,.90);
+  }
+
+  /* Actions like your orange Continue button */
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top: 14px;
+  }
+  .btn{
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    text-decoration:none;
+    font-size: 12px;
+    font-weight: 800;
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.65);
+    color: rgba(22,22,22,.85);
+    transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover{
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+  }
+  .btn.primary{
+    background: linear-gradient(180deg, #ff7a1a, #ff6600);
+    border-color: rgba(255,102,0,.35);
+    color: #fff;
+    box-shadow: 0 12px 20px rgba(255,102,0,.20);
+  }
+
+  /* responsive */
+  @media (max-width: 1200px){
+    .emp-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+  }
+  @media (max-width: 720px){
+    .emp-grid{ grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="emp-grid">
+  {% for obj in cl.result_list %}
+    <div class="emp-card">
+      <div class="emp-inner">
+
+        <div class="emp-top">
+          <div class="emp-avatar">
+            {% if obj.profile_picture %}
+              <img src="{{ obj.profile_picture.url }}" alt="{{ obj.full_name }}">
+            {% else %}
+              {{ obj.full_name|default:"-"|slice:":1"|upper }}
+            {% endif %}
+          </div>
+
+          <div class="emp-title">
+            <div class="emp-name">{{ obj.full_name|default:"(No name)" }}</div>
+            <div class="emp-sub">
+              CNIC: {{ obj.cnic|default:"-" }}<br>
+              {{ obj.email|default:"-" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="rows">
+          <div class="row">
+            <div class="k">{% trans "Contact" %}</div>
+            <div class="v">{{ obj.contact_number|default:"-" }}</div>
+          </div>
+          <div class="row">
+            <div class="k">{% trans "Gender" %}</div>
+            <div class="v">{{ obj.gender|default:"-" }}</div>
+          </div>
+          <div class="row">
+            <div class="k">{% trans "Blood Group" %}</div>
+            <div class="v">{{ obj.blood_group|default:"-" }}</div>
+          </div>
+        </div>
+
+        <div class="chips">
+          <span class="chip role">{{ obj.get_role_display|default:obj.role }}</span>
+
+          {% if obj.is_active %}
+            <span class="chip"><span class="dot ok"></span> {% trans "Active" %}</span>
+          {% else %}
+            <span class="chip"><span class="dot no"></span> {% trans "Inactive" %}</span>
+          {% endif %}
+
+          {% if obj.is_staff %}
+            <span class="chip"><span class="dot ok"></span> {% trans "Staff" %}</span>
+          {% else %}
+            <span class="chip"><span class="dot"></span> {% trans "Non-staff" %}</span>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          <a class="btn primary" href="{% url cl.opts|admin_urlname:'change' obj.pk %}">
+            {% trans "Open Profile" %}
+          </a>
+          <a class="btn" href="{% url cl.opts|admin_urlname:'history' obj.pk %}">
+            {% trans "History" %}
+          </a>
+        </div>
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block page_header %}
+<div class="app-hero">
+  <div class="app-hero-head">
+    <div>
+      <h1 class="app-hero-title">Team Payroll Summary</h1>
+      <p class="app-hero-sub">{{ manager.full_name }}</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  {% if team_data %}
+    <div class="table-card">
+      <div class="table-responsive">
+        <table class="table table-bordered table-hover shadow-sm align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th>Employee</th>
+              <th>Total Salary (USD)</th>
+              <th>Total Salary (PKR)</th>
+              <th>Paid (USD)</th>
+              <th>Paid (PKR)</th>
+              <th>Expenses (USD)</th>
+              <th>Expenses (PKR)</th>
+              <th>Remaining (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in team_data %}
+            <tr>
+              <td>{{ row.employee.full_name }}</td>
+              <td>{{ row.total_salary_usd }}</td>
+              <td>{{ row.total_salary_pkr }}</td>
+              <td>{{ row.total_paid_usd }}</td>
+              <td>{{ row.total_paid_pkr }}</td>
+              <td>{{ row.total_expenses_usd }}</td>
+              <td>{{ row.total_expenses_pkr }}</td>
+              <td>{{ row.remaining_pkr }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <p>No team members found under you.</p>
+  {% endif %}
+</div>
+{% endblock %}

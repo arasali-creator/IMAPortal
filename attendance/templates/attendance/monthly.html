@@ -1,0 +1,80 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/admin/attendance_monthly.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="att-wrap">
+
+  <div class="att-top">
+    <div class="att-title">
+      <div class="h">Attendance Monthly</div>
+      <div class="p">Matrix view (Present / Absent / Weekend)</div>
+    </div>
+
+    <div class="att-month">
+      <a class="nav" href="?year={{ prev_year }}&month={{ prev_month }}">‹</a>
+      <div class="label">{{ month_label }}</div>
+      <a class="nav" href="?year={{ next_year }}&month={{ next_month }}">›</a>
+
+      <form method="get" class="picker">
+        <input type="number" name="year" value="{{ year }}" min="2000" max="2100" />
+        <input type="number" name="month" value="{{ month }}" min="1" max="12" />
+        <button type="submit" class="go">Go</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span class="lg"><span class="dot present"></span> Present</span>
+    <span class="lg"><span class="dot absent"></span> Absent</span>
+    <span class="lg"><span class="dot weekend"></span> Weekend</span>
+    <span class="lg muted">Leaves can be added later (Paid/Unpaid/Hourly)</span>
+  </div>
+
+  <div class="table-wrap">
+    <table class="att-table">
+      <thead>
+        <tr>
+          <th class="name-col">Name</th>
+          {% for d in days %}
+            <th class="day-col">
+              <div class="day-num">{{ d.day|stringformat:"02d" }}</div>
+              <div class="day-w">{{ d.weekday }}</div>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="name-col">
+              <div class="emp">
+                <div class="emp-name">{{ r.employee.full_name|default:r.employee.email }}</div>
+                <div class="emp-mail">{{ r.employee.email }}</div>
+              </div>
+            </td>
+
+            {% for c in r.cells %}
+              <td class="day-col">
+                {% if c.type == "present" %}
+                  <span class="cell present" title="{{ c.tooltip }}">✓</span>
+                {% elif c.type == "absent" %}
+                  <span class="cell absent" title="{{ c.tooltip }}">×</span>
+                {% else %}
+                  <span class="cell weekend" title="{{ c.tooltip }}">W</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/admin/attendance_monthly.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="att-emp-wrap">
+
+  <div class="att-emp-head">
+    <div class="att-emp-avatar">{{ employee.full_name|default:employee.email|slice:":1"|upper }}</div>
+
+    <div class="att-emp-meta">
+      <div class="att-emp-name">{{ employee.full_name|default:"—" }}</div>
+      <div class="att-emp-email">{{ employee.email }}</div>
+      <div class="att-emp-sub">CNIC: {{ employee.cnic }}</div>
+    </div>
+
+    <div class="att-emp-actions">
+      <a class="att-btn ghost" href="{{ back_to_dashboard }}">Back</a>
+      <a class="att-btn" href="{{ back_to_monthly }}">Monthly view</a>
+      <a class="att-btn pri" href="{% url 'admin:accounts_employee_change' employee.id %}">Open profile</a>
+    </div>
+  </div>
+
+  <div class="att-emp-monthbar">
+    <a class="nav" href="?year={{ prev_year }}&month={{ prev_month }}">‹</a>
+    <div class="label">{{ month_label }}</div>
+    <a class="nav" href="?year={{ next_year }}&month={{ next_month }}">›</a>
+  </div>
+<div class="att-month-wrap">
+  <div class="att-legend">
+    <div class="pill"><span class="dot"></span> Present</div>
+    <div class="pill absent"><span class="dot"></span> Absent</div>
+    <div class="pill weekend"><span class="dot"></span> Weekend</div>
+  </div>
+
+  <div class="att-scroll">
+    <table class="att-table">
+      <thead>
+        <tr>
+          <th class="sticky-name">Name</th>
+          {% for d in days %}
+            <th>
+              {{ d.day }}<br><span style="font-weight:700;color:rgba(24,24,24,.6)">{{ d.weekday }}</span>
+            </th>
+          {% endfor %}
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="sticky-name">
+              <div class="att-name">
+                <div class="full">{{ row.employee.full_name|default:row.employee.email }}</div>
+                <div class="mail">{{ row.employee.email }}</div>
+              </div>
+            </td>
+
+            {% for c in row.cells %}
+              <td>
+                {% if c.type == "present" %}
+                  <span class="att-chip present" title="{{ c.tooltip }}">✓</span>
+                {% elif c.type == "absent" %}
+                  <span class="att-chip absent" title="{{ c.tooltip }}">×</span>
+                {% else %}
+                  <span class="att-chip weekend" title="{{ c.tooltip }}">W</span>
+                {% endif %}
+              </td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+
+  <div class="att-recent">
+    <div class="h">Recent Attendance</div>
+
+    <div class="recent-grid">
+      {% for a in recent_qs %}
+        <div class="recent-card">
+          <div class="top">
+            <div class="d">{{ a.check_in|date:"M d, Y" }}</div>
+            <div class="b {% if a.check_out %}ok{% else %}warn{% endif %}">
+              {% if a.check_out %}Completed{% else %}In progress{% endif %}
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <div class="k">In</div>
+              <div class="v">{{ a.check_in|date:"h:i A" }}</div>
+            </div>
+            <div>
+              <div class="k">Out</div>
+              <div class="v">{% if a.check_out %}{{ a.check_out|date:"h:i A" }}{% else %}—{% endif %}</div>
+            </div>
+            <div>
+              <div class="k">Hours</div>
+              <div class="v">{{ a.hours_worked }}</div>
+            </div>
+          </div>
+
+          <div class="act">
+            <a class="att-btn ghost" href="{% url 'admin:attendance_attendance_change' a.id %}">Open record</a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">No attendance records yet.</div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

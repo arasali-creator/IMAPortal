@@ -1,0 +1,492 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block content %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200..900&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#f7f8fc;
+    --card:rgba(255,255,255,.88);
+    --text:#0f172a;
+    --muted:#64748b;
+    --line: rgba(15,23,42,.10);
+    --shadow: 0 18px 40px rgba(2, 6, 23, .08);
+    --shadow2: 0 10px 26px rgba(2, 6, 23, .06);
+    --radius: 18px;
+
+    --primary:#ff6600;
+    --primary2:#181818;
+  }
+
+  body{ font-family:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif !important; }
+  #content{ background: var(--bg); }
+
+  .wrap{
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 18px 8px 24px 8px;
+  }
+
+  .hero{
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background:
+      radial-gradient(900px 240px at 10% 0%, rgba(255,102,0,.14), transparent 60%),
+      radial-gradient(900px 240px at 85% 0%, rgba(24,24,24,.10), transparent 55%),
+      linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.55));
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    padding: 18px;
+    margin-bottom: 14px;
+  }
+
+  .heroTop{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+
+  .title{
+    margin:0;
+    font-size: 1.35rem;
+    font-weight: 900;
+    letter-spacing: -.02em;
+    color: var(--primary2);
+  }
+  .sub{
+    margin: 8px 0 0 0;
+    color: var(--muted);
+    font-size: .95rem;
+    max-width: 82ch;
+  }
+
+  .chipRow{
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    margin-top: 12px;
+  }
+
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.12);
+    background: rgba(255,255,255,.78);
+    color: var(--primary2);
+    font-weight: 900;
+    font-size: .86rem;
+    text-decoration:none;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .chip:hover{
+    transform: translateY(-1px);
+    border-color: rgba(255,102,0,.40);
+    box-shadow: 0 14px 26px rgba(255,102,0,.12);
+  }
+  .chip.primary{
+    border-color: rgba(255,102,0,.22);
+    background: rgba(255,102,0,.10);
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 14px;
+  }
+
+  .card{
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--card);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--shadow2);
+    padding: 14px;
+  }
+
+  .kpi{ grid-column: span 3; }
+  .mid{ grid-column: span 6; }
+  .wide{ grid-column: span 12; }
+
+  .label{
+    color: var(--muted);
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: .74rem;
+    letter-spacing: .08em;
+    margin-bottom: 8px;
+  }
+  .value{
+    font-size: 1.55rem;
+    font-weight: 900;
+    color: var(--primary2);
+    line-height: 1.1;
+  }
+  .value.accent{ color: var(--primary); }
+  .hint{
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+
+  .split{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:flex-end;
+  }
+  .mono{
+    font-variant-numeric: tabular-nums;
+    white-space:nowrap;
+  }
+
+  .table{
+    width:100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    overflow:hidden;
+    border-radius: 14px;
+    border: 1px solid rgba(15,23,42,.10);
+    background: rgba(255,255,255,.85);
+  }
+  .table th, .table td{
+    padding: 11px 12px;
+    border-bottom: 1px solid rgba(15,23,42,.06);
+    font-size: .93rem;
+  }
+  .table th{
+    background: rgba(15,23,42,.03);
+    color:#334155;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: .78rem;
+    letter-spacing: .06em;
+    text-align:left;
+  }
+  .table tr:last-child td{ border-bottom: none; }
+  .table tbody tr:hover td{
+    background: rgba(255,102,0,.06);
+    transition: .15s ease;
+  }
+  .num{ text-align:left; font-variant-numeric: tabular-nums; white-space:nowrap; }
+  .table-wrap{ margin-top: 14px; }
+  .chart-grid{
+    display:grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .chart-box{
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(10px);
+    padding: 14px;
+    box-shadow: var(--shadow2);
+  }
+  .chart-canvas{
+    height: 240px;
+  }
+  .chart-canvas canvas{
+    max-height: 240px;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    padding: 3px 10px;
+    border-radius: 999px;
+    border: 1px solid rgba(15,23,42,.12);
+    background: rgba(255,255,255,.75);
+    font-weight: 900;
+    font-size: .84rem;
+    color: var(--primary2);
+  }
+  .badge.orange{
+    border-color: rgba(255,102,0,.22);
+    background: rgba(255,102,0,.10);
+  }
+
+  @media(max-width:1100px){
+    .kpi{ grid-column: span 6; }
+    .mid{ grid-column: span 12; }
+    .chart-grid{ grid-template-columns: 1fr; }
+  }
+  @media(max-width:700px){
+    .kpi{ grid-column: span 12; }
+    .split{ flex-direction:column; align-items:flex-start; }
+  }
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="heroTop">
+      <div>
+        <h1 class="title">Payroll Dashboard</h1>
+        <p class="sub">
+          Quick snapshot of salaries, payments, and expenses. Remaining balance is calculated in PKR.
+        </p>
+      </div>
+
+      <div class="chipRow" style="justify-content:flex-end">
+        <span class="chip primary">Rate: <span class="mono">1 USD = {{ rate|floatformat:4|intcomma }} PKR</span></span>
+        <a class="chip" href="{% url 'admin:payroll_company_summary' %}">Payroll Summary</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid">
+    <!-- KPIs -->
+    <div class="card kpi">
+      <div class="label">Total Salaries</div>
+      <div class="split">
+        <div class="value mono"> {{ salaries.total_pkr|default_if_none:0|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+      </div>
+      <div class="hint mono">{{ salaries.total_usd|default_if_none:0|floatformat:2|intcomma }} USD</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="label">Total Paid</div>
+      <div class="value accent mono">{{ paid.total_pkr|default_if_none:0|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+      <div class="hint mono">{{ paid.total_usd|default_if_none:0|floatformat:2|intcomma }} USD</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="label">Total Expenses</div>
+      <div class="value mono"> {{ expenses.total_pkr|default_if_none:0|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+      <div class="hint mono">{{ expenses.total_usd|default_if_none:0|floatformat:2|intcomma }} USD</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="label">Remaining</div>
+      <div class="value mono">{{ remaining_pkr|default_if_none:0|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+      <div class="hint">Salaries – Paid – Expenses</div>
+    </div>
+
+    <div class="card kpi">
+      <div class="label">PM/Admin Settlement</div>
+      <div class="value mono">{{ settlement.admin_owes_pkr|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+      <div class="hint">CEO owes PM</div>
+      <div class="hint">PM owes Admin: {{ settlement.pm_owes_pkr|floatformat:0|intcomma }} PKR</div>
+    </div>
+
+    {% for box in expense_boxes %}
+      <div class="card kpi">
+        <div class="label">{{ box.key }}</div>
+        <div class="value mono">{{ box.total_pkr|default_if_none:0|floatformat:0|intcomma }} <span style="font-size:.95rem;font-weight:900;color:var(--muted)">PKR</span></div>
+        <div class="hint mono">
+          {{ box.total_usd|default_if_none:0|floatformat:2|intcomma }} USD
+          {% if box.label and box.label != box.key %}• {{ box.label }}{% endif %}
+        </div>
+      </div>
+    {% endfor %}
+
+    <!-- Teams Table -->
+    <div class="card wide">
+      <div class="split" style="margin-bottom:10px">
+        <div>
+          <div class="label" style="margin-bottom:4px">Teams</div>
+          <div class="hint" style="margin-top:0">PM share vs Admin share, plus remaining PM balance.</div>
+        </div>
+        <div class="chipRow" style="margin-top:0">
+          <a class="chip" href="{% url 'admin:payroll_employeesalary_changelist' %}">Salaries</a>
+          <a class="chip" href="{% url 'admin:payroll_salarypayment_changelist' %}">Payments</a>
+          <a class="chip" href="{% url 'admin:payroll_expense_changelist' %}">Expenses</a>
+        </div>
+      </div>
+
+      <table class="table">
+        <thead>
+          <tr>
+            <th>PM</th>
+            <th class="num">Total Salary (USD)</th>
+            <th class="num">Paid (USD)</th>
+            <th class="num">PM Share (USD)</th>
+            <th class="num">Admin Share (USD)</th>
+            <th class="num">Remaining PM (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in teams %}
+            <tr>
+              <td>
+                <span style="font-weight:900;color:var(--primary2)">
+                  {{ t.pm.full_name|default:t.pm }}
+                </span>
+              </td>
+              <td class="num mono">{{ t.total_salary_usd|floatformat:2|intcomma }}</td>
+              <td class="num mono">{{ t.paid_usd|floatformat:2|intcomma }}</td>
+              <td class="num mono"><span class="badge orange">{{ t.pm_share|floatformat:2|intcomma }}</span></td>
+              <td class="num mono"><span class="badge">{{ t.admin_share|floatformat:2|intcomma }}</span></td>
+              <td class="num mono">{{ t.remaining_pm_usd|floatformat:2|intcomma }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="color:var(--muted);padding:14px;">No team data found.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Month-wise Summary -->
+    <div class="card wide">
+      <div class="split" style="margin-bottom:10px">
+        <div>
+          <div class="label" style="margin-bottom:4px">Month Wise Summary</div>
+          <div class="hint" style="margin-top:0">Company totals for salary, paid, and expenses per month.</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Month</th>
+              <th class="num">Total Salaries (PKR)</th>
+              <th class="num">Salaries Paid (PKR)</th>
+              <th class="num">Total Expenses (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in month_rows %}
+              <tr>
+                <td>{{ row.label }}</td>
+                <td class="num">{{ row.salary_pkr|floatformat:0|intcomma }}</td>
+                <td class="num">{{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                <td class="num">{{ row.exp_pkr|floatformat:0|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" style="color:var(--muted);padding:14px;">No monthly data found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Year-wise Summary -->
+    <div class="card wide">
+      <div class="split" style="margin-bottom:10px">
+        <div>
+          <div class="label" style="margin-bottom:4px">Year Wise Summary</div>
+          <div class="hint" style="margin-top:0">Full year totals for salaries, paid, and expenses.</div>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th class="num">Total Salaries (PKR)</th>
+              <th class="num">Salaries Paid (PKR)</th>
+              <th class="num">Total Expenses (PKR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in year_rows %}
+              <tr>
+                <td>{{ row.year }}</td>
+                <td class="num">{{ row.salary_pkr|floatformat:0|intcomma }}</td>
+                <td class="num">{{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                <td class="num">{{ row.exp_pkr|floatformat:0|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="4" style="color:var(--muted);padding:14px;">No yearly data found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="card wide">
+      <div class="split" style="margin-bottom:10px">
+        <div>
+          <div class="label" style="margin-bottom:4px">Charts</div>
+          <div class="hint" style="margin-top:0">Monthly and yearly trends (PKR).</div>
+        </div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="chart-box">
+          <div class="label" style="margin-bottom:6px">Monthly Trend</div>
+          <div class="chart-canvas">
+            <canvas id="monthTrendChart"></canvas>
+          </div>
+        </div>
+        <div class="chart-box">
+          <div class="label" style="margin-bottom:6px">Yearly Trend</div>
+          <div class="chart-canvas">
+            <canvas id="yearTrendChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  const monthLabels = {{ month_labels|safe }};
+  const monthSalary = {{ month_salary|safe }};
+  const monthPaid = {{ month_paid|safe }};
+  const monthExp = {{ month_exp|safe }};
+
+  const yearLabels = {{ year_labels|safe }};
+  const yearSalary = {{ year_salary|safe }};
+  const yearPaid = {{ year_paid|safe }};
+  const yearExp = {{ year_exp|safe }};
+
+  const monthCtx = document.getElementById("monthTrendChart");
+  if (monthCtx) {
+    new Chart(monthCtx, {
+      type: "line",
+      data: {
+        labels: monthLabels,
+        datasets: [
+          { label: "Salaries (PKR)", data: monthSalary, tension: 0.35, borderWidth: 2 },
+          { label: "Paid (PKR)", data: monthPaid, tension: 0.35, borderWidth: 2 },
+          { label: "Expenses (PKR)", data: monthExp, tension: 0.35, borderWidth: 2 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } },
+        scales: { y: { ticks: { callback: (v) => v.toLocaleString() } } }
+      }
+    });
+  }
+
+  const yearCtx = document.getElementById("yearTrendChart");
+  if (yearCtx) {
+    new Chart(yearCtx, {
+      type: "bar",
+      data: {
+        labels: yearLabels,
+        datasets: [
+          { label: "Salaries (PKR)", data: yearSalary, borderWidth: 1 },
+          { label: "Paid (PKR)", data: yearPaid, borderWidth: 1 },
+          { label: "Expenses (PKR)", data: yearExp, borderWidth: 1 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: "bottom" } },
+        scales: { y: { ticks: { callback: (v) => v.toLocaleString() } } }
+      }
+    });
+  }
+</script>
+{% endblock %}

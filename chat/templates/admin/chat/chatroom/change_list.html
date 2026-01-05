@@ -1,0 +1,550 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .chat-wrap{
+      display:grid;
+      grid-template-columns: 320px minmax(0,1fr);
+      gap:16px;
+    }
+    .chat-panel{
+      border:1px solid rgba(0,0,0,.06);
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 12px 24px rgba(0,0,0,.05);
+      overflow:hidden;
+    }
+    .chat-left{
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      padding:14px;
+    }
+    .chat-title{
+      font-size:18px;
+      font-weight:900;
+      color:#181818;
+    }
+    .chat-sub{
+      font-size:12px;
+      color:rgba(24,24,24,.6);
+      font-weight:600;
+      margin-top:4px;
+    }
+    .chat-new{
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:14px;
+      padding:12px;
+      background:rgba(255,255,255,.95);
+      box-shadow:0 10px 20px rgba(0,0,0,.04);
+    }
+    .chat-new label{
+      font-weight:800;
+      font-size:12px;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      color:rgba(24,24,24,.6);
+      margin-bottom:6px;
+      display:block;
+    }
+    .chat-new select,
+    .chat-new input{
+      width:100%;
+      padding:8px 10px;
+      border-radius:10px;
+      border:1px solid rgba(0,0,0,.12);
+      background:#fff;
+      margin-bottom:10px;
+    }
+    .chat-new button{
+      width:100%;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid #ff6600;
+      background:#ff6600;
+      color:#fff;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-size:11px;
+    }
+    .chat-rooms{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height: calc(100vh - 360px);
+      overflow:auto;
+      padding-right:4px;
+    }
+    .room-item{
+      border:1px solid rgba(0,0,0,.08);
+      border-radius:12px;
+      padding:10px 12px;
+      background:#fff;
+      cursor:pointer;
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+    }
+    .room-item.active{
+      border-color:rgba(255,102,0,.4);
+      background:rgba(255,102,0,.08);
+    }
+    .room-item.unread{
+      border-color:rgba(255,102,0,.35);
+      background:rgba(255,102,0,.06);
+    }
+    .room-unread{
+      margin-left:auto;
+      min-width:22px;
+      height:22px;
+      padding:0 6px;
+      border-radius:999px;
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      color:#fff;
+      font-size:10px;
+      font-weight:900;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      box-shadow:0 6px 12px rgba(34,197,94,.25);
+    }
+    .room-name{
+      font-weight:900;
+      color:#181818;
+      font-size:14px;
+    }
+    .room-meta{
+      font-size:11px;
+      color:rgba(24,24,24,.55);
+      margin-top:4px;
+    }
+    .room-avatar{
+      width:28px;
+      height:28px;
+      border-radius:999px;
+      background: rgba(24,24,24,.08);
+      border:1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:900;
+      color:#181818;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .room-avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:999px;
+      display:block;
+    }
+    .room-content{ min-width:0; }
+
+    .chat-main{
+      display:flex;
+      flex-direction:column;
+      min-height:520px;
+    }
+    .chat-header{
+      padding:14px 16px;
+      border-bottom:1px solid rgba(0,0,0,.06);
+      background:linear-gradient(120deg, rgba(255,102,0,.12), rgba(255,255,255,0));
+    }
+    .chat-header-inner{
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .chat-header-avatar{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      background: rgba(24,24,24,.08);
+      border:1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+      color:#181818;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .chat-header-avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:999px;
+      display:block;
+    }
+    .chat-header h3{
+      margin:0;
+      font-size:18px;
+      font-weight:900;
+    }
+    .chat-header p{
+      margin:4px 0 0;
+      font-size:12px;
+      color:rgba(24,24,24,.6);
+      font-weight:600;
+    }
+    .chat-typing{
+      font-size:11px;
+      color:rgba(255,102,0,.85);
+      font-weight:800;
+      margin-top:2px;
+      min-height:14px;
+    }
+    .chat-messages{
+      padding:16px;
+      flex:1;
+      overflow:auto;
+      max-height: 250px;
+      background:linear-gradient(180deg, #fff, rgba(255,255,255,.92));
+    }
+    .msg{
+      display:flex;
+      gap:10px;
+      margin-bottom:10px;
+      max-width:80%;
+    }
+    .msg .avatar{
+      width:32px;
+      height:32px;
+      border-radius:999px;
+      background: rgba(24,24,24,.08);
+      border:1px solid rgba(0,0,0,.08);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:12px;
+      font-weight:900;
+      color:#181818;
+      overflow:hidden;
+      flex:0 0 auto;
+    }
+    .msg .avatar img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      border-radius:999px;
+      display:block;
+    }
+    .msg.you{
+      margin-left:auto;
+      text-align:right;
+      flex-direction: row-reverse;
+    }
+    .msg-bubble{
+      padding:10px 12px;
+      border-radius:12px;
+      background:#f4f4f5;
+      border:1px solid rgba(0,0,0,.08);
+      font-size:13px;
+    }
+    .msg.you .msg-bubble{
+      background:rgba(255,102,0,.12);
+      border-color:rgba(255,102,0,.25);
+    }
+    .msg-meta{
+      font-size:10px;
+      color:rgba(24,24,24,.5);
+      margin-top:4px;
+      font-weight:700;
+    }
+    .chat-input{
+      border-top:1px solid rgba(0,0,0,.06);
+      padding:12px 16px;
+      display:flex;
+      gap:8px;
+    }
+    .chat-input input{
+      flex:1;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(0,0,0,.12);
+    }
+    .chat-input button{
+      padding:10px 14px;
+      border-radius:999px;
+      border:1px solid #ff6600;
+      background:#ff6600;
+      color:#fff;
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.06em;
+      font-size:11px;
+    }
+    @media (max-width: 1000px){
+      .chat-wrap{ grid-template-columns: 1fr; }
+      .chat-rooms{ max-height: 220px; }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="chat-wrap">
+    <div class="chat-panel">
+      <div class="chat-left">
+   
+
+        <div class="chat-title" style="font-size:14px;">Recent chats</div>
+        <div class="chat-rooms" id="roomsList">
+          {% for room in rooms %}
+            <div class="room-item {% if room.is_unread %}unread{% endif %}" data-room-id="{{ room.id }}" data-room-avatar="{{ room.avatar|default:'' }}">
+              <div class="room-avatar">
+                {% if room.avatar %}
+                  <img src="{{ room.avatar }}" alt="{{ room.name }}">
+                {% else %}
+                  <span>{{ room.name|slice:":1"|upper }}</span>
+                {% endif %}
+              </div>
+              <div class="room-content">
+                <div class="room-name">{{ room.name }}</div>
+                <div class="room-meta room-last-message">{{ room.last_message }}</div>
+                {% if room.last_time %}
+                  <div class="room-meta">{{ room.last_time }}</div>
+                {% endif %}
+              </div>
+              {% if room.unread_count %}
+                <div class="room-unread">{{ room.unread_count }}</div>
+              {% endif %}
+            </div>
+          {% empty %}
+            <div class="room-meta">No chats yet.</div>
+          {% endfor %}
+        </div>
+             <div>
+          <div class="chat-title">Team Chat</div>
+          <div class="chat-sub">Direct and group conversations.</div>
+        </div>
+
+        <div class="chat-new">
+          <label>Chat type</label>
+          <select id="roomType">
+            <option value="direct">1‑to‑1</option>
+            <option value="group">Group</option>
+          </select>
+
+          <label>Group name (optional)</label>
+          <input id="roomName" type="text" placeholder="Marketing Team">
+
+          <label>Select members</label>
+          <select id="roomMembers" multiple size="6">
+            {% for member in members %}
+              <option value="{{ member.id }}">{{ member.full_name|default:member.email }}</option>
+            {% endfor %}
+          </select>
+          <button id="createRoomBtn">Start chat</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-panel chat-main">
+      <div class="chat-header">
+        <div class="chat-header-inner">
+          <div class="chat-header-avatar" id="chatTitleAvatar">
+            <span>?</span>
+          </div>
+          <div>
+            <h3 id="chatTitle">Select a chat</h3>
+            <p id="chatSub">Messages appear in real time.</p>
+            <div class="chat-typing" id="chatTyping"></div>
+          </div>
+        </div>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input">
+        <input id="chatInput" type="text" placeholder="Write a message..." disabled>
+        <button id="sendBtn" disabled>Send</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const currentUserId = {{ current_user_id|default:"0" }};
+    const roomsList = document.getElementById("roomsList");
+    const chatTitle = document.getElementById("chatTitle");
+    const chatMessages = document.getElementById("chatMessages");
+    const chatInput = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("sendBtn");
+    const messagesUrlBase = "{{ messages_url }}";
+    const createRoomUrl = "{{ create_room_url }}";
+    const unreadCountUrl = "{{ unread_count_url }}";
+    const chatTyping = document.getElementById("chatTyping");
+    const playSound = typeof window.playNotificationSound === "function" ? window.playNotificationSound : () => {};
+
+    let activeRoomId = null;
+    let socket = null;
+
+    function selectRoom(roomId, roomName, roomAvatar) {
+      activeRoomId = roomId;
+      chatTitle.textContent = roomName || "Chat";
+      chatTyping.textContent = "";
+      const activeItem = document.querySelector(`.room-item[data-room-id="${roomId}"]`);
+      if (activeItem) {
+        activeItem.classList.remove("unread");
+        const badge = activeItem.querySelector(".room-unread");
+        if (badge) badge.remove();
+      }
+      const titleAvatar = document.getElementById("chatTitleAvatar");
+      if (titleAvatar) {
+        if (roomAvatar) {
+          titleAvatar.innerHTML = `<img src="${roomAvatar}" alt="${roomName}">`;
+        } else {
+          titleAvatar.innerHTML = `<span>${(roomName || "?").slice(0,1).toUpperCase()}</span>`;
+        }
+      }
+      chatInput.disabled = false;
+      sendBtn.disabled = false;
+      loadMessages(roomId);
+      connectSocket(roomId);
+    }
+
+    function loadMessages(roomId) {
+      chatMessages.innerHTML = "";
+      fetch(messagesUrlBase + roomId + "/")
+        .then(r => r.json())
+        .then(data => {
+          if (!data.ok) return;
+          data.messages.forEach(renderMessage);
+          chatMessages.scrollTop = chatMessages.scrollHeight;
+          const activeItem = document.querySelector(`.room-item[data-room-id="${roomId}"]`);
+          if (activeItem) {
+            const lastMsg = activeItem.querySelector(".room-last-message");
+            if (lastMsg) {
+              lastMsg.setAttribute("data-last", lastMsg.textContent);
+            }
+          }
+          if (socket) {
+            socket.send(JSON.stringify({ type: "read" }));
+          }
+        });
+    }
+
+    function renderMessage(msg) {
+      const wrap = document.createElement("div");
+      const isYou = msg.sender_id === currentUserId;
+      wrap.className = "msg" + (isYou ? " you" : "");
+      const avatarHtml = msg.avatar
+        ? `<img src="${msg.avatar}" alt="${msg.sender}">`
+        : `<span>${(msg.sender || "?").slice(0,1).toUpperCase()}</span>`;
+      wrap.innerHTML = `
+        <div class="avatar">${avatarHtml}</div>
+        <div>
+          <div class="msg-bubble">${msg.message}</div>
+          <div class="msg-meta">${msg.sender} · ${msg.timestamp}</div>
+        </div>
+      `;
+      chatMessages.appendChild(wrap);
+    }
+
+    function connectSocket(roomId) {
+      if (socket) socket.close();
+      const protocol = window.location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${protocol}://${window.location.host}/ws/chat/${roomId}/`);
+      socket.onmessage = (e) => {
+        const data = JSON.parse(e.data);
+        if (data.type === "typing") {
+          if (data.sender_id !== currentUserId) {
+            chatTyping.textContent = data.is_typing ? "Typing..." : "";
+            const activeItem = document.querySelector(`.room-item[data-room-id="${roomId}"]`);
+            if (activeItem) {
+              const lastMsg = activeItem.querySelector(".room-last-message");
+              if (lastMsg) {
+                lastMsg.textContent = data.is_typing ? "Typing..." : (lastMsg.getAttribute("data-last") || lastMsg.textContent);
+              }
+            }
+          }
+          return;
+        }
+        renderMessage(data);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        if (data.sender_id && data.sender_id !== currentUserId) {
+          playSound();
+        }
+        if (socket) {
+          socket.send(JSON.stringify({ type: "read" }));
+        }
+      };
+    }
+
+    roomsList.addEventListener("click", (e) => {
+      const item = e.target.closest(".room-item");
+      if (!item) return;
+      roomsList.querySelectorAll(".room-item").forEach(x => x.classList.remove("active"));
+      item.classList.add("active");
+      selectRoom(
+        item.dataset.roomId,
+        item.querySelector(".room-name").textContent,
+        item.dataset.roomAvatar || ""
+      );
+    });
+
+    sendBtn.addEventListener("click", () => {
+      const text = chatInput.value.trim();
+      if (!text || !socket) return;
+      socket.send(JSON.stringify({ message: text }));
+      chatInput.value = "";
+    });
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendBtn.click();
+    });
+
+    let typingTimer = null;
+    chatInput.addEventListener("input", () => {
+      if (!socket) return;
+      socket.send(JSON.stringify({ type: "typing", is_typing: true }));
+      if (typingTimer) clearTimeout(typingTimer);
+      typingTimer = setTimeout(() => {
+        if (socket) socket.send(JSON.stringify({ type: "typing", is_typing: false }));
+      }, 1200);
+    });
+
+    function refreshUnreadBadge() {
+      if (!unreadCountUrl) return;
+      fetch(unreadCountUrl)
+        .then(r => r.json())
+        .then(data => {
+          if (!data.ok) return;
+          const badge = document.querySelector(".chat-badge");
+          if (!badge) return;
+          if (data.count) {
+            badge.textContent = data.count;
+            badge.style.display = "inline-flex";
+          } else {
+            badge.style.display = "none";
+          }
+        });
+    }
+    setInterval(refreshUnreadBadge, 5000);
+
+    document.getElementById("createRoomBtn").addEventListener("click", () => {
+      const roomType = document.getElementById("roomType").value;
+      const roomName = document.getElementById("roomName").value.trim();
+      const members = Array.from(document.getElementById("roomMembers").selectedOptions).map(x => x.value);
+      const form = new FormData();
+      form.append("room_type", roomType);
+      form.append("room_name", roomName);
+      members.forEach(m => form.append("members", m));
+      fetch(createRoomUrl, {
+        method: "POST",
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+        body: form
+      })
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok) {
+          alert(data.error || "Unable to create room");
+          return;
+        }
+        window.location.reload();
+      });
+    });
+  </script>
+{% endblock %}

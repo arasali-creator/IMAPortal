@@ -1,0 +1,50 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registration Submitted | IMA Admin</title>
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #F36E42;
+      font-family: "Outfit", Arial, sans-serif;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+      text-align: center;
+      box-shadow: 0px 6px 25px rgba(0,0,0,0.1);
+    }
+
+    .container h2 {
+      color: #ff6600;
+      margin-bottom: 20px;
+    }
+
+    .container p {
+      color: #333;
+      font-size: 15px;
+      margin-bottom: 30px;
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Registration Submitted</h2>
+    <p>Your account is pending admin approval.<br>
+       You’ll be able to sign in with your CNIC and password after approval.</p>
+    <a href="{% url 'login' %}" class="btn btn-primary">Go to Login</a>
+  </div>
+</body>
+</html>

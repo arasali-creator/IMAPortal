@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Employee Registration</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
+
+  <style>
+    body {
+      margin: 0;
+      font-family: "Outfit", Arial, sans-serif;
+      background: #ff6600;
+    }
+
+    .register-container {
+      background: #fff;
+      border-radius: 12px;
+      max-width: 920px;
+      margin: 30px auto;
+      padding: 2rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #ff6600;
+      text-decoration: underline;
+      text-transform: uppercase;
+    }
+
+    .form-instruction {
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #555;
+      text-align: center;
+    }
+
+    fieldset {
+      border: 1px solid #e2e2e2;
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    legend {
+      font-weight: bold;
+      padding: 0 8px;
+      font-size: 20px;
+      color: #ff6600;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem 2rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .form-group.full-width {
+      grid-column: span 2;
+    }
+
+    label {
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 4px;
+      color: #000 !important;
+    }
+
+    input, select, textarea {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+      background: #fafafa;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: #ff6600;
+      background: #fff;
+      outline: none;
+      box-shadow: 0 0 0 4px rgba(255, 102, 0, 0.15);
+    }
+
+    .divider {
+      text-align: center;
+      margin: 15px 0;
+      position: relative;
+      font-size: 14px;
+      color: #aaa;
+    }
+
+    .divider span {
+      background: white;
+      padding: 0 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .divider::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 50%;
+      border-top: 1px solid #ddd;
+      z-index: 0;
+    }
+
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-group.full-width {
+        grid-column: span 1;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="register-container">
+  <h2>Employee Registration Form</h2>
+  <p class="form-instruction">
+    Please complete the form below with accurate details to create your employee account.
+  </p>
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <fieldset>
+      <legend>Personal Information</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.full_name.label_tag }} {{ form.full_name }} {{ form.full_name.errors }}</div>
+        <div class="form-group">{{ form.fathers_name.label_tag }} {{ form.fathers_name }} {{ form.fathers_name.errors }}</div>
+        <div class="form-group">{{ form.date_of_birth.label_tag }} {{ form.date_of_birth }} {{ form.date_of_birth.errors }}</div>
+        <div class="form-group">{{ form.gender.label_tag }} {{ form.gender }} {{ form.gender.errors }}</div>
+        <div class="form-group">{{ form.marital_status.label_tag }} {{ form.marital_status }} {{ form.marital_status.errors }}</div>
+        <div class="form-group">{{ form.cnic.label_tag }} {{ form.cnic }} {{ form.cnic.errors }}</div>
+        <div class="form-group">{{ form.contact_number.label_tag }} {{ form.contact_number }} {{ form.contact_number.errors }}</div>
+        <div class="form-group">{{ form.email.label_tag }} {{ form.email }} {{ form.email.errors }}</div>
+        <div class="form-group full-width">{{ form.residential_address.label_tag }} {{ form.residential_address }} {{ form.residential_address.errors }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Employment Information</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.date_of_joining.label_tag }} {{ form.date_of_joining }} {{ form.date_of_joining.errors }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Documents</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.profile_picture.label_tag }} {{ form.profile_picture }} {{ form.profile_picture.errors }}</div>
+        <div class="form-group">{{ form.cnic_front.label_tag }} {{ form.cnic_front }} {{ form.cnic_front.errors }}</div>
+        <div class="form-group">{{ form.cnic_back.label_tag }} {{ form.cnic_back }} {{ form.cnic_back.errors }}</div>
+        <div class="form-group">{{ form.degree_certificate.label_tag }} {{ form.degree_certificate }} {{ form.degree_certificate.errors }}</div>
+        <div class="form-group full-width">{{ form.father_cnic.label_tag }} {{ form.father_cnic }} {{ form.father_cnic.errors }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Emergency Contact</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.emergency_contact_name.label_tag }} {{ form.emergency_contact_name }} {{ form.emergency_contact_name.errors }}</div>
+        <div class="form-group">{{ form.emergency_relationship.label_tag }} {{ form.emergency_relationship }} {{ form.emergency_relationship.errors }}</div>
+        <div class="form-group">{{ form.emergency_contact_number.label_tag }} {{ form.emergency_contact_number }} {{ form.emergency_contact_number.errors }}</div>
+        <div class="form-group full-width">{{ form.emergency_contact_address.label_tag }} {{ form.emergency_contact_address }} {{ form.emergency_contact_address.errors }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Additional</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.blood_group.label_tag }} {{ form.blood_group }} {{ form.blood_group.errors }}</div>
+        <div class="form-group">{{ form.previous_employer.label_tag }} {{ form.previous_employer }} {{ form.previous_employer.errors }}</div>
+        <div class="form-group full-width">{{ form.special_skills.label_tag }} {{ form.special_skills }} {{ form.special_skills.errors }}</div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Set Password</legend>
+      <div class="form-grid">
+        <div class="form-group">{{ form.password1.label_tag }} {{ form.password1 }} {{ form.password1.errors }}</div>
+        <div class="form-group">{{ form.password2.label_tag }} {{ form.password2 }} {{ form.password2.errors }}</div>
+      </div>
+    </fieldset>
+
+    <button type="submit" class="btn btn-primary full">Submit Registration</button>
+    <div class="divider"><span>OR</span></div>
+    <a href="{% url 'login' %}" class="btn btn-secondary full">Click to Login</a>
+  </form>
+</div>
+
+</body>
+</html>

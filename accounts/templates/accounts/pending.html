@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_header %}
+<div class="app-hero">
+  <div class="app-hero-head">
+    <div>
+      <h1 class="app-hero-title">Account Pending Approval</h1>
+      <p class="app-hero-sub">We are reviewing your account details.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<p>CNIC: <strong>{{ cnic|default:"(unknown)" }}</strong></p>
+<p>Your account is awaiting admin approval. This page will auto-check your status every 5 seconds.</p>
+<p>You can also try to <a href="{% url 'login' %}">login</a> again later.</p>
+<script src="{% static 'js/pending.js' %}"></script>
+<script>
+  window.PENDING_CNIC = "{{ cnic|default:'' }}";
+</script>
+{% endblock %}

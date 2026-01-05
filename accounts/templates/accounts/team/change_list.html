@@ -1,0 +1,347 @@
+{% extends "admin/change_list.html" %}
+{% load i18n admin_urls %}
+
+{% block result_list %}
+<style>
+  :root{
+    --p:#ff6600;
+    --s:#181818;
+
+    --cream:#fbf7f1;
+    --cream2:#fffaf4;
+    --text:#161616;
+    --muted:rgba(22,22,22,.62);
+  }
+
+  /* 3-grid */
+  .team-grid{
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:18px;
+    margin-top: 14px;
+  }
+
+  .team-card{
+    border-radius: 18px;
+    overflow:hidden;
+    border: 1px solid rgba(0,0,0,.06);
+
+    box-shadow: 0 14px 28px rgba(0,0,0,.08), 0 2px 6px rgba(0,0,0,.04);
+    transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    position:relative;
+  }
+  .team-card:hover{
+    transform: translateY(-3px);
+    border-color: rgba(255,102,0,.22);
+    box-shadow: 0 18px 42px rgba(0,0,0,.12), 0 3px 10px rgba(0,0,0,.06);
+  }
+
+  .team-inner{ padding: 18px; }
+
+  /* Top row */
+  .team-top{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+
+  .team-icon{
+    width:52px;height:52px;
+    border-radius: 14px;
+    display:grid;
+    place-items:center;
+    color:#fff;
+    font-weight: 900;
+    background: linear-gradient(180deg, #ff7a1a, #ff6600);
+    box-shadow: 0 10px 18px rgba(255,102,0,.22);
+    flex:0 0 auto;
+  }
+
+  .team-title{ min-width:0; }
+  .team-name{
+    font-weight: 900;
+    color: var(--text);
+    font-size: 16px;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+    line-height: 1.15;
+  }
+  .team-sub{
+    margin-top: 4px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.45;
+  }
+
+  .divider{
+    height:1px;
+    background: rgba(0,0,0,.08);
+    margin: 14px 0;
+  }
+
+  .rows{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  .row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    align-items:center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(0,0,0,.06);
+  }
+  .k{
+    font-size:12px;
+    color: rgba(22,22,22,.55);
+    font-weight: 800;
+  }
+  .v{
+    font-size:12px;
+    color: rgba(22,22,22,.85);
+    font-weight: 900;
+    text-align:right;
+    max-width: 60%;
+    white-space: nowrap;
+    overflow:hidden;
+    text-overflow: ellipsis;
+  }
+
+  .actions{
+    display:flex;
+    gap:10px;
+    margin-top: 14px;
+  }
+  .btn{
+    flex:1;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding: 10px 12px;
+    border-radius: 12px;
+    text-decoration:none;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid rgba(0,0,0,.10);
+    background: rgba(255,255,255,.65);
+    color: rgba(22,22,22,.86);
+    transition: transform .15s ease, filter .15s ease;
+  }
+  .btn:hover{
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+  }
+  .btn.primary{
+    background: linear-gradient(180deg, #ff7a1a, #ff6600);
+    border-color: rgba(255,102,0,.35);
+    color: #fff;
+    box-shadow: 0 12px 20px rgba(255,102,0,.18);
+  }
+
+  @media (max-width: 1200px){
+    .team-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+  @media (max-width: 720px){
+    .team-grid{ grid-template-columns: 1fr; }
+  }
+  /* members list */
+.members-list{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  margin-top: 10px;
+}
+
+/* single member row */
+.member-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+
+  padding: 8px 10px;
+  border-radius: 10px;
+
+  background: rgba(255,255,255,.6);
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+/* left: full name */
+.member-name{
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(22,22,22,.88);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  max-width: 55%;
+}
+
+/* right: email */
+.member-email{
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(22,22,22,.55);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  max-width: 45%;
+  text-align: right;
+}
+
+/* +more indicator */
+.member-more{
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  color: rgba(255,102,0,.9);
+}
+.att-box{
+  margin-top: 12px;
+  padding: 12px;
+  margin-bottom: 12px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.55);
+  border: 1px solid rgba(0,0,0,.06);
+}
+
+.att-title{
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(22,22,22,.8);
+  margin-bottom: 10px;
+}
+
+.att-stats{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-bottom: 10px;
+}
+
+.att-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.65);
+}
+
+.att-pill.ok{ border-color: rgba(34,197,94,.25); }
+.att-pill.warn{ border-color: rgba(255,102,0,.25); }
+.att-pill.bad{ border-color: rgba(239,68,68,.25); }
+
+.att-bar{
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(0,0,0,.08);
+  overflow:hidden;
+}
+
+.att-fill{
+  height: 100%;
+  background: linear-gradient(180deg, #ff7a1a, #ff6600);
+  border-radius: 999px;
+}
+
+.att-foot{
+  margin-top: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(22,22,22,.55);
+}
+
+</style>
+
+<div class="team-grid">
+  {% for obj in cl.result_list %}
+    <div class="team-card">
+      <div class="team-inner">
+
+        <div class="team-top">
+          <div class="team-icon">T</div>
+
+          <div class="team-title">
+            <div class="team-name">{{ obj.name|default:"(No name)" }}</div>
+            <div class="team-sub">
+              {% trans "Project Manager" %}:
+              {{ obj.project_manager|default:"-" }}
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+<div class="att-box">
+  <div class="att-title">Attendance (Today)</div>
+
+  <div class="att-stats">
+    <div class="att-pill ok">Present - {{ obj.present_today|default:0 }}</div>
+    <div class="att-pill warn">Late - {{ obj.late_today|default:0 }}</div>
+    <div class="att-pill bad">Absent - {{ obj.absent_today|default:0 }}</div>
+  </div>
+
+  {# percentage #}
+  {% if obj.total_members and obj.total_members > 0 %}
+    {% with pct=obj.present_today|default:0 %}
+      <div class="att-bar">
+        <div class="att-fill" style="width: calc(({{ obj.present_today|default:0 }} + {{ obj.late_today|default:0 }}) * 100% / {{ obj.total_members }})"></div>
+      </div>
+      <div class="att-foot">
+        {{ obj.total_members }} total members
+      </div>
+    {% endwith %}
+  {% else %}
+    <div class="att-foot">No members</div>
+  {% endif %}
+</div>
+
+        <div class="rows">
+          <div class="row">
+            <div class="k">{% trans "Team Members" %}</div>
+            <div class="v">{{ obj.members.count }}</div>
+          </div>
+          <div class="members-list">
+  {% for m in obj.members.all %}
+    {% if forloop.counter <= 6 %}
+      <div class="member-row">
+        <span class="member-name">
+          {{ m.full_name|default:"—" }}
+        </span>
+        <span class="member-email">
+          {{ m.email }}
+        </span>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {% if obj.members.count > 6 %}
+    <div class="member-more">
+      +{{ obj.members.count|add:"-6" }} more
+    </div>
+  {% endif %}
+</div>
+
+        </div>
+
+        <div class="actions">
+          <a class="btn primary" href="{% url cl.opts|admin_urlname:'change' obj.pk %}">
+            {% trans "Open Team" %}
+          </a>
+          <a class="btn" href="{% url cl.opts|admin_urlname:'history' obj.pk %}">
+            {% trans "History" %}
+          </a>
+        </div>
+
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

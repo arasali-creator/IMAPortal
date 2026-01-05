@@ -1,0 +1,270 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="attendance-container">
+  <div class="page-hero">
+    <div>
+      <h1>Attendance Dashboard</h1>
+      <p class="muted">Track your daily activity and working hours.</p>
+    </div>
+    <div class="hero-badge">
+      <span>Today</span>
+      <strong>{{ today_hours }} hrs</strong>
+    </div>
+  </div>
+
+  <!-- Hours Summary Cards -->
+  <div class="hours-cards">
+    <div class="card">
+      <div class="card-icon"><i class="fa fa-clock"></i></div>
+      <h3>Today's Hours</h3>
+      <p>{{ today_hours }} hrs</p>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa fa-calendar-week"></i></div>
+      <h3>This Week</h3>
+      <p>{{ week_hours }} hrs</p>
+    </div>
+    <div class="card">
+      <div class="card-icon"><i class="fa fa-calendar-alt"></i></div>
+      <h3>This Month</h3>
+      <p>{{ month_hours }} hrs</p>
+    </div>
+  </div>
+
+  <!-- Check In / Check Out Buttons -->
+  <div class="checkin-checkout">
+    {% if is_checked_in %}
+      <button class="btn-action checked-in"><i class="fa fa-user-check"></i> Checked In</button>
+      <a href="{% url 'attendance:check_out' %}" class="btn-action check-out"><i class="fa fa-user-times"></i> Check Out</a>
+    {% else %}
+      <a href="{% url 'attendance:check_in' %}" class="btn-action check-in"><i class="fa fa-user-check"></i> Check In</a>
+      <button class="btn-action checked-out"><i class="fa fa-user-times"></i> Check Out</button>
+    {% endif %}
+  </div>
+
+  <!-- Today's Records Table -->
+  <h4 class="section-title">Today's Records</h4>
+  <div class="table-card">
+    <div class="table-responsive">
+      <table class="records-table">
+      <thead>
+        <tr>
+          <th>Check In</th>
+          <th>Check Out</th>
+          <th>Hours Worked</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records %}
+          <tr>
+            <td>{{ record.check_in|date:"H:i" }}</td>
+            <td>{% if record.check_out %}{{ record.check_out|date:"H:i" }}{% else %}-{% endif %}</td>
+            <td>{{ record.hours_worked }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="3">No records for today.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+.attendance-container {
+  max-width: 980px;
+  margin: 30px auto;
+  padding: 24px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.08);
+}
+.page-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  padding:18px 20px;
+  border-radius:16px;
+  background: linear-gradient(120deg, rgba(255,102,0,0.18), rgba(255,255,255,0.95));
+  border:1px solid rgba(255,102,0,0.2);
+  margin-bottom:24px;
+}
+.page-hero h1{
+  margin:0;
+  font-size:24px;
+  color:#1f2937;
+}
+.muted{
+  margin:6px 0 0;
+  color:#6b7280;
+  font-weight:600;
+}
+.hero-badge{
+  background:#fff;
+  border-radius:14px;
+  padding:10px 14px;
+  border:1px solid rgba(255,102,0,0.25);
+  text-align:center;
+  min-width:120px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.08);
+}
+.hero-badge span{
+  display:block;
+  font-size:11px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  color:#6b7280;
+  font-weight:700;
+}
+.hero-badge strong{
+  display:block;
+  font-size:16px;
+  color:#ff6600;
+}
+.hours-cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0,1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.hours-cards .card {
+  padding: 18px;
+  background: #fff;
+  border-radius: 14px;
+  text-align: left;
+  border:1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  position: relative;
+}
+.hours-cards .card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 22px rgba(0,0,0,0.12);
+}
+.card-icon {
+  font-size: 24px;
+  color: #ff6600;
+  margin-bottom: 10px;
+}
+.hours-cards h3{
+  margin:0;
+  font-size:14px;
+  color:#6b7280;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.hours-cards p{
+  margin:10px 0 0;
+  font-size:22px;
+  font-weight:800;
+  color:#1f2937;
+}
+.checkin-checkout {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.btn-action {
+  padding: 12px 30px;
+  font-size: 15px;
+  font-weight: 800;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  color: #fff;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.12);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.btn-action.check-in {
+  background: #ff6600;
+}
+.btn-action.check-in:hover {
+  transform: translateY(-2px);
+}
+.btn-action.checked-in {
+  background: #ff6600;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+.btn-action.check-out {
+  background: #111827;
+}
+.btn-action.check-out:hover {
+  transform: translateY(-2px);
+}
+.btn-action.checked-out {
+  background: #111827;
+  cursor: not-allowed;
+  opacity: 0.9;
+}
+.table-responsive {
+  overflow-x: auto;
+}
+.records-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 10px;
+  border-radius: 14px;
+  overflow:hidden;
+}
+.records-table th, .records-table td {
+  padding: 12px 15px;
+  text-align: center;
+  border-bottom: 1px solid #f0f0f0;
+}
+.records-table thead {
+  background: #ff6600;
+  color: #fff;
+  font-weight: bold;
+}
+.records-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+.records-table tbody tr:hover {
+  background: #fff3e6;
+}
+.records-table td {
+  font-weight: 600;
+  color: #333;
+}
+.table-card{
+  background:#fff;
+  border-radius:16px;
+  border:1px solid rgba(0,0,0,0.05);
+  box-shadow:0 10px 22px rgba(0,0,0,0.08);
+  padding:8px;
+}
+.section-title{
+  margin: 8px 0 12px;
+  font-size: 18px;
+  color:#1f2937;
+}
+@media (max-width: 900px) {
+  .hours-cards {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 768px) {
+  .page-hero{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+  .checkin-checkout {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+</style>
+{% endblock %}

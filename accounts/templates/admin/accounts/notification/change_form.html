@@ -1,0 +1,137 @@
+{% extends "admin/change_form.html" %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <style>
+    .notif-form {
+      margin-top: 8px;
+    }
+    .notif-hero {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: linear-gradient(120deg, rgba(255,102,0,.14), rgba(255,255,255,0));
+      box-shadow: 0 12px 24px rgba(0,0,0,.06);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+    .notif-hero:before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 6px;
+      background: #ff6600;
+    }
+    .notif-title {
+      font-size: 20px;
+      font-weight: 900;
+      color: #181818;
+      letter-spacing: .01em;
+    }
+    .notif-meta {
+      margin-top: 6px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: rgba(24,24,24,.6);
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .notif-chips {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .notif-chip {
+      display: inline-flex;
+      align-items: center;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      font-weight: 900;
+      background: rgba(0,0,0,.06);
+      color: #1f2937;
+    }
+    .notif-chip.unread { background: rgba(255,102,0,.14); color: #9a3412; }
+    .notif-chip.read { background: rgba(34,197,94,.12); color: #166534; }
+    .notif-chip.added { background: rgba(34,197,94,.12); color: #166534; }
+    .notif-chip.updated { background: rgba(255,102,0,.14); color: #9a3412; }
+    .notif-chip.deleted { background: rgba(239,68,68,.12); color: #991b1b; }
+
+    .notif-form .module {
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 16px;
+      background: #fff;
+      box-shadow: 0 10px 20px rgba(0,0,0,.05);
+      margin-bottom: 14px;
+      padding: 6px 12px 12px;
+    }
+    .notif-form .module h2 {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #475569;
+      font-weight: 900;
+      padding: 8px 2px 6px;
+      border-bottom: 1px dashed rgba(0,0,0,.08);
+      margin-bottom: 10px;
+    }
+    .notif-form .form-row {
+      padding: 8px 6px;
+    }
+    .notif-form .form-row label {
+      font-weight: 800;
+      color: #1f2937;
+      font-size: 12px;
+    }
+    .notif-form .form-row .readonly {
+      background: #f8fafc;
+      border: 1px solid rgba(0,0,0,.06);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 700;
+      color: #1f2937;
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="notif-form">
+    {% if original %}
+      <div class="notif-hero">
+        <div class="notif-title">{{ original.object_repr }}</div>
+        <div class="notif-meta">
+          <span>Time: {{ original.action_time }}</span>
+          {% if original.actor %}
+            <span>Actor: {{ original.actor }}</span>
+          {% endif %}
+        </div>
+        <div class="notif-chips">
+          {% if original.is_read %}
+            <span class="notif-chip read">Read</span>
+          {% else %}
+            <span class="notif-chip unread">Unread</span>
+          {% endif %}
+          {% if original.action_flag == 1 %}
+            <span class="notif-chip added">Added</span>
+          {% elif original.action_flag == 2 %}
+            <span class="notif-chip updated">Updated</span>
+          {% elif original.action_flag == 3 %}
+            <span class="notif-chip deleted">Deleted</span>
+          {% else %}
+            <span class="notif-chip updated">Changed</span>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+
+    {{ block.super }}
+  </div>
+{% endblock %}
+
