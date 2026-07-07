@@ -13,7 +13,8 @@
 </head>
 <body class="console-body">
   <div class="console-shell">
-    <aside class="console-sidebar">
+    <div class="console-backdrop" id="console-backdrop" onclick="toggleConsoleSidebar()"></div>
+    <aside class="console-sidebar" id="console-sidebar">
       <div class="console-brand">
         <div class="mark">IM</div>
         <div class="text">
@@ -79,7 +80,12 @@
 
     <div class="console-main">
       <header class="console-topbar">
-        <h1>{% block page_title %}Console{% endblock %}</h1>
+        <div style="display:flex;align-items:center;gap:12px;">
+          <button class="console-menu-toggle" onclick="toggleConsoleSidebar()" aria-label="Toggle menu">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <h1>{% block page_title %}Console{% endblock %}</h1>
+        </div>
         <div class="console-user">
           <div class="avatar">{{ request.user.full_name|default:request.user.email|slice:":1"|upper }}</div>
           <div class="meta">
@@ -99,5 +105,13 @@
       </div>
     </div>
   </div>
+
+  <script>
+    function toggleConsoleSidebar() {
+      document.getElementById("console-sidebar").classList.toggle("open");
+      document.getElementById("console-backdrop").classList.toggle("open");
+    }
+  </script>
+  {% block extra_scripts %}{% endblock %}
 </body>
 </html>

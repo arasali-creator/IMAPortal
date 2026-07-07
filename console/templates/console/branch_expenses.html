@@ -1,22 +1,21 @@
 {% extends "console/base.html" %}
 {% load humanize %}
 
+{% block page_title %}Branches Expenses{% endblock %}
+
 {% block content %}
 <style>
   :root{
-    --be-bg:#f6f7fb;
-    --be-text:#0f172a;
-    --be-muted:rgba(15,23,42,.60);
-    --be-line:rgba(15,23,42,.10);
-    --be-accent:#ff6a00;
-    --be-card:#ffffff;
+    --be-bg:var(--cn-bg);
+    --be-text:var(--cn-text);
+    --be-muted:var(--cn-muted);
+    --be-line:var(--cn-border);
+    --be-accent:var(--cn-accent);
+    --be-card:var(--cn-card);
   }
   .be-wrap{
     max-width:1200px;
     margin:0 auto;
-    padding:14px;
-    border-radius:18px;
-    background:linear-gradient(135deg,#fbfbfd 0%,#f6f7fb 100%);
     font-family:"Outfit", "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:var(--be-text);
   }

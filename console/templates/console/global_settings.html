@@ -1,59 +1,45 @@
 {% extends "console/base.html" %}
 {% load humanize %}
 
+{% block page_title %}Global Settings{% endblock %}
+
 {% block content %}
-<style>
-  .gs-wrap{max-width:1000px;margin:0 auto;font-family:"Outfit", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;color:#0f172a;}
-  .gs-sub{margin:0 0 16px 0;color:rgba(15,23,42,.55);font-size:.92rem;}
-  .gs-panel{padding:20px;border-radius:16px;border:1px solid rgba(15,23,42,.10);background:#fff;box-shadow:0 10px 24px rgba(2,6,23,.08);margin-bottom:18px;}
-  .gs-panel h3{margin:0 0 4px 0;font-weight:900;}
-  .gs-panel .hint{color:rgba(15,23,42,.55);font-size:.88rem;margin-bottom:14px;}
-  .gs-row{display:flex;gap:12px;align-items:end;flex-wrap:wrap;}
-  .gs-field{display:flex;flex-direction:column;gap:6px;}
-  .gs-field label{font-weight:700;font-size:.85rem;}
-  .gs-field input, .gs-field select{padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.15);min-width:220px;}
-  .btn{padding:10px 18px;border-radius:999px;border:1px solid rgba(15,23,42,.15);background:linear-gradient(180deg,#ff7a1a,#ff6600);color:#fff;font-weight:700;cursor:pointer;}
-  table{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:10px;}
-  thead th{text-align:left;padding:10px 12px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
-  tbody td{padding:10px 12px;border-bottom:1px solid rgba(15,23,42,.10);}
-  .gs-current{font-size:1.3rem;font-weight:900;color:#ff6600;margin-bottom:14px;}
-</style>
+<p class="cn-page-lede">Manage the USD&rarr;PKR conversion rate and each PM's split percentage.</p>
 
-<div class="gs-wrap">
-  <h2>Global Settings</h2>
-  <p class="gs-sub">Manage the USD&rarr;PKR conversion rate and each PM's split percentage.</p>
-
-  <div class="gs-panel">
-    <h3>Dollar to PKR Converter</h3>
-    <div class="hint">Current rate: <span class="gs-current">{% if setting %}{{ setting.usd_to_pkr_rate|floatformat:2 }}{% else %}280.00{% endif %}</span></div>
-    <form method="post" class="gs-row">
-      {% csrf_token %}
-      <input type="hidden" name="action" value="update_rate">
-      <div class="gs-field">
-        <label>New USD to PKR rate</label>
-        <input type="number" name="usd_to_pkr_rate" step="0.01" min="0" value="{% if setting %}{{ setting.usd_to_pkr_rate }}{% endif %}" required>
-      </div>
-      <button class="btn" type="submit">Update Rate</button>
-    </form>
+<div class="cn-card cn-card-pad" style="margin-bottom:18px;max-width:520px;">
+  <h3 style="margin:0 0 4px;">Dollar to PKR Converter</h3>
+  <div class="cn-stat-card" style="box-shadow:none;border:none;padding:14px 0 18px;">
+    <div class="label">Current Rate</div>
+    <div class="value accent">{% if setting %}{{ setting.usd_to_pkr_rate|floatformat:2 }}{% else %}280.00{% endif %}</div>
   </div>
+  <form method="post" style="display:flex;gap:10px;align-items:end;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_rate">
+    <div class="cn-field" style="flex:1;margin-bottom:0;">
+      <label>New USD to PKR rate</label>
+      <input type="number" name="usd_to_pkr_rate" step="0.01" min="0" value="{% if setting %}{{ setting.usd_to_pkr_rate }}{% endif %}" required>
+    </div>
+    <button class="cn-btn primary" type="submit">Update</button>
+  </form>
+</div>
 
-  <div class="gs-panel">
-    <h3>PM Split Percentage</h3>
-    <div class="hint">Set the percentage of income each PM keeps; the rest goes to the company.</div>
-    <table>
+<div class="cn-card">
+  <div class="cn-card-header"><h3>PM Split Percentage</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
       <thead><tr><th>PM</th><th>Current Split %</th><th>Update</th></tr></thead>
       <tbody>
         {% for split in splits %}
           <tr>
             <td>{{ split.pm.full_name|default:split.pm.email }}</td>
-            <td>{{ split.pm_share_percent|floatformat:2 }}%</td>
+            <td><span class="cn-badge neutral">{{ split.pm_share_percent|floatformat:2 }}%</span></td>
             <td>
-              <form method="post" class="gs-row">
+              <form method="post" style="display:flex;gap:8px;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_split">
                 <input type="hidden" name="pm_id" value="{{ split.pm_id }}">
-                <input type="number" name="pm_share_percent" step="0.01" min="0" max="100" value="{{ split.pm_share_percent }}" required>
-                <button class="btn" type="submit">Save</button>
+                <input class="cn-input" style="width:110px;" type="number" name="pm_share_percent" step="0.01" min="0" max="100" value="{{ split.pm_share_percent }}" required>
+                <button class="cn-btn sm" type="submit">Save</button>
               </form>
             </td>
           </tr>
@@ -61,20 +47,20 @@
         {% for pm in pms_without_split %}
           <tr>
             <td>{{ pm.full_name|default:pm.email }}</td>
-            <td>50.00% (default)</td>
+            <td><span class="cn-badge neutral">50.00% (default)</span></td>
             <td>
-              <form method="post" class="gs-row">
+              <form method="post" style="display:flex;gap:8px;">
                 {% csrf_token %}
                 <input type="hidden" name="action" value="update_split">
                 <input type="hidden" name="pm_id" value="{{ pm.id }}">
-                <input type="number" name="pm_share_percent" step="0.01" min="0" max="100" value="50.00" required>
-                <button class="btn" type="submit">Save</button>
+                <input class="cn-input" style="width:110px;" type="number" name="pm_share_percent" step="0.01" min="0" max="100" value="50.00" required>
+                <button class="cn-btn sm" type="submit">Save</button>
               </form>
             </td>
           </tr>
         {% endfor %}
         {% if not splits and not pms_without_split %}
-          <tr><td colspan="3">No project managers found.</td></tr>
+          <tr><td colspan="3" class="cn-empty">No project managers found.</td></tr>
         {% endif %}
       </tbody>
     </table>

@@ -1,22 +1,21 @@
 {% extends "console/base.html" %}
 {% load humanize %}
 
+{% block page_title %}PM Calculations{% endblock %}
+
 {% block content %}
 <style>
   :root{
-    --pm-bg:#f6f7fb;
-    --pm-text:#0f172a;
-    --pm-muted:rgba(15,23,42,.60);
-    --pm-line:rgba(15,23,42,.10);
-    --pm-accent:#ff6a00;
-    --pm-card:#ffffff;
+    --pm-bg:var(--cn-bg);
+    --pm-text:var(--cn-text);
+    --pm-muted:var(--cn-muted);
+    --pm-line:var(--cn-border);
+    --pm-accent:var(--cn-accent);
+    --pm-card:var(--cn-card);
   }
   .pm-calc-wrap{
     max-width:1200px;
     margin:0 auto;
-    padding:14px;
-    border-radius:18px;
-    background:linear-gradient(135deg,#fbfbfd 0%,#f6f7fb 100%);
     font-family:"Outfit", "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
     color:var(--pm-text);
   }
