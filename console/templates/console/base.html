@@ -1,46 +1,103 @@
-{% extends "base.html" %}
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Console · IMA Office Portal{% endblock %}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="{% static 'console/css/console.css' %}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body class="console-body">
+  <div class="console-shell">
+    <aside class="console-sidebar">
+      <div class="console-brand">
+        <div class="mark">IM</div>
+        <div class="text">
+          <div class="title">IMA Console</div>
+          <div class="subtitle">Office Portal</div>
+        </div>
+      </div>
 
-{% block sidebar_extra %}
-  <hr />
-  <a href="{% url 'console:dashboard' %}" class="{% if request.path == '/console/' %}active{% endif %}">
-    <i class="fa fa-gauge"></i> Console
-  </a>
-  <a href="{% url 'console:employees_list' %}" class="{% if '/console/employees/' in request.path %}active{% endif %}">
-    <i class="fa fa-users"></i> Employees
-  </a>
-  <a href="{% url 'console:teams_list' %}" class="{% if '/console/teams/' in request.path %}active{% endif %}">
-    <i class="fa fa-people-group"></i> Teams
-  </a>
-  <a href="{% url 'console:attendance_list' %}" class="{% if request.path == '/console/attendance/' %}active{% endif %}">
-    <i class="fa fa-calendar-check"></i> Attendance
-  </a>
-  <a href="{% url 'console:leaves_list' %}" class="{% if request.path == '/console/leaves/' %}active{% endif %}">
-    <i class="fa fa-plane-departure"></i> Leave Requests
-  </a>
-  {% if request.user.is_superuser or request.user.role == "admin" %}
-  <a href="{% url 'console:pm_calculations' %}" class="{% if request.path == '/console/pm-calculations/' %}active{% endif %}">
-    <i class="fa fa-calculator"></i> PM Calculations
-  </a>
-  {% endif %}
-  <a href="{% url 'console:employee_salary' %}" class="{% if request.path == '/console/employee-salary/' %}active{% endif %}">
-    <i class="fa fa-money-check-dollar"></i> Employee Salary
-  </a>
-  {% if request.user.is_superuser or request.user.role == "admin" %}
-  <a href="{% url 'console:company_summary' %}" class="{% if request.path == '/console/company-summary/' %}active{% endif %}">
-    <i class="fa fa-chart-line"></i> Company Summary
-  </a>
-  <a href="{% url 'console:branch_expenses' %}" class="{% if request.path == '/console/branch-expenses/' %}active{% endif %}">
-    <i class="fa fa-building"></i> Branches Expenses
-  </a>
-  <a href="{% url 'console:global_settings' %}" class="{% if request.path == '/console/global-settings/' %}active{% endif %}">
-    <i class="fa fa-sliders"></i> Global Settings
-  </a>
-  <a href="{% url 'console:password_resets_list' %}" class="{% if request.path == '/console/password-resets/' %}active{% endif %}">
-    <i class="fa fa-key"></i> Password Resets
-  </a>
-  {% endif %}
-  <a href="{% url 'console:notifications_list' %}" class="{% if request.path == '/console/notifications/' %}active{% endif %}">
-    <i class="fa fa-bell"></i> Notifications
-  </a>
-  <hr />
-{% endblock %}
+      <nav class="console-nav">
+        <a href="{% url 'console:dashboard' %}" class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+          <i class="fa-solid fa-gauge-high"></i> Dashboard
+        </a>
+
+        <div class="console-nav-label">People</div>
+        <a href="{% url 'console:employees_list' %}" class="{% if request.resolver_match.url_name == 'employees_list' or request.resolver_match.url_name == 'employee_detail' %}active{% endif %}">
+          <i class="fa-solid fa-users"></i> Employees
+        </a>
+        <a href="{% url 'console:teams_list' %}" class="{% if 'team' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-people-group"></i> Teams
+        </a>
+        <a href="{% url 'console:attendance_list' %}" class="{% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
+          <i class="fa-solid fa-calendar-check"></i> Attendance
+        </a>
+        <a href="{% url 'console:leaves_list' %}" class="{% if 'leave' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-plane-departure"></i> Leave Requests
+        </a>
+
+        <div class="console-nav-label">Payroll</div>
+        {% if request.user.is_superuser or request.user.role == "admin" %}
+        <a href="{% url 'console:pm_calculations' %}" class="{% if request.resolver_match.url_name == 'pm_calculations' %}active{% endif %}">
+          <i class="fa-solid fa-calculator"></i> PM Calculations
+        </a>
+        {% endif %}
+        <a href="{% url 'console:employee_salary' %}" class="{% if request.resolver_match.url_name == 'employee_salary' %}active{% endif %}">
+          <i class="fa-solid fa-money-check-dollar"></i> Employee Salary
+        </a>
+        {% if request.user.is_superuser or request.user.role == "admin" %}
+        <a href="{% url 'console:company_summary' %}" class="{% if request.resolver_match.url_name == 'company_summary' %}active{% endif %}">
+          <i class="fa-solid fa-chart-line"></i> Company Summary
+        </a>
+        <a href="{% url 'console:branch_expenses' %}" class="{% if request.resolver_match.url_name == 'branch_expenses' %}active{% endif %}">
+          <i class="fa-solid fa-building"></i> Branches Expenses
+        </a>
+        <a href="{% url 'console:global_settings' %}" class="{% if request.resolver_match.url_name == 'global_settings' %}active{% endif %}">
+          <i class="fa-solid fa-sliders"></i> Global Settings
+        </a>
+
+        <div class="console-nav-label">Admin</div>
+        <a href="{% url 'console:password_resets_list' %}" class="{% if request.resolver_match.url_name == 'password_resets_list' %}active{% endif %}">
+          <i class="fa-solid fa-key"></i> Password Resets
+        </a>
+        {% endif %}
+        <a href="{% url 'console:notifications_list' %}" class="{% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
+          <i class="fa-solid fa-bell"></i> Notifications
+        </a>
+      </nav>
+
+      <div class="console-sidebar-footer">
+        <a href="{% url 'dashboard' %}"><i class="fa-solid fa-arrow-left"></i> Back to Portal</a>
+        <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+      </div>
+    </aside>
+
+    <div class="console-main">
+      <header class="console-topbar">
+        <h1>{% block page_title %}Console{% endblock %}</h1>
+        <div class="console-user">
+          <div class="avatar">{{ request.user.full_name|default:request.user.email|slice:":1"|upper }}</div>
+          <div class="meta">
+            <div class="name">{{ request.user.full_name|default:request.user.email }}</div>
+            <div class="role">{{ request.user.get_role_display|default:"Superuser" }}</div>
+          </div>
+        </div>
+      </header>
+
+      <div class="console-content">
+        {% if messages %}
+          <ul class="console-messages">
+            {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+      </div>
+    </div>
+  </div>
+</body>
+</html>

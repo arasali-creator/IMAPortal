@@ -1,39 +1,31 @@
 {% extends "console/base.html" %}
 
-{% block page_header %}<h2>Attendance</h2>{% endblock %}
+{% block page_title %}Attendance{% endblock %}
 
 {% block content %}
-<style>
-  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
-  .cn-filter{margin-bottom:14px;}
-  .cn-filter select{padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.15);min-width:220px;}
-  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);overflow:auto;}
-  table{width:100%;border-collapse:collapse;font-size:.92rem;}
-  thead th{text-align:left;padding:10px 16px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
-  tbody td{padding:10px 16px;border-bottom:1px solid rgba(15,23,42,.10);}
-</style>
-<div class="cn-wrap">
-  <form class="cn-filter" method="get">
-    <select name="employee" onchange="this.form.submit()">
-      <option value="">All employees</option>
-      {% for e in employees %}
-        <option value="{{ e.id }}" {% if selected_employee == e.id|stringformat:"s" %}selected{% endif %}>{{ e.full_name|default:e.email }}</option>
-      {% endfor %}
-    </select>
-  </form>
-  <div class="cn-panel">
-    <table>
+<form class="cn-toolbar" method="get">
+  <select name="employee" onchange="this.form.submit()">
+    <option value="">All employees</option>
+    {% for e in employees %}
+      <option value="{{ e.id }}" {% if selected_employee == e.id|stringformat:"s" %}selected{% endif %}>{{ e.full_name|default:e.email }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+<div class="cn-card">
+  <div class="cn-table-wrap">
+    <table class="cn-table">
       <thead><tr><th>Employee</th><th>Check In</th><th>Check Out</th><th>Hours Worked</th></tr></thead>
       <tbody>
         {% for r in records %}
           <tr>
-            <td>{{ r.employee }}</td>
-            <td>{{ r.check_in|date:"Y-m-d H:i" }}</td>
-            <td>{{ r.check_out|date:"Y-m-d H:i"|default:"-" }}</td>
-            <td>{{ r.hours_worked }}</td>
+            <td class="cn-person"><span class="cn-avatar">{{ r.employee.full_name|default:r.employee.email|slice:":1"|upper }}</span>{{ r.employee }}</td>
+            <td>{{ r.check_in|date:"M j, Y H:i" }}</td>
+            <td>{{ r.check_out|date:"M j, Y H:i"|default:"-" }}</td>
+            <td><span class="cn-badge neutral">{{ r.hours_worked }} hrs</span></td>
           </tr>
         {% empty %}
-          <tr><td colspan="4">No attendance records found.</td></tr>
+          <tr><td colspan="4" class="cn-empty">No attendance records found.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -1,6 +1,11 @@
 {% extends "console/base.html" %}
 
-{% block page_header %}<h2>Access denied</h2>{% endblock %}
+{% block page_title %}Access denied{% endblock %}
+
 {% block content %}
-<p>You do not have permission to view this page.</p>
+<div class="cn-card cn-card-pad" style="text-align:center;padding:48px 20px;">
+  <i class="fa-solid fa-lock" style="font-size:2rem;color:var(--cn-accent);margin-bottom:14px;"></i>
+  <h2 style="margin:0 0 8px;">Access denied</h2>
+  <p class="cn-page-lede" style="margin-bottom:0;">You do not have permission to view this page.</p>
+</div>
 {% endblock %}

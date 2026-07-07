@@ -1,0 +1,437 @@
+/* Console design system — standalone, not shared with Django admin or the employee portal theme. */
+
+:root {
+  --cn-bg: #f3f4f8;
+  --cn-sidebar: #12141c;
+  --cn-sidebar-2: #191c26;
+  --cn-sidebar-text: #9aa1b4;
+  --cn-sidebar-text-active: #ff8a3d;
+  --cn-sidebar-hover: rgba(255, 255, 255, 0.06);
+  --cn-sidebar-active-bg: rgba(255, 102, 0, 0.16);
+  --cn-accent: #ff6600;
+  --cn-accent-2: #ff8a3d;
+  --cn-accent-grad: linear-gradient(135deg, #ff8a3d 0%, #ff6600 100%);
+  --cn-card: #ffffff;
+  --cn-border: rgba(15, 23, 42, 0.08);
+  --cn-text: #111827;
+  --cn-muted: rgba(17, 24, 39, 0.56);
+  --cn-radius: 16px;
+  --cn-radius-sm: 10px;
+  --cn-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+  --cn-shadow-lg: 0 20px 45px rgba(15, 23, 42, 0.12);
+  --cn-success-bg: rgba(22, 163, 74, 0.12);
+  --cn-success: #15803d;
+  --cn-danger-bg: rgba(220, 38, 38, 0.10);
+  --cn-danger: #b91c1c;
+  --cn-warning-bg: rgba(255, 102, 0, 0.12);
+  --cn-warning: #c2410c;
+}
+
+* { box-sizing: border-box; }
+
+body.console-body {
+  margin: 0;
+  background: var(--cn-bg);
+  color: var(--cn-text);
+  font-family: "Outfit", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+
+/* ---------------------------------------------------------------- Shell */
+
+.console-shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.console-sidebar {
+  width: 264px;
+  min-width: 264px;
+  background: linear-gradient(180deg, var(--cn-sidebar) 0%, var(--cn-sidebar-2) 100%);
+  color: var(--cn-sidebar-text);
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.console-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 10px 22px;
+}
+
+.console-brand .mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--cn-accent-grad);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.05rem;
+  flex-shrink: 0;
+  box-shadow: 0 8px 18px rgba(255, 102, 0, 0.35);
+}
+
+.console-brand .text { line-height: 1.2; }
+.console-brand .text .title { color: #fff; font-weight: 800; font-size: 1rem; }
+.console-brand .text .subtitle { color: var(--cn-sidebar-text); font-size: 0.74rem; font-weight: 600; letter-spacing: .02em; }
+
+.console-nav-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: rgba(255, 255, 255, 0.28);
+  font-weight: 700;
+  margin: 18px 12px 8px;
+}
+
+.console-nav a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--cn-radius-sm);
+  text-decoration: none;
+  color: var(--cn-sidebar-text);
+  font-weight: 600;
+  font-size: 0.88rem;
+  margin-bottom: 2px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.console-nav a i { width: 18px; text-align: center; font-size: 0.92rem; }
+
+.console-nav a:hover { background: var(--cn-sidebar-hover); color: #fff; }
+
+.console-nav a.active {
+  background: var(--cn-sidebar-active-bg);
+  color: var(--cn-sidebar-text-active);
+}
+
+.console-sidebar-footer {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.console-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.console-topbar {
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 0 28px;
+  background: #fff;
+  border-bottom: 1px solid var(--cn-border);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.console-topbar h1 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.console-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.console-user .avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--cn-accent-grad);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+
+.console-user .meta { line-height: 1.15; }
+.console-user .meta .name { font-weight: 700; font-size: 0.86rem; }
+.console-user .meta .role { color: var(--cn-muted); font-size: 0.74rem; text-transform: capitalize; }
+
+.console-user .logout {
+  margin-left: 6px;
+  color: var(--cn-muted);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+.console-user .logout:hover { color: var(--cn-accent); }
+
+.console-content {
+  padding: 26px 28px 40px;
+  flex: 1;
+  max-width: 1320px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .console-sidebar { display: none; }
+  .console-content { padding: 18px; }
+  .console-topbar { padding: 0 16px; }
+}
+
+/* ---------------------------------------------------------------- Messages */
+
+.console-messages { list-style: none; padding: 0; margin: 0 0 18px; display: flex; flex-direction: column; gap: 8px; }
+.console-messages li {
+  padding: 12px 16px;
+  border-radius: var(--cn-radius-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+  border: 1px solid transparent;
+}
+.console-messages li.success { background: var(--cn-success-bg); color: var(--cn-success); }
+.console-messages li.error { background: var(--cn-danger-bg); color: var(--cn-danger); }
+.console-messages li.warning { background: var(--cn-warning-bg); color: var(--cn-warning); }
+.console-messages li.info { background: rgba(59, 130, 246, 0.10); color: #1d4ed8; }
+
+/* ---------------------------------------------------------------- Cards & layout */
+
+.cn-card {
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  box-shadow: var(--cn-shadow);
+}
+
+.cn-card-pad { padding: 20px; }
+
+.cn-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--cn-border);
+  flex-wrap: wrap;
+}
+
+.cn-card-header h2, .cn-card-header h3 { margin: 0; font-weight: 800; font-size: 1rem; }
+
+.cn-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.cn-stat-card {
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  box-shadow: var(--cn-shadow);
+  padding: 18px 20px;
+}
+
+.cn-stat-card .label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--cn-muted);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.cn-stat-card .value { font-size: 1.7rem; font-weight: 900; letter-spacing: -0.01em; }
+.cn-stat-card .value.accent { color: var(--cn-accent); }
+
+/* ---------------------------------------------------------------- Buttons */
+
+.cn-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--cn-border);
+  background: #fff;
+  color: var(--cn-text);
+  font-weight: 700;
+  font-size: 0.84rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: box-shadow 0.15s ease, transform 0.1s ease;
+  line-height: 1.2;
+}
+
+.cn-btn:hover { box-shadow: 0 8px 16px rgba(15, 23, 42, 0.08); }
+.cn-btn:active { transform: translateY(1px); }
+
+.cn-btn.primary {
+  background: var(--cn-accent-grad);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 10px 20px rgba(255, 102, 0, 0.24);
+}
+
+.cn-btn.danger { color: var(--cn-danger); border-color: rgba(220, 38, 38, 0.25); }
+.cn-btn.sm { padding: 6px 12px; font-size: 0.78rem; }
+.cn-btn[disabled] { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+
+/* ---------------------------------------------------------------- Forms */
+
+.cn-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.cn-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+.cn-field.full { grid-column: 1 / -1; }
+.cn-field label { font-weight: 700; font-size: 0.82rem; color: var(--cn-text); }
+
+.cn-field input,
+.cn-field select,
+.cn-field textarea,
+input.cn-input,
+select.cn-input {
+  padding: 10px 12px;
+  border-radius: var(--cn-radius-sm);
+  border: 1px solid var(--cn-border);
+  background: #fbfbfd;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: var(--cn-text);
+  width: 100%;
+}
+
+.cn-field input:focus,
+.cn-field select:focus,
+.cn-field textarea:focus {
+  outline: none;
+  border-color: rgba(255, 102, 0, 0.5);
+  background: #fff;
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12);
+}
+
+/* Django form helpers (form.as_p renders <p><label>...</label><input></p>) */
+.cn-django-form p { margin: 0 0 14px 0; display: flex; flex-direction: column; gap: 6px; }
+.cn-django-form label { font-weight: 700; font-size: 0.82rem; }
+.cn-django-form input, .cn-django-form select, .cn-django-form textarea {
+  padding: 10px 12px; border-radius: var(--cn-radius-sm); border: 1px solid var(--cn-border);
+  background: #fbfbfd; font-family: inherit; font-size: 0.9rem; width: 100%;
+}
+.cn-django-form ul.errorlist { color: var(--cn-danger); font-size: 0.8rem; margin: 2px 0 0; padding: 0; list-style: none; }
+
+/* ---------------------------------------------------------------- Tables */
+
+.cn-table-wrap { overflow-x: auto; }
+
+table.cn-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+table.cn-table thead th {
+  text-align: left;
+  padding: 12px 20px;
+  color: var(--cn-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--cn-border);
+  background: #fafbfe;
+  white-space: nowrap;
+}
+table.cn-table tbody td { padding: 13px 20px; border-bottom: 1px solid var(--cn-border); vertical-align: middle; }
+table.cn-table tbody tr:hover { background: rgba(15, 23, 42, 0.02); }
+table.cn-table tbody tr:last-child td { border-bottom: none; }
+
+.cn-empty { padding: 30px 20px; text-align: center; color: var(--cn-muted); font-size: 0.9rem; }
+
+/* ---------------------------------------------------------------- Badges / avatars */
+
+.cn-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+}
+.cn-badge.success { background: var(--cn-success-bg); color: var(--cn-success); }
+.cn-badge.danger { background: var(--cn-danger-bg); color: var(--cn-danger); }
+.cn-badge.warning { background: var(--cn-warning-bg); color: var(--cn-warning); }
+.cn-badge.neutral { background: rgba(15, 23, 42, 0.06); color: var(--cn-muted); }
+
+.cn-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 102, 0, 0.12);
+  color: var(--cn-accent);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.78rem;
+  margin-right: 10px;
+  flex-shrink: 0;
+}
+
+.cn-person { display: inline-flex; align-items: center; }
+
+/* ---------------------------------------------------------------- Filters / toolbars */
+
+.cn-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+}
+
+.cn-toolbar input, .cn-toolbar select {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--cn-border);
+  background: #fff;
+  font-size: 0.85rem;
+  min-width: 200px;
+}
+
+.cn-toolbar .spacer { flex: 1; }
+
+/* ---------------------------------------------------------------- Grid of cards (teams) */
+
+.cn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+
+.cn-tile {
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  box-shadow: var(--cn-shadow);
+  padding: 18px 20px;
+}
+
+.cn-tile h3 { margin: 0 0 6px; font-weight: 800; font-size: 1.02rem; }
+.cn-tile .sub { color: var(--cn-muted); font-size: 0.86rem; margin-bottom: 12px; }
+.cn-tile .tile-actions { display: flex; gap: 8px; }
+
+/* ---------------------------------------------------------------- Misc */
+
+.cn-page-lede { color: var(--cn-muted); font-size: 0.92rem; margin: -6px 0 20px; }
+.cn-action-group { display: flex; gap: 8px; flex-wrap: wrap; }

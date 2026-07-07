@@ -1,24 +1,13 @@
 {% extends "console/base.html" %}
 
-{% block page_header %}<h2>{{ employee.full_name|default:employee.email }}</h2>{% endblock %}
+{% block page_title %}{{ employee.full_name|default:employee.email }}{% endblock %}
 
 {% block content %}
-<style>
-  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;max-width:760px;}
-  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);padding:20px;}
-  .cn-panel p{margin:0 0 14px 0;}
-  .cn-panel label{display:block;font-weight:700;font-size:.85rem;margin-bottom:4px;}
-  .cn-panel input, .cn-panel select, .cn-panel textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.15);}
-  .cn-panel ul.errorlist{color:#b91c1c;font-size:.82rem;margin:4px 0;}
-  .btn{padding:10px 18px;border-radius:999px;border:1px solid rgba(15,23,42,.15);background:linear-gradient(180deg,#ff7a1a,#ff6600);color:#fff;font-weight:700;cursor:pointer;}
-</style>
-<div class="cn-wrap">
-  <div class="cn-panel">
-    <form method="post" enctype="multipart/form-data">
-      {% csrf_token %}
-      {{ form.as_p }}
-      <button class="btn" type="submit">Save Changes</button>
-    </form>
-  </div>
+<div class="cn-card cn-card-pad" style="max-width:800px;">
+  <form method="post" enctype="multipart/form-data" class="cn-django-form">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="cn-btn primary" type="submit"><i class="fa-solid fa-check"></i> Save Changes</button>
+  </form>
 </div>
 {% endblock %}
