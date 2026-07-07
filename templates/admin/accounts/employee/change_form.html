@@ -41,7 +41,7 @@
     overflow: hidden;
   }
 
-  /* Header top with gradient like payroll */
+  /* Header top with gradient styling */
   .emp-profile-top{
     display:flex;
     align-items:center;
@@ -297,6 +297,41 @@
     flex-direction:column;
     gap: 10px;
   }
+  .emp-docs-grid{
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:10px;
+  }
+  .emp-doc{
+    border:1px solid rgba(15,23,42,.10);
+    border-radius:14px;
+    background:#fff;
+    padding:8px;
+    text-align:center;
+  }
+  .emp-doc img{
+    width:100%;
+    height:120px;
+    object-fit:cover;
+    border-radius:10px;
+    display:block;
+  }
+  .emp-doc .label{
+    margin-top:6px;
+    font-size:.78rem;
+    font-weight:800;
+    color:var(--muted);
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .emp-doc .file-link{
+    display:inline-block;
+    margin-top:6px;
+    font-size:.82rem;
+    font-weight:800;
+    color:var(--primary);
+    text-decoration:none;
+  }
   .emp-side-item{
     padding: 10px 12px;
     border-radius: 14px;
@@ -516,6 +551,41 @@
             <div class="k">Role</div>
             <div class="v">{% if original %}{{ original.get_role_display|default:"N/A" }}{% else %}N/A{% endif %}</div>
           </div>
+        </div>
+      </div>
+
+      <div class="emp-side-card">
+        <div class="emp-side-title">Documents Preview</div>
+        <div class="emp-docs-grid">
+          {% if original and original.cnic_front %}
+            <div class="emp-doc">
+              <img src="{{ original.cnic_front.url }}" alt="CNIC Front">
+              <div class="label">CNIC Front</div>
+            </div>
+          {% endif %}
+          {% if original and original.cnic_back %}
+            <div class="emp-doc">
+              <img src="{{ original.cnic_back.url }}" alt="CNIC Back">
+              <div class="label">CNIC Back</div>
+            </div>
+          {% endif %}
+          {% if original and original.father_cnic %}
+            <div class="emp-doc">
+              <img src="{{ original.father_cnic.url }}" alt="Father CNIC">
+              <div class="label">Father CNIC</div>
+            </div>
+          {% endif %}
+          {% if original and original.degree_certificate %}
+            <div class="emp-doc">
+              {% if original.degree_certificate.url|lower|slice:"-4:" == ".pdf" %}
+                <div class="label">Degree</div>
+                <a class="file-link" href="{{ original.degree_certificate.url }}" target="_blank">Open PDF</a>
+              {% else %}
+                <img src="{{ original.degree_certificate.url }}" alt="Degree Certificate">
+                <div class="label">Degree</div>
+              {% endif %}
+            </div>
+          {% endif %}
         </div>
       </div>
     </aside>

@@ -9,7 +9,7 @@
  body {
         margin: 0;
         font-family: "Outfit", Arial, sans-serif;
-        background: #f9f9f9; 
+        background: #f9f9f9;
       }
   :root{
     --p:#ff6600;           /* primary */
@@ -28,13 +28,43 @@
     gap:18px;
     margin-top: 14px;
   }
+  .latest-banner{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+    border-radius:16px;
+    border:1px solid rgba(255,102,0,.18);
+    background:
+      radial-gradient(700px 160px at 10% 0%, rgba(255,106,0,.16), transparent 60%),
+      linear-gradient(180deg, #fff7ed, #fff);
+    box-shadow:0 12px 22px rgba(2,6,23,.08);
+  }
+  .latest-badge{
+    background:linear-gradient(180deg,#ff7a1a,#ff6600);
+    color:#fff;
+    font-weight:900;
+    font-size:12px;
+    padding:6px 10px;
+    border-radius:999px;
+  }
+  .latest-name{
+    font-weight:900;
+    font-size:16px;
+    color:var(--text);
+  }
+  .latest-meta{
+    font-size:12px;
+    color:var(--muted);
+  }
 
   /* Card – soft cream like your reference image */
   .emp-card{
     position:relative;
     border-radius: 18px;
     overflow:hidden;
-    
+
     box-shadow:
       0 14px 28px rgba(0,0,0,.08),
       0 2px 6px rgba(0,0,0,.04);
@@ -204,6 +234,84 @@
     box-shadow: 0 12px 20px rgba(255,102,0,.20);
   }
 
+  /* bulk actions bar */
+  .bulk-bar{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:12px 16px;
+    border-radius:16px;
+    border:1px solid var(--line);
+    background: linear-gradient(180deg, #fff, var(--cream));
+    box-shadow:0 8px 16px rgba(2,6,23,.05);
+  }
+  .bulk-bar label{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--text);
+    cursor:pointer;
+  }
+  .bulk-count{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:600;
+  }
+  .btn.danger{
+    flex:0 0 auto;
+    margin-left:auto;
+    padding:10px 16px;
+    border-radius:12px;
+    border:1px solid rgba(239,68,68,.35);
+    background: linear-gradient(180deg, #f87171, #ef4444);
+    color:#fff;
+    font-size:12px;
+    font-weight:800;
+    font-family:inherit;
+    cursor:pointer;
+    box-shadow:0 12px 20px rgba(239,68,68,.18);
+    transition: transform .15s ease, filter .15s ease, opacity .15s ease;
+  }
+  .btn.danger:hover:not(:disabled){
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+  }
+  .btn.danger:disabled{
+    opacity:.45;
+    cursor:not-allowed;
+    box-shadow:none;
+  }
+  .emp-check{
+    position:absolute;
+    top:12px;
+    right:12px;
+    z-index:2;
+    display:grid;
+    place-items:center;
+    width:30px;
+    height:30px;
+    border-radius:10px;
+    background: rgba(255,255,255,.85);
+    border:1px solid rgba(0,0,0,.10);
+    cursor:pointer;
+  }
+  .emp-check input,
+  .bulk-bar input[type="checkbox"]{
+    width:16px;
+    height:16px;
+    accent-color:#ef4444;
+    cursor:pointer;
+  }
+  .emp-card:has(.action-select:checked){
+    border-color: rgba(239,68,68,.45);
+    box-shadow:
+      0 0 0 2px rgba(239,68,68,.35),
+      0 14px 28px rgba(0,0,0,.08);
+  }
+
   /* responsive */
   @media (max-width: 1200px){
     .emp-grid{ grid-template-columns: repeat(2, minmax(0,1fr)); }
@@ -214,8 +322,37 @@
 </style>
 
 <div class="emp-grid">
+  {% if can_bulk_delete and cl.result_list %}
+    <div class="bulk-bar">
+      <label>
+        <input type="checkbox" id="bulk-select-all">
+        {% trans "Select all" %}
+      </label>
+      <span class="bulk-count" id="bulk-count">0 {% trans "selected" %}</span>
+      <input type="hidden" name="action" value="delete_selected">
+      <button type="submit" name="index" value="0" class="btn danger" id="bulk-delete-btn" disabled>
+        {% trans "Delete selected" %}
+      </button>
+    </div>
+  {% endif %}
+  {% if latest_employee %}
+    <div class="latest-banner">
+      <span class="latest-badge">Latest Joined</span>
+      <div>
+        <div class="latest-name">{{ latest_employee.full_name|default:"(No name)" }}</div>
+        <div class="latest-meta">
+          Joined: {{ latest_employee.date_joined|date:"d M Y" }} • {{ latest_employee.email|default:"-" }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
   {% for obj in cl.result_list %}
     <div class="emp-card">
+      {% if can_bulk_delete %}
+        <label class="emp-check" title="{% trans 'Select for bulk action' %}">
+          <input type="checkbox" class="action-select" name="_selected_action" value="{{ obj.pk }}">
+        </label>
+      {% endif %}
       <div class="emp-inner">
 
         <div class="emp-top">
@@ -243,14 +380,7 @@
             <div class="k">{% trans "Contact" %}</div>
             <div class="v">{{ obj.contact_number|default:"-" }}</div>
           </div>
-          <div class="row">
-            <div class="k">{% trans "Gender" %}</div>
-            <div class="v">{{ obj.gender|default:"-" }}</div>
-          </div>
-          <div class="row">
-            <div class="k">{% trans "Blood Group" %}</div>
-            <div class="v">{{ obj.blood_group|default:"-" }}</div>
-          </div>
+
         </div>
 
         <div class="chips">
@@ -282,4 +412,31 @@
     </div>
   {% endfor %}
 </div>
+
+{% if can_bulk_delete %}
+<script>
+(function () {
+  var boxes = Array.prototype.slice.call(document.querySelectorAll(".emp-card .action-select"));
+  var selectAll = document.getElementById("bulk-select-all");
+  var countEl = document.getElementById("bulk-count");
+  var deleteBtn = document.getElementById("bulk-delete-btn");
+  if (!boxes.length || !selectAll) return;
+
+  function refresh() {
+    var checked = boxes.filter(function (b) { return b.checked; }).length;
+    countEl.textContent = checked + " selected";
+    deleteBtn.disabled = checked === 0;
+    selectAll.checked = checked === boxes.length;
+    selectAll.indeterminate = checked > 0 && checked < boxes.length;
+  }
+
+  selectAll.addEventListener("change", function () {
+    boxes.forEach(function (b) { b.checked = selectAll.checked; });
+    refresh();
+  });
+  boxes.forEach(function (b) { b.addEventListener("change", refresh); });
+  refresh();
+})();
+</script>
+{% endif %}
 {% endblock %}

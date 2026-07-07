@@ -1,0 +1,1051 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block content %}
+<style>
+  :root{
+    --pm-bg:#f6f7fb;
+    --pm-text:#0f172a;
+    --pm-muted:rgba(15,23,42,.60);
+    --pm-line:rgba(15,23,42,.10);
+    --pm-accent:#ff6a00;
+    --pm-card:#ffffff;
+  }
+  .pm-calc-wrap{
+    max-width:1200px;
+    margin:0 auto;
+    padding:14px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#fbfbfd 0%,#f6f7fb 100%);
+    font-family:"Outfit", "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--pm-text);
+  }
+  .pm-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:16px;}
+  .pm-card{
+    grid-column:span 3;
+    padding:16px;
+    border-radius:16px;
+    border:1px solid var(--pm-line);
+    background:var(--pm-card);
+    box-shadow:0 10px 22px rgba(2,6,23,.08);
+    text-decoration:none;
+    color:var(--pm-text);
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .pm-card:hover{transform:translateY(-2px);box-shadow:0 16px 30px rgba(2,6,23,.12);border-color:rgba(255,106,0,.40);}
+  .pm-title{margin:0 0 6px 0;font-weight:800;font-size:1.02rem;}
+  .pm-sub{margin:0;color:var(--pm-muted);font-size:.9rem;}
+  .pm-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 8px;}
+  .pm-action{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid var(--pm-line);
+    background:#fff;
+    text-decoration:none;
+    color:var(--pm-text);
+    font-weight:600;
+  }
+  .pm-action:hover{border-color:rgba(255,106,0,.45);box-shadow:0 10px 18px rgba(2,6,23,.10);}
+  .summary-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin:14px 0 6px;}
+  .summary-card{
+    grid-column:span 3;
+    padding:16px;
+    border-radius:16px;
+    border:1px solid var(--pm-line);
+    background:var(--pm-card);
+    box-shadow:0 10px 22px rgba(2,6,23,.08);
+  }
+  .summary-card.featured{
+    grid-column:span 3;
+    padding:22px;
+    background:
+      radial-gradient(600px 180px at 0% 0%, rgba(255,106,0,.10), transparent 60%),
+      linear-gradient(180deg,#ffffff 0%,#fff8f2 100%);
+    border-color:rgba(255,106,0,.22);
+    box-shadow:0 18px 36px rgba(255,106,0,.12);
+  }
+  .summary-card h4{margin:0 0 6px 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--pm-muted);}
+  .summary-card .value{font-size:1.35rem;font-weight:900;}
+  .summary-card .sub{margin-top:6px;font-size:.9rem;color:var(--pm-muted);}
+  .summary-card.featured h4{font-size:.86rem;}
+  .summary-card.featured .value{font-size:2rem;}
+  .summary-card.featured .sub{font-size:1rem;}
+  .accent{color:var(--pm-accent);}
+  .balance-positive{
+    background:rgba(239,68,68,.12);
+    color:#b91c1c;
+    padding:6px 10px;
+    border-radius:10px;
+    display:inline-block;
+  }
+  .balance-negative{
+    background:rgba(34,197,94,.12);
+    color:#16a34a;
+    padding:6px 10px;
+    border-radius:10px;
+    display:inline-block;
+  }
+  .panel{
+    margin-top:16px;
+    border:1px solid var(--pm-line);
+    border-radius:16px;
+    background:var(--pm-card);
+    box-shadow:0 10px 22px rgba(2,6,23,.08);
+  }
+  .panel-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 16px;
+    border-bottom:1px solid var(--pm-line);
+  }
+  .panel-title{margin:0;font-size:1rem;font-weight:800;}
+  .badge{
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(255,106,0,.08);
+    color:var(--pm-accent);
+    font-size:.78rem;
+    font-weight:700;
+    border:1px solid rgba(255,106,0,.25);
+  }
+  .table-wrap{overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{
+    text-align:left;
+    padding:12px 16px;
+    color:var(--pm-muted);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    border-bottom:1px solid var(--pm-line);
+    background:#fafbff;
+  }
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--pm-line);}
+  tbody tr:hover{background:rgba(15,23,42,.03);}
+  .cell-muted{color:var(--pm-muted);}
+  .empty-state{padding:16px;color:var(--pm-muted);}
+  .pm-filter{
+    display:grid;
+    grid-template-columns:140px 1fr auto;
+    gap:12px;
+    align-items:center;
+    margin:12px 0 16px;
+    padding:14px;
+    border-radius:16px;
+    border:1px solid var(--pm-line);
+    background:linear-gradient(180deg,#ffffff 0%,#fbfbff 100%);
+    box-shadow:0 12px 22px rgba(2,6,23,.08);
+  }
+  .pm-filter label{font-weight:800;font-size:.9rem;color:var(--pm-text);}
+  .pm-filter select{
+    width:100%;
+    min-width:220px;
+    padding:12px 12px;
+    border-radius:12px;
+    border:1px solid var(--pm-line);
+    background:#fff;
+    font-weight:700;
+    color:var(--pm-text);
+  }
+  .pm-filter select:focus{outline:2px solid rgba(255,106,0,.20);border-color:rgba(255,106,0,.45);}
+  .pm-native-select--enhanced{display:none;}
+  .pm-combobox{
+    position:relative;
+    width:100%;
+  }
+  .pm-combobox[hidden]{display:none !important;}
+  .pm-search-input{
+    width:100%;
+    min-width:220px;
+    padding:12px 42px 12px 12px;
+    border-radius:12px;
+    border:1px solid var(--pm-line);
+    background:#fff;
+    font-weight:700;
+    color:var(--pm-text);
+  }
+  .pm-search-input:focus{
+    outline:2px solid rgba(255,106,0,.20);
+    border-color:rgba(255,106,0,.45);
+  }
+  .pm-search-icon{
+    position:absolute;
+    top:50%;
+    right:12px;
+    transform:translateY(-50%);
+    color:var(--pm-muted);
+    pointer-events:none;
+    font-size:.95rem;
+  }
+  .pm-search-dropdown{
+    position:absolute;
+    top:calc(100% + 8px);
+    left:0;
+    right:0;
+    z-index:20;
+    display:none;
+    padding:8px;
+    border-radius:14px;
+    border:1px solid var(--pm-line);
+    background:#fff;
+    box-shadow:0 18px 34px rgba(2,6,23,.14);
+    max-height:220px;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+  }
+  .pm-search-dropdown.open{display:block;}
+  .pm-search-option{
+    width:100%;
+    padding:10px 12px;
+    border:none;
+    border-radius:10px;
+    background:transparent;
+    text-align:left;
+    color:var(--pm-text);
+    font-weight:600;
+    cursor:pointer;
+  }
+  .pm-search-option:hover,
+  .pm-search-option.is-active{
+    background:rgba(255,106,0,.10);
+    color:#b45309;
+  }
+  .pm-search-empty{
+    padding:10px 12px;
+    color:var(--pm-muted);
+    font-size:.88rem;
+  }
+  .pm-filter .hint{
+    color:var(--pm-muted);
+    font-size:.85rem;
+    text-align:right;
+    white-space:nowrap;
+  }
+  .pm-topbar{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+    align-items:center;
+    margin-bottom:12px;
+    padding:12px 14px;
+    border-radius:16px;
+    border:1px solid var(--pm-line);
+    background:
+      radial-gradient(700px 180px at 10% 0%, rgba(255,106,0,.10), transparent 60%),
+      linear-gradient(180deg,#ffffff 0%, #fbfbff 100%);
+    box-shadow:0 12px 22px rgba(2,6,23,.08);
+  }
+  .pm-title{
+    margin:0;
+    font-size:1.55rem;
+    font-weight:900;
+    letter-spacing:-.01em;
+  }
+  .pm-subtitle{
+    margin:4px 0 0 0;
+    color:var(--pm-muted);
+    font-weight:600;
+  }
+  .pm-period{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:8px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid var(--pm-line);
+  }
+  .pm-period label{
+    font-size:.78rem;
+    font-weight:800;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--pm-muted);
+    margin-right:2px;
+  }
+  .pm-period select{
+    padding:8px 10px;
+    border-radius:10px;
+    border:1px solid var(--pm-line);
+    background:#fff;
+    font-weight:700;
+  }
+  .pm-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-top:6px;
+  }
+  .pm-name{
+    margin:0;
+    font-size:1.15rem;
+    font-weight:900;
+  }
+  .pm-actions .pm-action{
+    border-radius:999px;
+    padding:10px 16px;
+    font-weight:700;
+  }
+  .pm-actions .pm-action.primary{
+    background:linear-gradient(180deg,#ff7a1a,#ff6600);
+    color:#fff;
+    border-color:rgba(255,102,0,.35);
+    box-shadow:0 12px 20px rgba(255,102,0,.20);
+  }
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(2,6,23,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    z-index:9999;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal-card{
+    width:100%;
+    max-width:590px;
+    background:#fff;
+    border-radius:18px;
+    border:1px solid var(--pm-line);
+    box-shadow:0 28px 60px rgba(15,23,42,.22);
+    overflow:hidden;
+  }
+  .modal-head{
+    padding:14px 16px;
+    border-bottom:1px solid var(--pm-line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .modal-title{margin:0;font-weight:900;}
+  .modal-body{padding:16px;}
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .modal-field{display:flex;flex-direction:column;gap:6px;}
+  .modal-field input,.modal-field select,.modal-field textarea{
+    padding:10px 12px;border-radius:12px;border:1px solid var(--pm-line);
+  }
+  .modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;}
+  .icon-btn{
+    border:1px solid var(--pm-line);
+    background:#fff;
+    width:34px;
+    height:34px;
+    border-radius:10px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+  }
+  .icon-btn:hover{border-color:rgba(255,106,0,.45);box-shadow:0 8px 16px rgba(2,6,23,.10);}
+  .icon-edit{color:#0f172a;}
+  .icon-del{color:#b91c1c;border-color:rgba(239,68,68,.35);}
+  @media(max-width:1100px){.pm-card{grid-column:span 6;}.summary-card{grid-column:span 12;}}
+  @media(max-width:700px){
+    .pm-card{grid-column:span 12;}
+    .panel-header{flex-direction:column;align-items:flex-start;gap:6px;}
+    .pm-filter{flex-direction:column;align-items:stretch;}
+    .modal-grid{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="pm-calc-wrap">
+  <div class="pm-topbar">
+    <div>
+      <h2 class="pm-title">PM Calculations</h2>
+      <div class="pm-subtitle">Select a PM to see totals.</div>
+    </div>
+    <form class="pm-period" method="get" action="{% url 'admin:pm_calculations' %}">
+      <label>Period</label>
+      <input type="hidden" name="pm" value="{{ selected_pm.id }}">
+      <select name="period" onchange="this.form.submit()">
+        <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+        <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+      </select>
+      <select name="year" onchange="this.form.submit()">
+        {% for y in year_options %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+        {% for m, label in months %}
+          <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <form class="pm-filter" method="get" action="{% url 'admin:pm_calculations' %}">
+    <input type="hidden" name="period" value="{{ period }}">
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    <label for="pm-select">Select PM</label>
+    <div class="pm-combobox" id="pm-combobox" hidden>
+      <input
+        id="pm-search"
+        class="pm-search-input"
+        type="text"
+        placeholder="Search PM by name, email or CNIC"
+        autocomplete="off"
+        spellcheck="false"
+      >
+      <span class="pm-search-icon">⌕</span>
+      <div id="pm-search-dropdown" class="pm-search-dropdown" role="listbox" aria-label="PM suggestions"></div>
+    </div>
+    <select id="pm-select" class="pm-native-select" name="pm" onchange="this.form.submit()">
+      <option value="">Choose a PM</option>
+      {% for pm in pms %}
+        <option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>
+          {{ pm.full_name|default:pm.email|default:pm.cnic }}
+        </option>
+      {% endfor %}
+    </select>
+    <div class="hint">Auto-load on select</div>
+  </form>
+
+  {% if selected_pm and summary %}
+    <div class="pm-header">
+      <h3 class="pm-name">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</h3>
+      <div class="pm-actions">
+        <a class="pm-action" href="{% url 'admin:employee_salary' %}?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
+          Employee Salary
+        </a>
+        <button class="pm-action primary" type="button" onclick="openModal('income-modal')">
+          Add Income
+        </button>
+        <button class="pm-action" type="button" onclick="openModal('advance-modal')">
+          Add Advance
+        </button>
+      </div>
+    </div>
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h4>Total Income</h4>
+        <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">${{ summary.total_income_usd|floatformat:2 }}</div>
+      </div>
+      <div class="summary-card">
+        <h4>Amount Paid</h4>
+        <div class="value">PKR {{ summary.cash_online_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">${{ summary.cash_online_usd|floatformat:2 }}</div>
+      </div>
+      <div class="summary-card">
+        <h4>Paid Jobs & Connects Divided</h4>
+        <div class="value">PKR {{ summary.jobs_connects_divided_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">${{ summary.jobs_connects_divided_usd|floatformat:2 }}</div>
+      </div>
+      <div class="summary-card featured">
+        <h4>Available Balance</h4>
+        <div class="value {% if summary.available_balance_pkr < 0 %}balance-negative{% else %}balance-positive{% endif %}">
+          PKR {{ summary.available_balance_pkr|floatformat:0|intcomma }}
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">PM Income Details</div>
+        <div class="badge">{{ incomes|length }} entries</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Source</th>
+              <th>Description</th>
+              <th>Amount USD</th>
+              <th>Amount PKR</th>
+              <th>PM Share PKR</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for income in incomes %}
+              <tr>
+                <td>{{ income.income_date }}</td>
+                <td class="cell-muted">{{ income.get_source_display }}</td>
+                <td>{{ income.description|default:"-" }}</td>
+                <td>${{ income.amount_usd|floatformat:2 }}</td>
+                <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
+                <td>PKR {{ income.pm_share_pkr|floatformat:0|intcomma }}</td>
+                <td>
+                  <button
+                    class="icon-btn icon-edit"
+                    type="button"
+                    onclick="openEditIncome(this)"
+                    data-id="{{ income.id }}"
+                    data-note="{{ income.description|escape }}"
+                    data-amount="{{ income.amount_usd }}"
+                    data-date="{{ income.withdrawn_at|default:income.income_date }}"
+                    data-withdrawnby="{{ income.withdrawn_by_id|default_if_none:'' }}"
+                  >✎</button>
+                  <button
+                    class="icon-btn icon-del"
+                    type="button"
+                    onclick="openDeleteIncome(this)"
+                    data-id="{{ income.id }}"
+                  >✕</button>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="7" class="empty-state">No income entries found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">PM Advance Details</div>
+        <div class="badge">{{ advances|length }} entries</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Notes</th>
+              <th>Amount PKR</th>
+              <th>Amount USD</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for advance in advances %}
+              <tr>
+                <td>{{ advance.advance_date }}</td>
+                <td class="cell-muted">{{ advance.get_advance_type_display }}</td>
+                <td>{{ advance.notes|default:"-" }}</td>
+                <td>PKR {{ advance.amount_pkr|floatformat:0|intcomma }}</td>
+                <td>${{ advance.amount_usd|floatformat:2 }}</td>
+                <td>
+                  <button
+                    class="icon-btn icon-edit"
+                    type="button"
+                    onclick="openEditAdvance(this)"
+                    data-id="{{ advance.id }}"
+                    data-type="{{ advance.advance_type }}"
+                    data-note="{{ advance.notes|escape }}"
+                    data-amount="{{ advance.amount_pkr }}"
+                    data-date="{{ advance.advance_date }}"
+                    data-paidby="{{ advance.paid_by_id|default_if_none:'' }}"
+                  >✎</button>
+                  <button
+                    class="icon-btn icon-del"
+                    type="button"
+                    onclick="openDeleteAdvance(this)"
+                    data-id="{{ advance.id }}"
+                  >✕</button>
+                </td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="empty-state">No advance entries found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-title">
+          {{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }} - Amount paid to employee in term of salaries
+        </div>
+        <div class="badge">{{ salary_rows|length }} employees</div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Salary Income</th>
+              <th>Expenses</th>
+              <th>Salary Paid</th>
+              <th>Remaining Balance</th>
+              <th>PM Share Applied</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in salary_rows %}
+              <tr>
+                <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
+                <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
+                <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
+                <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
+                <td>PKR {{ row.pm_share_pkr|floatformat:0|intcomma }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="6" class="empty-state">No employee salary balances found.</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<div id="edit-income-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'edit-income-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Edit Income</div>
+      <button class="pm-action" type="button" onclick="closeModal('edit-income-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit_income">
+        <input type="hidden" name="income_id" id="edit-income-id">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label>Note</label>
+            <input type="text" name="note" id="edit-income-note">
+          </div>
+          <div class="modal-field">
+            <label>Amount in USD</label>
+            <input type="number" name="amount_usd" id="edit-income-amount" step="0.01" min="0" required>
+          </div>
+          <div class="modal-field">
+            <label>Withdraw date</label>
+            <input type="date" name="withdrawn_at" id="edit-income-date" required>
+          </div>
+          <div class="modal-field">
+            <label>Withdraw by</label>
+            <select name="withdrawn_by" id="edit-income-withdrawn-by" required>
+              <option value="">Select user</option>
+              {% for user in paid_by_users %}
+                <option value="{{ user.id }}">{{ user.full_name|default:user.email|default:user.cnic }} ({{ user.get_role_display }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('edit-income-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="delete-income-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'delete-income-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Delete Income</div>
+      <button class="pm-action" type="button" onclick="closeModal('delete-income-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_income">
+        <input type="hidden" name="income_id" id="delete-income-id">
+        <div class="modal-field">
+          <div>Are you sure you want to delete this income?</div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('delete-income-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="edit-advance-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'edit-advance-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Edit Advance</div>
+      <button class="pm-action" type="button" onclick="closeModal('edit-advance-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit_advance">
+        <input type="hidden" name="advance_id" id="edit-advance-id">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label>Advance type</label>
+            <select name="advance_type" id="edit-advance-type" required>
+              <option value="upwork_job_paid">Upwork job paid</option>
+              <option value="upwork_connects">Upwork connects</option>
+              <option value="cash_taken">Cash taken</option>
+              <option value="online_taken">Online taken</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label>Amount in PKR</label>
+            <input type="number" name="amount_pkr" id="edit-advance-amount" step="0.01" min="0" required>
+          </div>
+          <div class="modal-field">
+            <label>Note</label>
+            <input type="text" name="note" id="edit-advance-note">
+          </div>
+          <div class="modal-field">
+            <label>Advance taken date</label>
+            <input type="date" name="advance_date" id="edit-advance-date" required>
+          </div>
+          <div class="modal-field">
+            <label>Paid by</label>
+            <select name="paid_by" id="edit-advance-paid-by" required>
+              <option value="">Select user</option>
+              {% for user in paid_by_users %}
+                <option value="{{ user.id }}">{{ user.full_name|default:user.email|default:user.cnic }} ({{ user.get_role_display }})</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('edit-advance-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="delete-advance-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'delete-advance-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Delete Advance</div>
+      <button class="pm-action" type="button" onclick="closeModal('delete-advance-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="delete_advance">
+        <input type="hidden" name="advance_id" id="delete-advance-id">
+        <div class="modal-field">
+          <div>Are you sure you want to delete this advance?</div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('delete-advance-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Delete</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<div id="income-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'income-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Add Income</div>
+      <button class="pm-action" type="button" onclick="closeModal('income-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_income">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label>PM</label>
+            <select name="pm_id" required>
+              <option value="">Select PM</option>
+              {% for pm in pms %}
+                <option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>
+                  {{ pm.full_name|default:pm.email|default:pm.cnic }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="modal-field">
+            <label>Source</label>
+            <select name="source" disabled>
+              <option value="upwork" selected>Upwork</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label>Note</label>
+            <input type="text" name="note">
+          </div>
+          <div class="modal-field">
+            <label>Amount in USD</label>
+            <input type="number" name="amount_usd" step="0.01" min="0" required>
+          </div>
+          <div class="modal-field">
+            <label>Withdraw date</label>
+            <input type="date" name="withdrawn_at" value="{{ today }}" required>
+          </div>
+          <div class="modal-field">
+            <label>Withdraw by</label>
+            <select name="withdrawn_by" required>
+              <option value="">Select user</option>
+              {% for user in paid_by_users %}
+                <option value="{{ user.id }}" {% if user.id == current_user_id %}selected{% endif %}>
+                  {{ user.full_name|default:user.email|default:user.cnic }} ({{ user.get_role_display }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('income-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Save Income</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="advance-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'advance-modal')">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title">Add Advance</div>
+      <button class="pm-action" type="button" onclick="closeModal('advance-modal')">Close</button>
+    </div>
+    <div class="modal-body">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_advance">
+        <div class="modal-grid">
+          <div class="modal-field">
+            <label>PM</label>
+            <select name="pm_id" required>
+              <option value="">Select PM</option>
+              {% for pm in pms %}
+                <option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>
+                  {{ pm.full_name|default:pm.email|default:pm.cnic }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="modal-field">
+            <label>Advance type</label>
+            <select name="advance_type" required>
+              <option value="upwork_job_paid">Upwork job paid</option>
+              <option value="upwork_connects">Upwork connects</option>
+              <option value="cash_taken">Cash taken</option>
+              <option value="online_taken">Online taken</option>
+            </select>
+          </div>
+          <div class="modal-field">
+            <label>Amount in PKR</label>
+            <input type="number" name="amount_pkr" step="0.01" min="0" required>
+          </div>
+          <div class="modal-field">
+            <label>Note</label>
+            <input type="text" name="note">
+          </div>
+          <div class="modal-field">
+            <label>Advance taken date</label>
+            <input type="date" name="advance_date" value="{{ today }}" required>
+          </div>
+          <div class="modal-field">
+            <label>Paid by</label>
+            <select name="paid_by" required>
+              <option value="">Select user</option>
+              {% for user in paid_by_users %}
+                <option value="{{ user.id }}" {% if user.id == current_user_id %}selected{% endif %}>
+                  {{ user.full_name|default:user.email|default:user.cnic }} ({{ user.get_role_display }})
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button class="pm-action" type="button" onclick="closeModal('advance-modal')">Cancel</button>
+          <button class="pm-action" type="submit">Save Advance</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id){document.getElementById(id).classList.add('open');}
+  function closeModal(id){document.getElementById(id).classList.remove('open');}
+  function closeOnBackdrop(e,id){if(e.target.id===id){closeModal(id);}}
+  (function(){
+    const select = document.getElementById('pm-select');
+    const combobox = document.getElementById('pm-combobox');
+    const input = document.getElementById('pm-search');
+    const dropdown = document.getElementById('pm-search-dropdown');
+    if(!select || !combobox || !input || !dropdown){return;}
+
+    const options = Array.from(select.options)
+      .filter(option => option.value)
+      .map(option => ({ value: option.value, label: option.text.trim() }));
+
+    let filteredOptions = options.slice();
+    let activeIndex = -1;
+    let suppressBlur = false;
+
+    const selectedOption = options.find(option => option.value === select.value);
+    input.value = selectedOption ? selectedOption.label : '';
+
+    select.classList.add('pm-native-select--enhanced');
+    combobox.hidden = false;
+
+    function closeDropdown(){
+      dropdown.classList.remove('open');
+      activeIndex = -1;
+    }
+
+    function openDropdown(){
+      if(filteredOptions.length || input.value.trim()){
+        dropdown.classList.add('open');
+      }
+    }
+
+    function renderOptions(){
+      dropdown.innerHTML = '';
+
+      if(!filteredOptions.length){
+        const emptyState = document.createElement('div');
+        emptyState.className = 'pm-search-empty';
+        emptyState.textContent = 'No PM found for this search.';
+        dropdown.appendChild(emptyState);
+        activeIndex = -1;
+        openDropdown();
+        return;
+      }
+
+      filteredOptions.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'pm-search-option' + (index === activeIndex ? ' is-active' : '');
+        button.textContent = option.label;
+        button.setAttribute('role', 'option');
+        button.setAttribute('aria-selected', index === activeIndex ? 'true' : 'false');
+        button.dataset.value = option.value;
+        button.addEventListener('mousedown', function(){
+          suppressBlur = true;
+        });
+        button.addEventListener('click', function(){
+          selectPm(option);
+        });
+        dropdown.appendChild(button);
+      });
+
+      openDropdown();
+    }
+
+    function filterOptions(term){
+      const query = term.trim().toLowerCase();
+      filteredOptions = !query
+        ? options.slice()
+        : options.filter(option => option.label.toLowerCase().includes(query));
+      activeIndex = filteredOptions.length ? 0 : -1;
+      renderOptions();
+    }
+
+    function syncActiveOption(){
+      const buttons = dropdown.querySelectorAll('.pm-search-option');
+      buttons.forEach((button, index) => {
+        const isActive = index === activeIndex;
+        button.classList.toggle('is-active', isActive);
+        button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+        if(isActive){
+          button.scrollIntoView({ block: 'nearest' });
+        }
+      });
+    }
+
+    function selectPm(option){
+      select.value = option.value;
+      input.value = option.label;
+      closeDropdown();
+      select.form.submit();
+    }
+
+    input.addEventListener('focus', function(){
+      filterOptions(input.value);
+    });
+
+    input.addEventListener('input', function(){
+      filterOptions(input.value);
+    });
+
+    input.addEventListener('keydown', function(event){
+      const wasOpen = dropdown.classList.contains('open');
+      if(!wasOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp')){
+        filterOptions(input.value);
+      }
+
+      if(event.key === 'ArrowDown'){
+        if(filteredOptions.length){
+          activeIndex = wasOpen
+            ? (activeIndex < filteredOptions.length - 1 ? activeIndex + 1 : 0)
+            : 0;
+          syncActiveOption();
+        }
+        event.preventDefault();
+      } else if(event.key === 'ArrowUp'){
+        if(filteredOptions.length){
+          activeIndex = wasOpen
+            ? (activeIndex > 0 ? activeIndex - 1 : filteredOptions.length - 1)
+            : filteredOptions.length - 1;
+          syncActiveOption();
+        }
+        event.preventDefault();
+      } else if(event.key === 'Enter'){
+        if(filteredOptions.length){
+          event.preventDefault();
+          const option = filteredOptions[Math.max(activeIndex, 0)];
+          selectPm(option);
+        }
+      } else if(event.key === 'Escape'){
+        closeDropdown();
+      }
+    });
+
+    input.addEventListener('blur', function(){
+      window.setTimeout(function(){
+        if(suppressBlur){
+          suppressBlur = false;
+          input.focus();
+          return;
+        }
+
+        const selected = options.find(option => option.value === select.value);
+        input.value = selected ? selected.label : '';
+        closeDropdown();
+      }, 120);
+    });
+
+    document.addEventListener('click', function(event){
+      if(!combobox.contains(event.target)){
+        closeDropdown();
+      }
+    });
+  })();
+  function openEditIncome(btn){
+    document.getElementById('edit-income-id').value = btn.dataset.id;
+    document.getElementById('edit-income-note').value = btn.dataset.note || '';
+    document.getElementById('edit-income-amount').value = btn.dataset.amount || '';
+    document.getElementById('edit-income-date').value = btn.dataset.date || '';
+    document.getElementById('edit-income-withdrawn-by').value = btn.dataset.withdrawnby || '';
+    openModal('edit-income-modal');
+  }
+  function openDeleteIncome(btn){
+    document.getElementById('delete-income-id').value = btn.dataset.id;
+    openModal('delete-income-modal');
+  }
+  function openEditAdvance(btn){
+    document.getElementById('edit-advance-id').value = btn.dataset.id;
+    document.getElementById('edit-advance-type').value = btn.dataset.type || 'cash_taken';
+    document.getElementById('edit-advance-amount').value = btn.dataset.amount || '';
+    document.getElementById('edit-advance-note').value = btn.dataset.note || '';
+    document.getElementById('edit-advance-date').value = btn.dataset.date || '';
+    document.getElementById('edit-advance-paid-by').value = btn.dataset.paidby || '';
+    openModal('edit-advance-modal');
+  }
+  function openDeleteAdvance(btn){
+    document.getElementById('delete-advance-id').value = btn.dataset.id;
+    openModal('delete-advance-modal');
+  }
+</script>
+{% endblock %}

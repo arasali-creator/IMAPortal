@@ -1,0 +1,1030 @@
+{% extends "admin/base_site.html" %}
+{% load humanize %}
+
+{% block content %}
+<style>
+  :root{
+    --es-bg:#f6f7fb;
+    --es-text:#0f172a;
+    --es-muted:rgba(15,23,42,.60);
+    --es-line:rgba(15,23,42,.10);
+    --es-accent:#ff6a00;
+    --es-card:#ffffff;
+  }
+  .es-wrap{
+    max-width:1240px;
+    margin:0 auto;
+    padding:14px;
+    border-radius:18px;
+    background:linear-gradient(135deg,#fbfbfd 0%,#f6f7fb 100%);
+    font-family:"Outfit","Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    color:var(--es-text);
+  }
+  .es-topbar,.es-filter,.es-panel,.es-summary-card{
+    border:1px solid var(--es-line);
+    background:var(--es-card);
+    box-shadow:0 10px 22px rgba(2,6,23,.08);
+  }
+  .es-topbar{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:12px;
+    align-items:center;
+    margin-bottom:12px;
+    padding:12px 14px;
+    border-radius:16px;
+    background:
+      radial-gradient(700px 180px at 10% 0%, rgba(255,106,0,.10), transparent 60%),
+      linear-gradient(180deg,#ffffff 0%, #fbfbff 100%);
+  }
+  .es-title{margin:0;font-size:1.55rem;font-weight:900;letter-spacing:-.01em;}
+  .es-subtitle{margin:4px 0 0 0;color:var(--es-muted);font-weight:600;}
+  .es-period{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
+    padding:8px;
+    border-radius:12px;
+    background:#fff;
+    border:1px solid var(--es-line);
+  }
+  .es-period label,.es-filter label,.field label{font-size:.82rem;font-weight:800;color:var(--es-text);}
+  .es-period select,.es-filter select,.field input,.field select,.field textarea,.field .read-only{
+    padding:10px 12px;
+    border-radius:12px;
+    border:1px solid var(--es-line);
+    background:#fff;
+    color:var(--es-text);
+    width:100%;
+  }
+  .es-filter{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:12px;
+    align-items:end;
+    margin-bottom:14px;
+    padding:14px;
+    border-radius:16px;
+  }
+  .span-4{grid-column:span 4;}
+  .span-3{grid-column:span 3;}
+  .span-2{grid-column:span 2;}
+  .es-actions{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+  }
+  .btn{
+    padding:10px 16px;
+    border-radius:999px;
+    border:1px solid var(--es-line);
+    background:#fff;
+    color:var(--es-text);
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn.primary{
+    background:linear-gradient(180deg,#ff7a1a,#ff6600);
+    color:#fff;
+    border-color:rgba(255,102,0,.35);
+    box-shadow:0 12px 20px rgba(255,102,0,.20);
+  }
+  .btn:hover{box-shadow:0 10px 18px rgba(2,6,23,.10);}
+  .es-summary{
+    display:grid;
+    grid-template-columns:repeat(12,1fr);
+    gap:14px;
+    margin-bottom:16px;
+  }
+  .es-summary-card{
+    grid-column:span 3;
+    padding:16px;
+    border-radius:16px;
+  }
+  .es-summary-card h4{margin:0 0 6px 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--es-muted);}
+  .es-summary-card .value{font-size:1.4rem;font-weight:900;}
+  .es-summary-card .sub{margin-top:6px;font-size:.92rem;color:var(--es-muted);}
+  .balance{
+    display:inline-block;
+    padding:6px 10px;
+    border-radius:10px;
+    background:rgba(34,197,94,.12);
+    color:#15803d;
+  }
+  .tabs{display:flex;gap:10px;flex-wrap:wrap;margin:0 0 14px 0;}
+  .tab-btn{
+    padding:10px 14px;
+    border-radius:999px;
+    border:1px solid var(--es-line);
+    background:#fff;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .tab-btn.active{
+    border-color:rgba(255,106,0,.35);
+    color:var(--es-accent);
+    box-shadow:0 10px 16px rgba(255,106,0,.12);
+  }
+  .es-panel{margin-top:14px;border-radius:16px;overflow:hidden;}
+  .es-panel[hidden]{display:none;}
+  .panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 16px;
+    border-bottom:1px solid var(--es-line);
+  }
+  .panel-title{margin:0;font-size:1rem;font-weight:800;}
+  .badge{
+    padding:4px 10px;
+    border-radius:999px;
+    background:rgba(255,106,0,.08);
+    color:var(--es-accent);
+    font-size:.78rem;
+    font-weight:700;
+    border:1px solid rgba(255,106,0,.25);
+  }
+  .table-wrap{overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{
+    text-align:left;
+    padding:12px 16px;
+    color:var(--es-muted);
+    font-size:.78rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    border-bottom:1px solid var(--es-line);
+    background:#fafbff;
+  }
+  tbody td{padding:12px 16px;border-bottom:1px solid var(--es-line);vertical-align:top;}
+  tbody tr:hover{background:rgba(15,23,42,.03);}
+  .muted{color:var(--es-muted);}
+  .empty{padding:18px;color:var(--es-muted);}
+  .danger{
+    border:1px solid rgba(239,68,68,.35);
+    background:#fff;
+    color:#b91c1c;
+    border-radius:10px;
+    padding:8px 10px;
+    cursor:pointer;
+  }
+  .action-group{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .action-btn{
+    border:1px solid var(--es-line);
+    background:#fff;
+    color:var(--es-text);
+    border-radius:10px;
+    padding:8px 10px;
+    cursor:pointer;
+    font-weight:700;
+  }
+  .modal-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(2,6,23,.45);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:18px;
+    z-index:9999;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal-card{
+    width:100%;
+    max-width:680px;
+    background:#fff;
+    border-radius:18px;
+    border:1px solid var(--es-line);
+    box-shadow:0 28px 60px rgba(15,23,42,.22);
+    overflow:hidden;
+  }
+  .modal-head{
+    padding:14px 16px;
+    border-bottom:1px solid var(--es-line);
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .modal-title{margin:0;font-weight:900;}
+  .modal-body{padding:16px;}
+  .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .field{display:flex;flex-direction:column;gap:6px;}
+  .field.full{grid-column:1 / -1;}
+  .field-group{display:contents;}
+  .read-only{background:#f8fafc;color:var(--es-muted);}
+  .income-preview{
+    padding:14px;
+    border-radius:14px;
+    border:1px dashed rgba(255,106,0,.35);
+    background:rgba(255,106,0,.05);
+  }
+  .income-preview strong{display:block;font-size:1.2rem;}
+  .es-hidden{display:none !important;}
+  @media(max-width:1050px){
+    .es-summary-card{grid-column:span 12;}
+    .span-4,.span-3,.span-2{grid-column:span 12;}
+  }
+  @media(max-width:720px){
+    .es-topbar{grid-template-columns:1fr;}
+    .modal-grid{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="es-wrap">
+  <div class="es-topbar">
+    <div>
+      <h2 class="es-title">Employee Salary</h2>
+      <div class="es-subtitle">Manage team salary income, employee expenses, and available balances.</div>
+    </div>
+    <form class="es-period" method="get">
+      {% if selected_pm %}<input type="hidden" name="pm" value="{{ selected_pm.id }}">{% endif %}
+      {% if selected_employee %}<input type="hidden" name="employee" value="{{ selected_employee.id }}">{% endif %}
+      <label>Period</label>
+      <select name="period" onchange="this.form.submit()">
+        <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+        <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+      </select>
+      <select name="year" onchange="this.form.submit()">
+        {% for y in year_options %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+        {% for m, label in months %}
+          <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </form>
+  </div>
+
+  <form class="es-filter" method="get">
+    <input type="hidden" name="period" value="{{ period }}">
+    <input type="hidden" name="year" value="{{ year }}">
+    <input type="hidden" name="month" value="{{ month }}">
+    {% if not is_pm_user %}
+      <div class="span-4">
+        <label for="pm-select">PM</label>
+        <select id="pm-select" name="pm" onchange="this.form.submit()">
+          <option value="">Select PM</option>
+          {% for pm in pms %}
+            <option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>
+              {{ pm.full_name|default:pm.email|default:pm.cnic }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    {% else %}
+      <input type="hidden" name="pm" value="{{ selected_pm.id }}">
+      <div class="span-4">
+        <label>PM</label>
+        <div class="read-only">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</div>
+      </div>
+    {% endif %}
+    <div class="span-4">
+      <label for="employee-select">Employee</label>
+      <select id="employee-select" name="employee" onchange="this.form.submit()" {% if not selected_pm %}disabled{% endif %}>
+        <option value="">All team members</option>
+        {% for employee in team_members %}
+          <option value="{{ employee.id }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>
+            {{ employee.full_name|default:employee.email|default:employee.cnic }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="span-4 es-actions">
+      <button class="btn primary" type="button" onclick="openModal('salary-modal')" {% if not selected_pm %}disabled{% endif %}>Add Salary</button>
+      <button class="btn" type="button" onclick="openModal('expense-modal')" {% if not selected_pm %}disabled{% endif %}>Add Expense</button>
+      <button class="btn" type="button" onclick="openModal('payment-modal')" {% if not selected_pm %}disabled{% endif %}>Pay Salary</button>
+    </div>
+  </form>
+
+  {% if selected_pm and salary_data %}
+    <div class="es-summary">
+      <div class="es-summary-card">
+        <h4>Total Income</h4>
+        <div class="value">PKR {{ salary_data.total_income_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">Gross salary generated by {{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</div>
+      </div>
+      <div class="es-summary-card">
+        <h4>Total Expenses</h4>
+        <div class="value">PKR {{ salary_data.total_expenses_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">Mess + Hostel, advance taken, fines, and other expenses</div>
+      </div>
+      <div class="es-summary-card">
+        <h4>Total Paid</h4>
+        <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
+        <div class="sub">Salary already paid to employees</div>
+      </div>
+      <div class="es-summary-card">
+        <h4>Available Balance</h4>
+        <div class="value"><span class="balance">PKR {{ salary_data.total_balance_pkr|floatformat:0|intcomma }}</span></div>
+        <div class="sub">${{ salary_data.total_balance_usd|floatformat:2 }}</div>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" type="button" data-tab-target="summary-tab" onclick="showTab(this)">Employee Summary</button>
+      <button class="tab-btn" type="button" data-tab-target="salary-tab" onclick="showTab(this)">Salary Entries</button>
+      <button class="tab-btn" type="button" data-tab-target="expense-tab" onclick="showTab(this)">Expense Entries</button>
+      <button class="tab-btn" type="button" data-tab-target="payment-tab" onclick="showTab(this)">Salary Paid</button>
+    </div>
+
+    <section id="summary-tab" class="es-panel">
+      <div class="panel-head">
+        <h3 class="panel-title">Team Balance Summary</h3>
+        <div class="badge">{{ salary_data.employee_rows|length }} employees</div>
+      </div>
+      {% if salary_data.employee_rows %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Total Income</th>
+                <th>Total Expenses</th>
+                <th>Total Paid</th>
+                <th>Available Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in salary_data.employee_rows %}
+                <tr>
+                  <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
+                  <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">No salary or expense records found for this filter.</div>
+      {% endif %}
+    </section>
+
+    <section id="salary-tab" class="es-panel" hidden>
+      <div class="panel-head">
+        <h3 class="panel-title">Salary Entries</h3>
+        <div class="badge">{{ salary_data.salaries|length }} entries</div>
+      </div>
+      {% if salary_data.salaries %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Type</th>
+                <th>Upwork Profile</th>
+                <th>Project</th>
+                <th>Units</th>
+                <th>Rate</th>
+                <th>Income</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for salary in salary_data.salaries %}
+                <tr>
+                  <td>{{ salary.work_date }}</td>
+                  <td>{{ salary.employee.full_name|default:salary.employee.email|default:salary.employee.cnic }}</td>
+                  <td>{{ salary.get_salary_type_display }}</td>
+                  <td>{{ salary.upwork_profile_name }}</td>
+                  <td>{{ salary.project_name }}</td>
+                  <td>
+                    {% if salary.salary_type == "fixed_budget" %}
+                      {{ salary.entries_email|floatformat:2 }} entries/email
+                    {% else %}
+                      {{ salary.number_of_hours|floatformat:2 }} hours
+                    {% endif %}
+                  </td>
+                  <td>
+                    {% if salary.salary_type == "fixed_budget" %}
+                      PKR {{ salary.per_entry_rate|floatformat:2 }}
+                    {% else %}
+                      PKR {{ salary.per_hour_rate|floatformat:2 }}
+                    {% endif %}
+                  </td>
+                  <td>PKR {{ salary.income_amount|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="action-group">
+                      <button
+                        class="action-btn"
+                        type="button"
+                        data-salary-id="{{ salary.id }}"
+                        data-employee-id="{{ salary.employee_id }}"
+                        data-salary-type="{{ salary.salary_type }}"
+                        data-upwork-profile-name="{{ salary.upwork_profile_name }}"
+                        data-project-name="{{ salary.project_name }}"
+                        data-entries-email="{{ salary.entries_email|default_if_none:'' }}"
+                        data-per-entry-rate="{{ salary.per_entry_rate|default_if_none:'' }}"
+                        data-number-of-hours="{{ salary.number_of_hours|default_if_none:'' }}"
+                        data-per-hour-rate="{{ salary.per_hour_rate|default_if_none:'' }}"
+                        data-work-date="{{ salary.work_date|date:'Y-m-d' }}"
+                        onclick="openSalaryEditModal(this)"
+                      >Edit</button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary">
+                        <input type="hidden" name="salary_id" value="{{ salary.id }}">
+                        <button class="danger" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">No salary entries yet.</div>
+      {% endif %}
+    </section>
+
+    <section id="expense-tab" class="es-panel" hidden>
+      <div class="panel-head">
+        <h3 class="panel-title">Expense Entries</h3>
+        <div class="badge">{{ salary_data.expenses|length }} entries</div>
+      </div>
+      {% if salary_data.expenses %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Expense Type</th>
+                <th>Note</th>
+                <th>Paid By</th>
+                <th>Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for expense in salary_data.expenses %}
+                <tr>
+                  <td>{{ expense.paid_date }}</td>
+                  <td>{{ expense.employee.full_name|default:expense.employee.email|default:expense.employee.cnic }}</td>
+                  <td>{{ expense.get_expense_type_display }}</td>
+                  <td>{{ expense.note|default:"-" }}</td>
+                  <td>{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
+                  <td>PKR {{ expense.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="action-group">
+                      <button
+                        class="action-btn"
+                        type="button"
+                        data-expense-id="{{ expense.id }}"
+                        data-employee-id="{{ expense.employee_id }}"
+                        data-expense-type="{{ expense.expense_type }}"
+                        data-note="{{ expense.note }}"
+                        data-amount-pkr="{{ expense.amount_pkr }}"
+                        data-paid-date="{{ expense.paid_date|date:'Y-m-d' }}"
+                        data-paid-by-id="{{ expense.paid_by_id|default:selected_pm.id }}"
+                        data-paid-by-label="{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
+                        onclick="openExpenseEditModal(this)"
+                      >Edit</button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary_expense">
+                        <input type="hidden" name="expense_id" value="{{ expense.id }}">
+                        <button class="danger" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">No expense entries yet.</div>
+      {% endif %}
+    </section>
+
+    <section id="payment-tab" class="es-panel" hidden>
+      <div class="panel-head">
+        <h3 class="panel-title">Salary Paid</h3>
+        <div class="badge">{{ salary_data.payments|length }} entries</div>
+      </div>
+      {% if salary_data.payments %}
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Employee</th>
+                <th>Paid By</th>
+                <th>Note</th>
+                <th>Amount</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for payment in salary_data.payments %}
+                <tr>
+                  <td>{{ payment.paid_date }}</td>
+                  <td>{{ payment.employee.full_name|default:payment.employee.email|default:payment.employee.cnic }}</td>
+                  <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
+                  <td>{{ payment.note|default:"-" }}</td>
+                  <td>PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="action-group">
+                      <button
+                        class="action-btn"
+                        type="button"
+                        data-payment-id="{{ payment.id }}"
+                        data-employee-id="{{ payment.employee_id }}"
+                        data-amount-pkr="{{ payment.amount_pkr }}"
+                        data-note="{{ payment.note }}"
+                        data-paid-date="{{ payment.paid_date|date:'Y-m-d' }}"
+                        data-paid-by-id="{{ payment.paid_by_id|default:'' }}"
+                        data-paid-by-label="{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
+                        onclick="openPaymentEditModal(this)"
+                      >Edit</button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary_payment">
+                        <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                        <button class="danger" type="submit">Delete</button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty">No salary payments yet.</div>
+      {% endif %}
+    </section>
+  {% else %}
+    <div class="es-panel">
+      <div class="empty">Select a PM to manage employee salaries.</div>
+    </div>
+  {% endif %}
+</div>
+
+{% if selected_pm %}
+  <div id="salary-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'salary-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Add Salary</div>
+        <button class="btn" type="button" onclick="closeModal('salary-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_salary">
+          <input type="hidden" name="pm_id" value="{{ selected_pm.id }}">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Salary Type</label>
+              <select id="salary-type-add" name="salary_type" onchange="toggleSalaryMode('add')">
+                {% for value, label in salary_type_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Upwork Profile Name</label>
+              <input type="text" name="upwork_profile_name" required>
+            </div>
+            <div class="field">
+              <label>Project Name</label>
+              <input type="text" name="project_name" required>
+            </div>
+            <div id="fixed-budget-fields-add" class="field-group contents">
+              <div class="field">
+                <label>Entries/Email</label>
+                <input id="entries-email-add" type="number" name="entries_email" step="0.01" min="0" oninput="updateSalaryIncome('add')">
+              </div>
+              <div class="field">
+                <label>Per Entry Rate</label>
+                <input id="per-entry-rate-add" type="number" name="per_entry_rate" step="0.01" min="0" oninput="updateSalaryIncome('add')">
+              </div>
+            </div>
+            <div id="timer-fields-add" class="field-group contents es-hidden">
+              <div class="field">
+                <label>Number of Hours</label>
+                <input id="number-of-hours-add" type="number" name="number_of_hours" step="0.01" min="0" oninput="updateSalaryIncome('add')">
+              </div>
+              <div class="field">
+                <label>Per Hour Rate</label>
+                <input id="per-hour-rate-add" type="number" name="per_hour_rate" step="0.01" min="0" oninput="updateSalaryIncome('add')">
+              </div>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="work_date" value="{{ today }}" required>
+            </div>
+            <div class="field full">
+              <div class="income-preview">
+                <span class="muted">Employee income preview</span>
+                <strong id="salary-income-preview-add">PKR 0.00</strong>
+              </div>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('salary-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Save Salary</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="expense-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'expense-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Add Expense</div>
+        <button class="btn" type="button" onclick="closeModal('expense-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_salary_expense">
+          <input type="hidden" name="pm_id" value="{{ selected_pm.id }}">
+          <input type="hidden" name="paid_by" value="{{ selected_pm.id }}">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Expense Type</label>
+              <select name="expense_type" required>
+                {% for value, label in expense_type_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field full">
+              <label>Note</label>
+              <textarea name="note" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label>Amount - PKR</label>
+              <input type="number" name="amount_pkr" step="0.01" min="0" required>
+            </div>
+            <div class="field">
+              <label>Paid By</label>
+              <div class="read-only">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</div>
+            </div>
+            <div class="field">
+              <label>Date of Paid</label>
+              <input type="date" name="paid_date" value="{{ today }}" required>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('expense-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Save Expense</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="payment-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'payment-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Pay Salary</div>
+        <button class="btn" type="button" onclick="closeModal('payment-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="add_salary_payment">
+          <input type="hidden" name="pm_id" value="{{ selected_pm.id }}">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Amount Going To Pay</label>
+              <input type="number" name="amount_pkr" step="0.01" min="0" required>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="paid_date" value="{{ today }}" required>
+            </div>
+            <div class="field full">
+              <label>Note</label>
+              <textarea name="note" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('payment-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Save Payment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="salary-edit-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'salary-edit-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Edit Salary</div>
+        <button class="btn" type="button" onclick="closeModal('salary-edit-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form id="salary-edit-form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="edit_salary">
+          <input type="hidden" name="salary_id" value="">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Salary Type</label>
+              <select id="salary-type-edit" name="salary_type" onchange="toggleSalaryMode('edit')">
+                {% for value, label in salary_type_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}">{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Upwork Profile Name</label>
+              <input type="text" name="upwork_profile_name" required>
+            </div>
+            <div class="field">
+              <label>Project Name</label>
+              <input type="text" name="project_name" required>
+            </div>
+            <div id="fixed-budget-fields-edit" class="field-group contents">
+              <div class="field">
+                <label>Entries/Email</label>
+                <input id="entries-email-edit" type="number" name="entries_email" step="0.01" min="0" oninput="updateSalaryIncome('edit')">
+              </div>
+              <div class="field">
+                <label>Per Entry Rate</label>
+                <input id="per-entry-rate-edit" type="number" name="per_entry_rate" step="0.01" min="0" oninput="updateSalaryIncome('edit')">
+              </div>
+            </div>
+            <div id="timer-fields-edit" class="field-group contents es-hidden">
+              <div class="field">
+                <label>Number of Hours</label>
+                <input id="number-of-hours-edit" type="number" name="number_of_hours" step="0.01" min="0" oninput="updateSalaryIncome('edit')">
+              </div>
+              <div class="field">
+                <label>Per Hour Rate</label>
+                <input id="per-hour-rate-edit" type="number" name="per_hour_rate" step="0.01" min="0" oninput="updateSalaryIncome('edit')">
+              </div>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="work_date" required>
+            </div>
+            <div class="field full">
+              <div class="income-preview">
+                <span class="muted">Employee income preview</span>
+                <strong id="salary-income-preview-edit">PKR 0.00</strong>
+              </div>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('salary-edit-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Update Salary</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="expense-edit-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'expense-edit-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Edit Expense</div>
+        <button class="btn" type="button" onclick="closeModal('expense-edit-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form id="expense-edit-form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="edit_salary_expense">
+          <input type="hidden" name="expense_id" value="">
+          <input type="hidden" name="paid_by" value="">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}">{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Expense Type</label>
+              <select name="expense_type" required>
+                {% for value, label in expense_type_choices %}
+                  <option value="{{ value }}">{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field full">
+              <label>Note</label>
+              <textarea name="note" rows="3"></textarea>
+            </div>
+            <div class="field">
+              <label>Amount - PKR</label>
+              <input type="number" name="amount_pkr" step="0.01" min="0" required>
+            </div>
+            <div class="field">
+              <label>Paid By</label>
+              <div id="expense-edit-paid-by-label" class="read-only">-</div>
+            </div>
+            <div class="field">
+              <label>Date of Paid</label>
+              <input type="date" name="paid_date" required>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('expense-edit-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Update Expense</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="payment-edit-modal" class="modal-backdrop" onclick="closeOnBackdrop(event, 'payment-edit-modal')">
+    <div class="modal-card">
+      <div class="modal-head">
+        <div class="modal-title">Edit Salary Payment</div>
+        <button class="btn" type="button" onclick="closeModal('payment-edit-modal')">Close</button>
+      </div>
+      <div class="modal-body">
+        <form id="payment-edit-form" method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="edit_salary_payment">
+          <input type="hidden" name="payment_id" value="">
+          <input type="hidden" name="paid_by" value="">
+          <div class="modal-grid">
+            <div class="field">
+              <label>Employee</label>
+              <select name="employee_id" required>
+                <option value="">Select employee</option>
+                {% for employee in team_members %}
+                  <option value="{{ employee.id }}">{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label>Amount Going To Pay</label>
+              <input type="number" name="amount_pkr" step="0.01" min="0" required>
+            </div>
+            <div class="field">
+              <label>Date</label>
+              <input type="date" name="paid_date" required>
+            </div>
+            <div class="field">
+              <label>Paid By</label>
+              <div id="payment-edit-paid-by-label" class="read-only">-</div>
+            </div>
+            <div class="field full">
+              <label>Note</label>
+              <textarea name="note" rows="3"></textarea>
+            </div>
+          </div>
+          <div class="es-actions" style="margin-top:14px;">
+            <button class="btn" type="button" onclick="closeModal('payment-edit-modal')">Cancel</button>
+            <button class="btn primary" type="submit">Update Payment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endif %}
+
+<script>
+  function openModal(id){ document.getElementById(id)?.classList.add("open"); }
+  function closeModal(id){ document.getElementById(id)?.classList.remove("open"); }
+  function closeOnBackdrop(event, id){ if(event.target.id === id){ closeModal(id); } }
+
+  function showTab(button){
+    document.querySelectorAll(".tab-btn").forEach((btn) => btn.classList.remove("active"));
+    button.classList.add("active");
+    document.querySelectorAll(".es-panel[id$='-tab']").forEach((panel) => {
+      panel.hidden = panel.id !== button.dataset.tabTarget;
+    });
+  }
+
+  function setFormValue(formId, fieldName, value){
+    const form = document.getElementById(formId);
+    const field = form?.querySelector(`[name="${fieldName}"]`);
+    if(field){
+      field.value = value ?? "";
+    }
+  }
+
+  function setText(id, value){
+    const element = document.getElementById(id);
+    if(element){
+      element.textContent = value || "-";
+    }
+  }
+
+  function toggleSalaryMode(prefix){
+    const mode = document.getElementById(`salary-type-${prefix}`)?.value;
+    const fixed = document.getElementById(`fixed-budget-fields-${prefix}`);
+    const timer = document.getElementById(`timer-fields-${prefix}`);
+    if(!fixed || !timer) return;
+    fixed.classList.toggle("es-hidden", mode !== "fixed_budget");
+    timer.classList.toggle("es-hidden", mode !== "timer");
+    updateSalaryIncome(prefix);
+  }
+
+  function updateSalaryIncome(prefix){
+    const mode = document.getElementById(`salary-type-${prefix}`)?.value;
+    const entries = parseFloat(document.getElementById(`entries-email-${prefix}`)?.value || "0");
+    const perEntry = parseFloat(document.getElementById(`per-entry-rate-${prefix}`)?.value || "0");
+    const hours = parseFloat(document.getElementById(`number-of-hours-${prefix}`)?.value || "0");
+    const perHour = parseFloat(document.getElementById(`per-hour-rate-${prefix}`)?.value || "0");
+    const total = mode === "timer" ? hours * perHour : entries * perEntry;
+    const preview = document.getElementById(`salary-income-preview-${prefix}`);
+    if(preview){
+      preview.textContent = `PKR ${Number.isFinite(total) ? total.toFixed(2) : "0.00"}`;
+    }
+  }
+
+  function openSalaryEditModal(button){
+    setFormValue("salary-edit-form", "salary_id", button.dataset.salaryId);
+    setFormValue("salary-edit-form", "employee_id", button.dataset.employeeId);
+    setFormValue("salary-edit-form", "salary_type", button.dataset.salaryType);
+    setFormValue("salary-edit-form", "upwork_profile_name", button.dataset.upworkProfileName);
+    setFormValue("salary-edit-form", "project_name", button.dataset.projectName);
+    setFormValue("salary-edit-form", "entries_email", button.dataset.entriesEmail);
+    setFormValue("salary-edit-form", "per_entry_rate", button.dataset.perEntryRate);
+    setFormValue("salary-edit-form", "number_of_hours", button.dataset.numberOfHours);
+    setFormValue("salary-edit-form", "per_hour_rate", button.dataset.perHourRate);
+    setFormValue("salary-edit-form", "work_date", button.dataset.workDate);
+    toggleSalaryMode("edit");
+    openModal("salary-edit-modal");
+  }
+
+  function openExpenseEditModal(button){
+    setFormValue("expense-edit-form", "expense_id", button.dataset.expenseId);
+    setFormValue("expense-edit-form", "employee_id", button.dataset.employeeId);
+    setFormValue("expense-edit-form", "expense_type", button.dataset.expenseType);
+    setFormValue("expense-edit-form", "note", button.dataset.note);
+    setFormValue("expense-edit-form", "amount_pkr", button.dataset.amountPkr);
+    setFormValue("expense-edit-form", "paid_date", button.dataset.paidDate);
+    setFormValue("expense-edit-form", "paid_by", button.dataset.paidById);
+    setText("expense-edit-paid-by-label", button.dataset.paidByLabel);
+    openModal("expense-edit-modal");
+  }
+
+  function openPaymentEditModal(button){
+    setFormValue("payment-edit-form", "payment_id", button.dataset.paymentId);
+    setFormValue("payment-edit-form", "employee_id", button.dataset.employeeId);
+    setFormValue("payment-edit-form", "amount_pkr", button.dataset.amountPkr);
+    setFormValue("payment-edit-form", "note", button.dataset.note);
+    setFormValue("payment-edit-form", "paid_date", button.dataset.paidDate);
+    setFormValue("payment-edit-form", "paid_by", button.dataset.paidById);
+    setText("payment-edit-paid-by-label", button.dataset.paidByLabel);
+    openModal("payment-edit-modal");
+  }
+
+  toggleSalaryMode("add");
+  toggleSalaryMode("edit");
+</script>
+{% endblock %}

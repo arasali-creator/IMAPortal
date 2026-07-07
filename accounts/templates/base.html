@@ -197,18 +197,21 @@
   <a href="{% url 'attendance:dashboard' %}" class="{% if request.path == '/attendance/dashboard/' %}active{% endif %}">
     <i class="fa fa-calendar-check"></i> Attendance
   </a>
-  
-  <a href="{% url 'user_payroll_summary' %}" class="{% if request.path == '/payroll/my-summary/' %}active{% endif %}">
-    <i class="fa fa-wallet"></i> Payroll
+  {% if request.user.is_authenticated and request.user.role == 'pm' %}
+  <a href="{% url 'payroll:my_summary' %}" class="{% if request.path == '/payroll/my-summary/' %}active{% endif %}">
+    <i class="fa fa-wallet"></i> My Payroll
   </a>
-  
+  {% endif %}
+  {% if request.user.is_authenticated and request.user.role == 'employee' %}
+  <a href="{% url 'payroll:employee_salary_summary' %}" class="{% if request.path == '/payroll/salary-summary/' %}active{% endif %}">
+    <i class="fa fa-money-check-dollar"></i> Salary
+  </a>
+  {% endif %}
+
   <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/leaves/my-leaves/' %}active{% endif %}">
     <i class="fa fa-plane-departure"></i> Apply Leave
   </a>
 
-  <a href="{% url 'chat_home' %}" class="{% if request.path|slice:':6' == '/chat/' %}active{% endif %}">
-    <i class="fa fa-comments"></i> Chat
-  </a>
   
   <a href="{% url 'dashboard' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
     <i class="fa fa-user"></i> Profile

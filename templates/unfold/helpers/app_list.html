@@ -40,15 +40,15 @@
 
                                         {% with badge_callback=item|get_item:"badge_callback" badge=item|get_item:"badge" %}
                                             {% if badge_callback and badge_callback != "0" %}
-                                                <span class="nav-badge{% if item.icon == 'chat' or 'Chat' in item.title %} chat-badge{% endif %}{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}">
+                                                <span class="nav-badge{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}">
                                                     {{ badge_callback }}
                                                 </span>
                                             {% elif badge and badge != "0" %}
-                                                <span class="nav-badge{% if item.icon == 'chat' or 'Chat' in item.title %} chat-badge{% endif %}{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}">
+                                                <span class="nav-badge{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}">
                                                     {{ badge }}
                                                 </span>
-                                            {% elif item.icon == 'chat' or 'Chat' in item.title or item.icon == 'notifications' or 'Notifications' in item.title %}
-                                                <span class="nav-badge{% if item.icon == 'chat' or 'Chat' in item.title %} chat-badge{% endif %}{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}" style="display:none;"></span>
+                                            {% elif item.icon == 'notifications' or 'Notifications' in item.title %}
+                                                <span class="nav-badge{% if item.icon == 'notifications' or 'Notifications' in item.title %} notif-badge{% endif %}" style="display:none;"></span>
                                             {% endif %}
                                         {% endwith %}
                                     </a>

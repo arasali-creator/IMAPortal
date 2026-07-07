@@ -9,8 +9,6 @@ from django.utils import timezone
 
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
-from payroll.models import EmployeeSalary, Expense, SalaryPayment
-from chat.models import ChatMessage, ChatRoomMember
 from .models import Employee, Team, Notification
 
 
@@ -82,22 +80,13 @@ def notifications_queryset_for_user(user, qs=None):
     ct_team = ContentType.objects.get_for_model(Team)
     ct_leave = ContentType.objects.get_for_model(LeaveRequest)
     ct_att = ContentType.objects.get_for_model(Attendance)
-    ct_salary = ContentType.objects.get_for_model(EmployeeSalary)
-    ct_payment = ContentType.objects.get_for_model(SalaryPayment)
-    ct_expense = ContentType.objects.get_for_model(Expense)
 
     if member_ids:
         q |= Q(content_type=ct_employee, object_id__in=member_ids)
         leave_ids = LeaveRequest.objects.filter(employee_id__in=member_ids).values_list("id", flat=True)
         att_ids = Attendance.objects.filter(employee_id__in=member_ids).values_list("id", flat=True)
-        salary_ids = EmployeeSalary.objects.filter(employee_id__in=member_ids).values_list("id", flat=True)
-        payment_ids = SalaryPayment.objects.filter(employee_id__in=member_ids).values_list("id", flat=True)
-        expense_ids = Expense.objects.filter(employee_id__in=member_ids).values_list("id", flat=True)
         q |= Q(content_type=ct_leave, object_id__in=leave_ids)
         q |= Q(content_type=ct_att, object_id__in=att_ids)
-        q |= Q(content_type=ct_salary, object_id__in=salary_ids)
-        q |= Q(content_type=ct_payment, object_id__in=payment_ids)
-        q |= Q(content_type=ct_expense, object_id__in=expense_ids)
 
     if team_ids:
         q |= Q(content_type=ct_team, object_id__in=team_ids)
@@ -138,58 +127,43 @@ def can_view_leaves(request):
     return _has_perm(request.user, "leaves.view_leaverequest")
 
 
-def can_view_salary_payments(request):
-    return _has_perm(request.user, "payroll.view_salarypayment")
-
-
-def can_view_expenses(request):
-    return _has_perm(request.user, "payroll.view_expense")
-
-
 def can_view_notifications(request):
     return _has_perm(request.user, "accounts.view_notification")
 
 
-def can_view_chat(request):
-    return _has_perm(request.user, "chat.view_chatroom")
 
 
-def chat_unread_count_for_user(user):
-    if not user.is_authenticated:
-        return 0
-    memberships = ChatRoomMember.objects.filter(user=user).select_related("room")
-    total = 0
-    for membership in memberships:
-        qs = ChatMessage.objects.filter(room=membership.room).exclude(sender=user)
-        if membership.last_read_at:
-            qs = qs.filter(created_at__gt=membership.last_read_at)
-        total += qs.count()
-    return total
+def can_view_payroll_incomes(request):
+    return _has_perm(request.user, "payroll.view_pmincome")
 
 
-def chat_unread_badge(request):
-    try:
-        if not _has_perm(request.user, "chat.view_chatroom"):
-            return ""
-        count = chat_unread_count_for_user(request.user)
-        return count or ""
-    except (OperationalError, ProgrammingError):
-        return ""
+def can_view_payroll_advances(request):
+    return _has_perm(request.user, "payroll.view_pmadvance")
 
 
-def can_view_payroll_dashboard(request):
-    return _has_perm(request.user, "payroll.view_salarypayment") or _has_perm(
-        request.user, "payroll.view_expense"
-    )
+def can_view_payroll_splits(request):
+    return _has_perm(request.user, "payroll.view_pmsplitsetting")
 
 
-def can_view_salary_overview(request):
-    return _has_perm(request.user, "payroll.view_employeesalary")
+def can_view_employee_salary(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) in ["admin", "pm"]
 
 
-def can_view_pm_salary_share(request):
-    return _has_perm(request.user, "payroll.view_pmsalaryshare")
+def can_view_my_payroll(request):
+    return getattr(request.user, "role", None) == "pm"
 
 
-def can_view_dollar_rate(request):
-    return _has_perm(request.user, "payroll.view_globalsetting")
+def can_view_pm_calculations(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"
+
+
+def can_view_global_settings(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"
+
+
+def can_view_company_summary(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"
+
+
+def can_view_branch_expenses(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"

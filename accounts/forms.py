@@ -6,6 +6,11 @@ from .models import Employee, cnic_validator, alpha_spaces
 
 
 class EmployeeRegistrationForm(forms.ModelForm):
+    date_of_joining = forms.DateField(
+        label="Joining Date",
+        widget=forms.DateInput(attrs={"type": "date"}),
+        required=True,
+    )
     password1 = forms.CharField(
         label='Password',
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'})
@@ -14,6 +19,12 @@ class EmployeeRegistrationForm(forms.ModelForm):
         label='Confirm Password',
         widget=forms.PasswordInput(attrs={'autocomplete': 'new-password'})
     )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        optional_fields = {"degree_certificate", "blood_group"}
+        for name, field in self.fields.items():
+            field.required = name not in optional_fields
 
     class Meta:
         model = Employee

@@ -311,13 +311,9 @@
         <div>
           <h2 class="title">Office Portal Overview</h2>
           <p class="subtitle">
-            A quick snapshot of employees, attendance, payroll, payments and office expenses.
+            A quick snapshot of employees, attendance, and recent activity.
           </p>
         </div>
-
-        {% if rate %}
-          <div class="rate-badge"><span class="dot"></span> USD→PKR: {{ rate|floatformat:4 }}</div>
-        {% endif %}
       </div>
 
       <div class="quick">
@@ -342,50 +338,6 @@
           </div>
           <div class="qmeta">Open</div>
         </a>
-
-        <a class="qcard" href="{% url 'admin:payroll_globalsetting_changelist' %}">
-          <div class="ico">
-            <svg viewBox="0 0 24 24"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"/></svg>
-          </div>
-          <div>
-            <div class="qtitle">Set Dollar Rate</div>
-            <div class="qsub">USD→PKR conversion settings</div>
-          </div>
-          <div class="qmeta">Open</div>
-        </a>
-
-        <a class="qcard" href="{% url 'admin:payroll_employeesalary_changelist' %}">
-          <div class="ico">
-            <svg viewBox="0 0 24 24"><path d="M21 15V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v9"/><path d="M7 10h10"/><path d="M7 14h6"/><path d="M7 18h10"/></svg>
-          </div>
-          <div>
-            <div class="qtitle">Employee Salaries</div>
-            <div class="qsub">Monthly salary records</div>
-          </div>
-          <div class="qmeta">Open</div>
-        </a>
-
-        <a class="qcard" href="{% url 'admin:payroll_salarypayment_changelist' %}">
-          <div class="ico">
-            <svg viewBox="0 0 24 24"><path d="M3 7h18"/><path d="M5 7V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v2"/><path d="M5 7v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7"/><path d="M9 11h6"/><path d="M9 15h6"/></svg>
-          </div>
-          <div>
-            <div class="qtitle">Salary Payments</div>
-            <div class="qsub">Paid, pending & references</div>
-          </div>
-          <div class="qmeta">Open</div>
-        </a>
-
-        <a class="qcard" href="{% url 'admin:payroll_expense_changelist' %}">
-          <div class="ico">
-            <svg viewBox="0 0 24 24"><path d="M21 8V7a2 2 0 0 0-2-2H7L5 3H3"/><path d="M21 8H7"/><path d="M7 8l-2 12h14l2-12"/><path d="M9 12h6"/></svg>
-          </div>
-          <div>
-            <div class="qtitle">Office Expenses</div>
-            <div class="qsub">Categories & spend trends</div>
-          </div>
-          <div class="qmeta">Open</div>
-        </a>
       </div>
     </div>
 
@@ -401,38 +353,6 @@
         <div class="k-label">Attendance Today</div>
         <div class="k-value">{{ attendance_today|default:"—" }}</div>
         <div class="k-hint">Check-ins recorded today</div>
-      </div>
-
-      <div class="card kpi">
-        <div class="k-label">Payments This Month</div>
-        <div class="k-value accent">
-          {% if payments_month_total %}{{ payments_month_total|floatformat:0|intcomma }}{% else %}—{% endif %}
-        </div>
-        <div class="k-hint">Total PKR paid this month</div>
-      </div>
-
-      <div class="card kpi">
-        <div class="k-label">Expenses This Month</div>
-        <div class="k-value">
-          {% if expenses_month_total %}{{ expenses_month_total|floatformat:0|intcomma }}{% else %}—{% endif %}
-        </div>
-        <div class="k-hint">Total PKR expenses this month</div>
-      </div>
-
-      <div class="card panel">
-        <h3>6-Month Trend</h3>
-        <p class="mini">Payroll payments vs office expenses (PKR).</p>
-        <div class="chart-wrap">
-          <canvas id="trendChart"></canvas>
-        </div>
-      </div>
-
-      <div class="card panel">
-        <h3>Expense Categories</h3>
-        <p class="mini">This month split by category (PKR).</p>
-        <div class="chart-wrap">
-          <canvas id="catChart"></canvas>
-        </div>
       </div>
     </div>
 
@@ -509,51 +429,4 @@
 
   </div>
 </div>
-
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-  // Safe defaults if context not passed yet
-  const trendLabels = {{ trend_labels|default:"[]"|safe }};
-  const trendPayroll = {{ payroll_series|default:"[]"|safe }};
-  const trendExpenses = {{ expense_series|default:"[]"|safe }};
-
-  const catLabels = {{ cat_labels|default:"[]"|safe }};
-  const catSeries = {{ cat_series|default:"[]"|safe }};
-
-  // Trend chart
-  const t = document.getElementById("trendChart");
-  if (t && trendLabels.length && (trendPayroll.length || trendExpenses.length)) {
-    new Chart(t, {
-      type: "line",
-      data: {
-        labels: trendLabels,
-        datasets: [
-          { label: "Payments (PKR)", data: trendPayroll, tension: 0.35, borderWidth: 2 },
-          { label: "Expenses (PKR)", data: trendExpenses, tension: 0.35, borderWidth: 2 },
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: "bottom" } },
-        scales: {
-          y: { ticks: { callback: (v)=> Number(v).toLocaleString() } }
-        }
-      }
-    });
-  }
-
-  // Category chart
-  const c = document.getElementById("catChart");
-  if (c && catLabels.length && catSeries.length) {
-    new Chart(c, {
-      type: "doughnut",
-      data: { labels: catLabels, datasets: [{ data: catSeries }] },
-      options: {
-        responsive: true,
-        plugins: { legend: { position: "bottom" } },
-        cutout: "70%"
-      }
-    });
-  }
-</script>
 {% endblock %}

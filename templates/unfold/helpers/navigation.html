@@ -11,10 +11,10 @@
         {% include "admin/app_list.html" with app_list=available_apps show_changelinks=False %}
     {% endif %}
 
-    <div style="margin-top:auto; padding: 14px;">
+    <div class="nav-logout">
         <form method="post" action="{% url 'admin:logout' %}">
             {% csrf_token %}
-            <button type="submit" style="width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;background:#ff6600;color:#ffffff;font-weight:900;border:1px solid #ff6600;cursor:pointer;">
+            <button type="submit" class="nav-logout-btn">
                 Logout
             </button>
         </form>
@@ -22,7 +22,6 @@
 
     <script>
       (function () {
-        const unreadUrl = "{% url 'admin:chat_room_unread_count' %}";
         const notifUrl = "{% url 'admin:accounts_notification_unread_count' %}";
         let audioCtx = null;
         let soundEnabled = false;
@@ -62,29 +61,7 @@
           return Number.isFinite(n) ? n : 0;
         }
 
-        let lastChatCount = normalizeCount(document.querySelector(".chat-badge")?.textContent);
         let lastNotifCount = normalizeCount(document.querySelector(".notif-badge")?.textContent);
-
-        function updateChatBadge() {
-          const badge = document.querySelector(".chat-badge");
-          if (!badge) return;
-          fetch(unreadUrl)
-            .then(r => r.json())
-            .then(data => {
-              if (!data.ok) return;
-              const count = normalizeCount(data.count);
-              if (count > lastChatCount) {
-                playNotificationSound();
-              }
-              lastChatCount = count;
-              if (count) {
-                badge.textContent = count;
-                badge.style.display = "inline-flex";
-              } else {
-                badge.style.display = "none";
-              }
-            });
-        }
 
         function updateNotifBadge() {
           const badge = document.querySelector(".notif-badge");
@@ -107,10 +84,8 @@
             });
         }
 
-        updateChatBadge();
         updateNotifBadge();
         setInterval(() => {
-          updateChatBadge();
           updateNotifBadge();
         }, 5000);
       })();

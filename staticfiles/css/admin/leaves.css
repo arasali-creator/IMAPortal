@@ -1,0 +1,336 @@
+:root{
+  --p:#ff6600;
+  --s:#181818;
+  --line: rgba(0,0,0,.07);
+  --card: rgba(255,255,255,.92);
+  --muted: rgba(24,24,24,.55);
+}
+
+.lv-wrap{ margin-top: 10px; }
+
+.lv-head{
+  margin: 12px 0;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: var(--card);
+  box-shadow: 0 14px 28px rgba(0,0,0,.06);
+}
+.lv-head .h{ font-size: 16px; font-weight: 950; color: var(--s); }
+.lv-head .p{ font-size: 12px; font-weight: 700; color: var(--muted); margin-top: 4px; }
+
+.lv-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 38px;
+}
+
+.lv-kpis{
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.lv-kpi{
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 12px 14px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.05);
+}
+.lv-kpi .k{
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--muted);
+}
+.lv-kpi .v{
+  margin-top: 6px;
+  font-size: 18px;
+  font-weight: 950;
+  color: var(--s);
+}
+.lv-kpi.ok{ background: rgba(34,197,94,.08); border-color: rgba(34,197,94,.18); }
+.lv-kpi.bad{ background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.18); }
+.lv-kpi.pending{ background: rgba(255,102,0,.08); border-color: rgba(255,102,0,.18); }
+
+.lv-tables{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.lv-table-card{
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--card);
+  padding: 12px 14px;
+  box-shadow: 0 10px 20px rgba(0,0,0,.05);
+}
+.lv-table-card .t-title{
+  font-weight: 900;
+  margin-bottom: 8px;
+  color: var(--s);
+}
+.lv-table{
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid rgba(0,0,0,.06);
+  border-radius: 12px;
+  overflow:hidden;
+  background: rgba(255,255,255,.9);
+}
+.lv-table th, .lv-table td{
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  font-size: 12px;
+}
+.lv-table th{
+  background: rgba(0,0,0,.03);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: .06em;
+  color: #334155;
+  text-align:left;
+}
+.lv-table tr:last-child td{ border-bottom: none; }
+.lv-table .num{ text-align:right; font-variant-numeric: tabular-nums; }
+.lv-table .empty{
+  padding: 12px;
+  color: var(--muted);
+  text-align:center;
+  font-weight: 800;
+}
+
+.lv-card{
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255,255,255,.75);
+  box-shadow: 0 10px 20px rgba(0,0,0,.06);
+  overflow:hidden;
+}
+
+.lv-top{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.lv-avatar{
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  display:grid;
+  place-items:center;
+  font-weight: 950;
+  background: rgba(255,102,0,.12);
+  border: 1px solid rgba(255,102,0,.22);
+  color: var(--s);
+  flex: 0 0 auto;
+}
+
+.lv-meta{ min-width: 0; }
+.lv-name{
+  font-weight: 950;
+  color: var(--s);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+.lv-mail{
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.lv-badge{
+  margin-left:auto;
+  padding: 7px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 950;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.85);
+  white-space: nowrap;
+}
+.lv-badge.pending{ background: rgba(255,102,0,.12); border-color: rgba(255,102,0,.25); }
+.lv-badge.approved{ background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.25); }
+.lv-badge.rejected{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.25); }
+
+.lv-body{ margin-top: 12px; display:flex; flex-direction:column; gap: 10px; }
+.lv-row{ display:flex; gap: 10px; justify-content:space-between; align-items:flex-start; }
+.lv-row .k{ font-size: 11px; font-weight: 900; color: var(--muted); }
+.lv-row .v{ font-size: 12px; font-weight: 800; color: var(--s); text-align:right; max-width: 70%; }
+.lv-row.split{ gap: 12px; }
+.lv-row.split > div{ flex:1; }
+
+.mini{
+  margin-top: 4px;
+  display:inline-flex;
+  align-items:center;
+  padding: 5px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 900;
+  border: 1px solid rgba(0,0,0,.08);
+  background: rgba(255,255,255,.85);
+}
+.mini.pending{ background: rgba(255,102,0,.10); border-color: rgba(255,102,0,.20); }
+.mini.approved{ background: rgba(34,197,94,.10); border-color: rgba(34,197,94,.20); }
+.mini.rejected{ background: rgba(239,68,68,.10); border-color: rgba(239,68,68,.20); }
+
+.lv-actions{
+  display:flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+.lv-actions .btn{
+  flex:1;
+  text-align:center;
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-weight: 950;
+  font-size: 12px;
+  text-decoration:none;
+  border: 1px solid rgba(0,0,0,.10);
+  background: rgba(255,255,255,.9);
+  color: var(--s);
+}
+.lv-actions .btn.ok{
+  border-color: rgba(34,197,94,.25);
+  background: rgba(34,197,94,.12);
+}
+.lv-actions .btn.bad{
+  border-color: rgba(239,68,68,.25);
+  background: rgba(239,68,68,.10);
+}
+.lv-actions .btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0,0,0,.10);
+}
+.lv-actions .btn.ok:hover{
+  background: rgba(34,197,94,.18);
+}
+.lv-actions .btn.bad:hover{
+  background: rgba(239,68,68,.16);
+}
+
+.lv-empty{
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px dashed rgba(0,0,0,.12);
+  color: var(--muted);
+  font-weight: 850;
+}
+
+@media (max-width: 1100px){
+  .lv-grid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lv-kpis{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .lv-tables{ grid-template-columns: 1fr; }
+}
+@media (max-width: 700px){
+  .lv-grid{ grid-template-columns: 1fr; }
+  .lv-kpis{ grid-template-columns: 1fr; }
+}
+/* Hide default table result list on Leaves (keep our cards) */
+body.app-leaves .results,
+body.app-leaves #result_list,
+body.app-leaves .result_list,
+body.app-leaves .change-list table,
+body.app-leaves .change-list .overflow-x-auto,
+body.app-leaves .change-list form#changelist-form > div:has(table) {
+  display: none !important;
+}
+/* ==============================
+   Leaves – Month filter (toplinks)
+   ============================== */
+
+body.app-leaves ul.toplinks{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:12px 14px;
+  margin: 6px 0 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(0,0,0,.07);
+  background: rgba(255,255,255,.75);
+  box-shadow: 0 10px 20px rgba(0,0,0,.05);
+}
+
+/* remove default list spacing */
+body.app-leaves ul.toplinks li{
+  list-style:none;
+  padding:0 !important;
+  margin:0;
+}
+
+/* all links → pill buttons */
+body.app-leaves ul.toplinks a{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  text-decoration:none;
+  color:#181818;
+  background: rgba(255,255,255,.9);
+  border: 1px solid rgba(0,0,0,.08);
+  transition: 
+    transform .12s ease,
+    box-shadow .12s ease,
+    background .12s ease,
+    color .12s ease;
+}
+
+/* hover */
+body.app-leaves ul.toplinks a:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0,0,0,.10);
+  background: rgba(255,102,0,.08);
+  border-color: rgba(255,102,0,.25);
+  color:#ff6600;
+}
+
+/* "All dates" (back link) */
+body.app-leaves ul.toplinks .date-back a{
+  background: rgba(0,0,0,.04);
+  font-weight: 950;
+}
+
+/* arrow icon spacing */
+body.app-leaves ul.toplinks .material-symbols-outlined{
+  font-size:16px;
+}
+
+/* active month (when Django marks it as current) */
+body.app-leaves ul.toplinks strong,
+body.app-leaves ul.toplinks a.active{
+  background:#ff6600;
+  color:white;
+  border-color: rgba(255,102,0,.35);
+  box-shadow: 0 12px 22px rgba(255,102,0,.35);
+}
+
+/* mobile-friendly */
+@media (max-width: 768px){
+  body.app-leaves ul.toplinks{
+    gap:8px;
+    padding:10px;
+  }
+  body.app-leaves ul.toplinks a{
+    padding:7px 12px;
+    font-size:11px;
+  }
+}

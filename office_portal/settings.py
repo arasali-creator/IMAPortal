@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "change-me"
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['arasali.pythonanywhere.com', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     "daphne",
@@ -21,9 +21,8 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "accounts",
     "attendance",
-    "payroll",
     "leaves",
-    "chat",
+    "payroll.apps.PayrollConfig",
     "django.contrib.humanize",
         # ✅ Slick Reporting
     "slick_reporting",
@@ -104,6 +103,15 @@ AUTH_USER_MODEL = "accounts.Employee"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
+
+# Email (Zoho SMTP)
+#EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+#EMAIL_HOST = "smtp.zoho.com"
+#EMAIL_PORT = 587
+#EMAIL_USE_TLS = True
+#EMAIL_HOST_USER = "projects@3mindslogiq.us"
+#EMAIL_HOST_PASSWORD = "Arasfb2021@"
+#DEFAULT_FROM_EMAIL = "projects@3mindslogiq.us"
 
 
 # =======================
@@ -196,56 +204,41 @@ UNFOLD = {
                         "link": reverse_lazy("admin:leaves_leaverequest_changelist"),
                         "permission": "accounts.utils.can_view_leaves",
                     },
-
-                ],
-            },
-                         
-
-      
-            {
-                "items": [
                     {
-                        "title": _("Payroll Dashboard"),
-                        "icon": "dashboard",
-                        "link": reverse_lazy("admin:payroll_dashboard"),  # /admin/payroll/globalsetting/dashboard/
-                        "permission": "accounts.utils.can_view_payroll_dashboard",
+                        "title": _("PM Calculations"),
+                        "icon": "calculate",
+                        "link": reverse_lazy("admin:pm_calculations"),
+                        "permission": "accounts.utils.can_view_pm_calculations",
                     },
-
                     {
-                        "title": _("Salary & Expense Overview"),
+                        "title": _("Employee Salary"),
                         "icon": "payments",
-                        "link": reverse_lazy("admin:payroll_employeesalary_changelist"),
-                        "permission": "accounts.utils.can_view_salary_overview",
+                        "link": reverse_lazy("admin:employee_salary"),
+                        "permission": "accounts.utils.can_view_employee_salary",
                     },
                     {
-                        "title": _("Salary Payments"),
-                        "icon": "paid",
-                        "link": reverse_lazy("admin:payroll_salarypayment_changelist"),
-                        "permission": "accounts.utils.can_view_salary_payments",
-                    },
-                    {
-                        "title": _("Office Expense"),
-                        "icon": "receipt_long",
-                        "link": reverse_lazy("admin:payroll_expense_changelist"),
-                        "permission": "accounts.utils.can_view_expenses",
-                    },
-                    {
-                        "title": _("Monthly Invoices"),
-                        "icon": "description",
-                        "link": reverse_lazy("admin:payroll_monthly_invoices"),
-                        "permission": "accounts.utils.can_view_payroll_dashboard",
-                    },
-                    {
-                        "title": _("PM Salary Share"),
+                        "title": _("My Payroll"),
                         "icon": "account_balance_wallet",
-                        "link": reverse_lazy("admin:payroll_pmsalaryshare_changelist"),
-                        "permission": "accounts.utils.can_view_pm_salary_share",
+                        "link": reverse_lazy("payroll:my_summary"),
+                        "permission": "accounts.utils.can_view_my_payroll",
                     },
                     {
-                        "title": _("Set Dollar Rate"),
-                        "icon": "attach_money",
-                        "link": reverse_lazy("admin:payroll_globalsetting_changelist"),
-                        "permission": "accounts.utils.can_view_dollar_rate",
+                        "title": _("Company Summary"),
+                        "icon": "insights",
+                        "link": reverse_lazy("admin:company_summary"),
+                        "permission": "accounts.utils.can_view_company_summary",
+                    },
+                    {
+                        "title": _("Branches Expenses"),
+                        "icon": "account_balance",
+                        "link": reverse_lazy("admin:branch_expenses"),
+                        "permission": "accounts.utils.can_view_branch_expenses",
+                    },
+                    {
+                        "title": _("Global Settings"),
+                        "icon": "tune",
+                        "link": reverse_lazy("admin:global_settings"),
+                        "permission": "accounts.utils.can_view_global_settings",
                     },
                     {
                         "title": _("Notifications"),
@@ -254,15 +247,8 @@ UNFOLD = {
                         "badge": "accounts.utils.notifications_unread_badge",
                         "permission": "accounts.utils.can_view_notifications",
                     },
-                    {
-                        "title": _("Chat"),
-                        "icon": "chat",
-                        "link": reverse_lazy("admin:chat_chatroom_changelist"),
-                        "badge": "accounts.utils.chat_unread_badge",
-                        "permission": "accounts.utils.can_view_chat",
-                    },
                 ],
             },
         ],
-    },
+}
 }

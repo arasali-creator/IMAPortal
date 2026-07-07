@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap');
+      body {
+        margin: 0;
+        font-family: "Outfit", Arial, sans-serif;
+      }
+
+:root{ --p:#ff6600; }
+ 
+body.change-form #content-main form{
+  max-width: 980px !important;
+  margin: 0 auto !important;
+}
+
+body.change-form #content-main fieldset{
+  border-radius: 18px !important;
+  border: 1px solid rgba(0,0,0,.06) !important;
+  background: rgba(255,255,255,.92) !important;
+  box-shadow: 0 14px 28px rgba(0,0,0,.08) !important;
+  overflow: hidden !important;
+}
+
+body.change-form #content-main fieldset .fieldset-heading{
+  background: rgba(255,102,0,.08) !important;
+  border-bottom: 1px solid rgba(0,0,0,.06) !important;
+}
+
+body.change-form #content-main fieldset .aligned{
+  display:grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 16px !important;
+  padding: 16px !important;
+}
+
+body.change-form #content-main fieldset .aligned .field-row{
+  margin:0 !important;
+}
+
+body.change-form #content-main fieldset .aligned .field-row:has(#id_employee),
+body.change-form #content-main fieldset .aligned .field-row:has(.field-attendance_date),
+body.change-form #content-main fieldset .aligned .field-row:has(.field-status_badge){
+  grid-column: 1 / -1 !important;
+}
+
+body.change-form #content-main input,
+body.change-form #content-main select{
+  width:100% !important;
+  max-width:100% !important;
+  border-radius: 14px !important;
+}
+
+body.change-form #content-main input:focus,
+body.change-form #content-main select:focus{
+  border-color: rgba(255,102,0,.55) !important;
+  box-shadow: 0 0 0 4px rgba(255,102,0,.18) !important;
+}

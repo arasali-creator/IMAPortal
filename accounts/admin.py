@@ -32,7 +32,7 @@ class EmployeeChangeForm(UserChangeForm):
 from unfold.admin import ModelAdmin
 
 @admin.register(Employee)
-class EmployeeAdmin(ModelAdmin):
+class EmployeeAdmin(BaseUserAdmin):
     model = Employee
     form = EmployeeChangeForm
     add_form = EmployeeCreationForm
@@ -41,7 +41,7 @@ class EmployeeAdmin(ModelAdmin):
     list_display = ('full_name', 'cnic', 'email', 'role', 'is_active', 'is_staff')
     list_filter = ('role', 'is_active', 'is_staff')
     search_fields = ('full_name', 'cnic', 'email')
-    ordering = ('cnic',)
+    ordering = ('-date_joined',)
 
     fieldsets = (
         ('Login', {'fields': ('cnic', 'email', 'password')}),
@@ -115,6 +115,13 @@ class EmployeeAdmin(ModelAdmin):
             if getattr(request.user, "role", None) == 'pm':
                 return qs.filter(teams__project_manager=request.user).distinct()
         return qs.none()
+
+    def changelist_view(self, request, extra_context=None):
+        extra_context = extra_context or {}
+        latest = Employee.objects.order_by("-date_joined").first()
+        extra_context["latest_employee"] = latest
+        extra_context["can_bulk_delete"] = self.has_delete_permission(request)
+        return super().changelist_view(request, extra_context=extra_context)
 
     def has_module_permission(self, request):
         if not request.user.is_authenticated:
