@@ -14,7 +14,14 @@
   {% for team in teams %}
     <div class="cn-tile">
       <h3><i class="fa-solid fa-people-group" style="color:var(--cn-accent);margin-right:8px;"></i>{{ team.name }}</h3>
-      <div class="sub">PM: {{ team.project_manager.full_name|default:team.project_manager.email }} &middot; {{ team.members.count }} members</div>
+      <div class="sub">PM: {{ team.project_manager.full_name|default:team.project_manager.email }}</div>
+      <div class="cn-avatar-stack" style="margin:12px 0;">
+        {% for member in team.members.all|slice:":6" %}
+          <span class="cn-avatar" title="{{ member.full_name|default:member.email }}">{{ member.full_name|default:member.email|slice:":1"|upper }}</span>
+        {% endfor %}
+        {% if team.members.count > 6 %}<span class="more">+{{ team.members.count|add:"-6" }}</span>{% endif %}
+        {% if not team.members.count %}<span class="sub" style="margin:0;">No members yet</span>{% endif %}
+      </div>
       {% if request.user.is_superuser or request.user.role == "admin" %}
         <div class="tile-actions">
           <a class="cn-btn sm" href="{% url 'console:team_edit' team.pk %}">Edit</a>

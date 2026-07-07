@@ -118,3 +118,37 @@ class ConsolePermissionTests(TestCase):
         leave.refresh_from_db()
         self.assertEqual(leave.pm_status, "Approved")
         self.assertEqual(leave.status, "Approved")
+
+    def test_pm_cannot_view_attendance_detail_outside_own_team(self):
+        other_pm = Employee.objects.create_user(
+            cnic="1212121212121", email="console-other-pm2@example.com", password="testpass123",
+            full_name="Other PM Two", role="pm", is_active=True,
+        )
+        outside_employee = Employee.objects.create_user(
+            cnic="1313131313131", email="console-outside@example.com", password="testpass123",
+            full_name="Outside Employee", role="employee", is_active=True,
+        )
+        Team.objects.create(name="Other Team Two", project_manager=other_pm).members.add(outside_employee)
+
+        self.client.force_login(self.pm)
+        response = self.client.get(reverse("console:attendance_employee_detail", args=[outside_employee.pk]))
+        self.assertEqual(response.status_code, 403)
+
+        response_own = self.client.get(reverse("console:attendance_employee_detail", args=[self.employee.pk]))
+        self.assertEqual(response_own.status_code, 200)
+
+    def test_employee_detail_form_saves_changes(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(
+            reverse("console:employee_detail", args=[self.employee.pk]),
+            {
+                "cnic": self.employee.cnic,
+                "email": self.employee.email,
+                "full_name": "Updated Name",
+                "role": "employee",
+                "is_active": "on",
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.full_name, "Updated Name")

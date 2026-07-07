@@ -1,9 +1,14 @@
+import calendar
+from datetime import date as date_cls
+from datetime import time as time_cls
 from datetime import timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Min, Max, Q
+from django.db.models.functions import TruncMonth, TruncYear
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -330,26 +335,221 @@ def password_reset_mark_resolved(request, pk):
 # Attendance
 # ---------------------------------------------------------------------------
 
+LATE_AFTER = time_cls(10, 15)
+
+
+def _attendance_base_qs(request):
+    qs = Attendance.objects.select_related("employee")
+    employees_qs = Employee.objects.all()
+    if not _is_admin(request):
+        member_ids = _pm_team_member_ids(request.user)
+        qs = qs.filter(employee_id__in=member_ids)
+        employees_qs = employees_qs.filter(id__in=member_ids)
+    return qs, employees_qs
+
+
+def _month_start(d):
+    return d.replace(day=1)
+
+
+def _next_month(d):
+    if d.month == 12:
+        return d.replace(year=d.year + 1, month=1, day=1)
+    return d.replace(month=d.month + 1, day=1)
+
+
 @login_required
 @role_required(*STAFF_ROLES)
 def attendance_list(request):
-    qs = Attendance.objects.select_related("employee").order_by("-check_in")
-    if not _is_admin(request):
-        qs = qs.filter(employee_id__in=_pm_team_member_ids(request.user))
+    today = timezone.localdate()
+    base_qs, employees_qs = _attendance_base_qs(request)
 
-    employee_id = request.GET.get("employee")
-    if employee_id:
-        qs = qs.filter(employee_id=employee_id)
+    todays_qs = base_qs.filter(check_in__date=today).order_by("employee_id", "-check_in")
+    latest_by_employee = {}
+    for att in todays_qs:
+        if att.employee_id not in latest_by_employee:
+            latest_by_employee[att.employee_id] = att
+    todays_cards = list(latest_by_employee.values())
 
-    employees_qs = Employee.objects.all()
-    if not _is_admin(request):
-        employees_qs = employees_qs.filter(id__in=_pm_team_member_ids(request.user))
-
-    return render(
-        request,
-        "console/attendance_list.html",
-        {"records": qs[:200], "employees": employees_qs, "selected_employee": employee_id},
+    total_employees = employees_qs.count()
+    present_ids = set(latest_by_employee.keys())
+    present_count = len(present_ids)
+    late_ids = set(
+        todays_qs.filter(check_in__time__gt=LATE_AFTER).values_list("employee_id", flat=True).distinct()
     )
+    late_count = len(late_ids)
+    pending_checkout_count = sum(1 for a in todays_cards if a.check_out is None)
+    completed_hours = [a.hours_worked for a in todays_cards if a.check_out]
+    avg_hours_worked = round(sum(completed_hours) / len(completed_hours), 2) if completed_hours else 0
+    absent_count = max(total_employees - present_count, 0)
+    absent_employees = employees_qs.exclude(id__in=present_ids)[:12]
+
+    approved_leaves = LeaveRequest.objects.filter(status="Approved")
+    if not _is_admin(request):
+        approved_leaves = approved_leaves.filter(employee__in=employees_qs)
+    total_employees_all = employees_qs.count()
+
+    min_att = base_qs.aggregate(min_date=Min("check_in"), max_date=Max("check_in"))
+    min_leave = approved_leaves.aggregate(min_date=Min("start_date"), max_date=Max("end_date"))
+    min_date = min(
+        [d.date() if hasattr(d, "date") else d for d in [min_att["min_date"], min_leave["min_date"]] if d] or [None]
+    )
+    max_date = max(
+        [d.date() if hasattr(d, "date") else d for d in [min_att["max_date"], min_leave["max_date"]] if d] or [None]
+    )
+
+    month_rows, year_rows = [], []
+    if min_date and max_date:
+        cursor = _month_start(min_date)
+        end = _next_month(_month_start(max_date))
+        while cursor < end:
+            nxt = _next_month(cursor)
+            present_ids_m = set(
+                base_qs.filter(check_in__date__gte=cursor, check_in__date__lt=nxt)
+                .values_list("employee_id", flat=True).distinct()
+            )
+            on_leave_ids = set(
+                approved_leaves.filter(start_date__lte=nxt, end_date__gte=cursor)
+                .values_list("employee_id", flat=True).distinct()
+            )
+            absent_c = max(total_employees_all - len(present_ids_m | on_leave_ids), 0)
+            month_rows.append({
+                "label": cursor.strftime("%b %Y"),
+                "present": len(present_ids_m), "absent": absent_c, "on_leave": len(on_leave_ids),
+            })
+            cursor = nxt
+
+        for y in range(min_date.year, max_date.year + 1):
+            y_start, y_end = date_cls(y, 1, 1), date_cls(y + 1, 1, 1)
+            present_ids_y = set(
+                base_qs.filter(check_in__date__gte=y_start, check_in__date__lt=y_end)
+                .values_list("employee_id", flat=True).distinct()
+            )
+            on_leave_ids = set(
+                approved_leaves.filter(start_date__lte=y_end, end_date__gte=y_start)
+                .values_list("employee_id", flat=True).distinct()
+            )
+            absent_c = max(total_employees_all - len(present_ids_y | on_leave_ids), 0)
+            year_rows.append({
+                "year": y, "present": len(present_ids_y), "absent": absent_c, "on_leave": len(on_leave_ids),
+            })
+
+    context = {
+        "today": today,
+        "late_after": LATE_AFTER.strftime("%I:%M %p"),
+        "total_employees": total_employees,
+        "present_count": present_count,
+        "late_count": late_count,
+        "pending_checkout_count": pending_checkout_count,
+        "absent_count": absent_count,
+        "avg_hours_worked": avg_hours_worked,
+        "todays_cards": todays_cards,
+        "absent_employees": absent_employees,
+        "month_rows": month_rows,
+        "year_rows": year_rows,
+    }
+    return render(request, "console/attendance_list.html", context)
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def attendance_monthly(request):
+    today = timezone.localdate()
+    year = max(2000, min(int(request.GET.get("year", today.year)), 2100))
+    month = max(1, min(int(request.GET.get("month", today.month)), 12))
+    _, days_in_month = calendar.monthrange(year, month)
+
+    days = []
+    for d in range(1, days_in_month + 1):
+        dt = date_cls(year, month, d)
+        days.append({"day": d, "weekday": dt.strftime("%a")[0], "is_weekend": dt.weekday() >= 5, "date": dt})
+
+    month_start_d, month_end_d = date_cls(year, month, 1), date_cls(year, month, days_in_month)
+    base_qs, employees_qs = _attendance_base_qs(request)
+    employees = employees_qs.order_by("full_name", "email")
+
+    month_att = (
+        base_qs.filter(check_in__date__gte=month_start_d, check_in__date__lte=month_end_d)
+        .values("employee_id", "check_in__date").annotate(first_in=Min("check_in"))
+    )
+    present_map = {(x["employee_id"], x["check_in__date"]): x["first_in"] for x in month_att}
+
+    rows = []
+    for e in employees:
+        cells = []
+        for info in days:
+            dt = info["date"]
+            if info["is_weekend"]:
+                cells.append({"type": "weekend", "tooltip": "Weekend"})
+                continue
+            first_in = present_map.get((e.id, dt))
+            if first_in:
+                cells.append({"type": "present", "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}"})
+            else:
+                cells.append({"type": "absent", "tooltip": "Absent"})
+        rows.append({"employee": e, "cells": cells})
+
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    context = {
+        "year": year, "month": month, "month_label": f"{calendar.month_abbr[month]} {year}",
+        "prev_year": prev_year, "prev_month": prev_month, "next_year": next_year, "next_month": next_month,
+        "days": days, "rows": rows,
+    }
+    return render(request, "console/attendance_monthly.html", context)
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def attendance_employee_detail(request, employee_id):
+    today = timezone.localdate()
+    year = max(2000, min(int(request.GET.get("year", today.year)), 2100))
+    month = max(1, min(int(request.GET.get("month", today.month)), 12))
+
+    employee = get_object_or_404(Employee, pk=employee_id)
+    if not _is_admin(request):
+        member_ids = _pm_team_member_ids(request.user)
+        if employee.id not in member_ids:
+            return render(request, "console/403.html", status=403)
+
+    _, days_in_month = calendar.monthrange(year, month)
+    month_start_d, month_end_d = date_cls(year, month, 1), date_cls(year, month, days_in_month)
+
+    days = []
+    for d in range(1, days_in_month + 1):
+        dt = date_cls(year, month, d)
+        days.append({"day": d, "weekday": dt.strftime("%a")[0], "is_weekend": dt.weekday() >= 5, "date": dt})
+
+    month_att = (
+        Attendance.objects.filter(employee_id=employee_id, check_in__date__gte=month_start_d, check_in__date__lte=month_end_d)
+        .values("check_in__date").annotate(first_in=Min("check_in"))
+    )
+    present_map = {x["check_in__date"]: x["first_in"] for x in month_att}
+
+    cells = []
+    for info in days:
+        dt = info["date"]
+        if info["is_weekend"]:
+            cells.append({"type": "weekend", "tooltip": "Weekend"})
+            continue
+        first_in = present_map.get(dt)
+        if first_in:
+            cells.append({"type": "present", "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}"})
+        else:
+            cells.append({"type": "absent", "tooltip": "Absent"})
+
+    recent_qs = Attendance.objects.filter(employee_id=employee_id).order_by("-check_in")[:25]
+
+    prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
+    next_year, next_month = (year + 1, 1) if month == 12 else (year, month + 1)
+
+    context = {
+        "employee": employee, "year": year, "month": month, "month_label": f"{calendar.month_name[month]} {year}",
+        "prev_year": prev_year, "prev_month": prev_month, "next_year": next_year, "next_month": next_month,
+        "days": days, "cells": cells, "recent_qs": recent_qs,
+    }
+    return render(request, "console/attendance_employee_detail.html", context)
 
 
 # ---------------------------------------------------------------------------
@@ -365,10 +565,54 @@ def leaves_list(request):
         qs = qs.filter(employee_id__in=member_ids) if member_ids else qs.none()
 
     status = request.GET.get("status")
-    if status:
-        qs = qs.filter(status=status)
+    filtered_qs = qs.filter(status=status) if status else qs
 
-    return render(request, "console/leaves_list.html", {"leaves": qs, "status": status})
+    totals = qs.aggregate(
+        total=Count("id"),
+        approved=Count("id", filter=Q(status="Approved")),
+        rejected=Count("id", filter=Q(status="Rejected")),
+        pending=Count("id", filter=Q(status="Pending")),
+    )
+
+    month_rows = []
+    monthly = (
+        qs.annotate(m=TruncMonth("created_at")).values("m")
+        .annotate(
+            total=Count("id"), approved=Count("id", filter=Q(status="Approved")),
+            rejected=Count("id", filter=Q(status="Rejected")), pending=Count("id", filter=Q(status="Pending")),
+        ).order_by("m")
+    )
+    for row in monthly:
+        if not row["m"]:
+            continue
+        month_rows.append({
+            "label": row["m"].strftime("%b %Y"),
+            "total": row["total"] or 0, "approved": row["approved"] or 0,
+            "rejected": row["rejected"] or 0, "pending": row["pending"] or 0,
+        })
+
+    year_rows = []
+    yearly = (
+        qs.annotate(y=TruncYear("created_at")).values("y")
+        .annotate(
+            total=Count("id"), approved=Count("id", filter=Q(status="Approved")),
+            rejected=Count("id", filter=Q(status="Rejected")), pending=Count("id", filter=Q(status="Pending")),
+        ).order_by("y")
+    )
+    for row in yearly:
+        if not row["y"]:
+            continue
+        year_rows.append({
+            "year": row["y"].year,
+            "total": row["total"] or 0, "approved": row["approved"] or 0,
+            "rejected": row["rejected"] or 0, "pending": row["pending"] or 0,
+        })
+
+    context = {
+        "leaves": filtered_qs, "status": status,
+        "summary": totals, "month_rows": month_rows, "year_rows": year_rows,
+    }
+    return render(request, "console/leaves_list.html", context)
 
 
 @login_required

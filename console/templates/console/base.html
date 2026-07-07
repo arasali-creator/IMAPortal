@@ -35,7 +35,7 @@
         <a href="{% url 'console:teams_list' %}" class="{% if 'team' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-people-group"></i> Teams
         </a>
-        <a href="{% url 'console:attendance_list' %}" class="{% if request.resolver_match.url_name == 'attendance_list' %}active{% endif %}">
+        <a href="{% url 'console:attendance_list' %}" class="{% if 'attendance' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-calendar-check"></i> Attendance
         </a>
         <a href="{% url 'console:leaves_list' %}" class="{% if 'leave' in request.resolver_match.url_name %}active{% endif %}">

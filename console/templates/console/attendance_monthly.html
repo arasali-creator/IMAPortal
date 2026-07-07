@@ -1,0 +1,43 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}Attendance — Monthly{% endblock %}
+
+{% block content %}
+<div class="cn-commandbar">
+  <div class="cn-action-group">
+    <a class="cn-btn" href="{% url 'console:attendance_list' %}"><i class="fa-solid fa-arrow-left"></i> Back</a>
+    <a class="cn-btn" href="?year={{ prev_year }}&month={{ prev_month }}"><i class="fa-solid fa-chevron-left"></i></a>
+    <span class="cn-badge neutral" style="font-size:.9rem;padding:8px 14px;">{{ month_label }}</span>
+    <a class="cn-btn" href="?year={{ next_year }}&month={{ next_month }}"><i class="fa-solid fa-chevron-right"></i></a>
+  </div>
+</div>
+
+<div class="cn-legend">
+  <span><span class="cn-cal-cell present"></span> Present</span>
+  <span><span class="cn-cal-cell absent"></span> Absent</span>
+  <span><span class="cn-cal-cell weekend"></span> Weekend</span>
+</div>
+
+<div class="cn-card">
+  <div class="cn-cal-wrap cn-card-pad">
+    <table class="cn-cal">
+      <thead>
+        <tr>
+          <th class="emp-name">Employee</th>
+          {% for d in days %}<th>{{ d.day }}<br>{{ d.weekday }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td class="emp-name"><a href="{% url 'console:attendance_employee_detail' row.employee.id %}?year={{ year }}&month={{ month }}">{{ row.employee.full_name|default:row.employee.email }}</a></td>
+            {% for cell in row.cells %}<td title="{{ cell.tooltip }}"><span class="cn-cal-cell {{ cell.type }}"></span></td>{% endfor %}
+          </tr>
+        {% empty %}
+          <tr><td colspan="{{ days|length|add:1 }}" class="cn-empty">No employees to show.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

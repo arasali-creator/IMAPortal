@@ -3,29 +3,101 @@
 {% block page_title %}Attendance{% endblock %}
 
 {% block content %}
-<form class="cn-toolbar" method="get">
-  <select name="employee" onchange="this.form.submit()">
-    <option value="">All employees</option>
-    {% for e in employees %}
-      <option value="{{ e.id }}" {% if selected_employee == e.id|stringformat:"s" %}selected{% endif %}>{{ e.full_name|default:e.email }}</option>
-    {% endfor %}
-  </select>
-</form>
+<div class="cn-commandbar">
+  <p class="cn-page-lede" style="margin:0;">Today's status, {{ today|date:"M j, Y" }}. Late is after {{ late_after }}.</p>
+  <a class="cn-btn primary" href="{% url 'console:attendance_monthly' %}"><i class="fa-solid fa-calendar-days"></i> Monthly View</a>
+</div>
 
-<div class="cn-card">
+<div class="cn-kpi-grid">
+  <div class="cn-kpi-tile c2">
+    <div class="icon"><i class="fa-solid fa-user-check"></i></div>
+    <div class="label">Present Today</div>
+    <div class="value">{{ present_count }}</div>
+    <div class="sub">of {{ total_employees }} employees</div>
+  </div>
+  <div class="cn-kpi-tile c1">
+    <div class="icon"><i class="fa-solid fa-clock"></i></div>
+    <div class="label">Late Arrivals</div>
+    <div class="value">{{ late_count }}</div>
+  </div>
+  <div class="cn-kpi-tile c3">
+    <div class="icon"><i class="fa-solid fa-hourglass-half"></i></div>
+    <div class="label">Pending Checkout</div>
+    <div class="value">{{ pending_checkout_count }}</div>
+  </div>
+  <div class="cn-kpi-tile c5">
+    <div class="icon"><i class="fa-solid fa-user-xmark"></i></div>
+    <div class="label">Absent Today</div>
+    <div class="value">{{ absent_count }}</div>
+  </div>
+  <div class="cn-kpi-tile dark">
+    <div class="icon"><i class="fa-solid fa-stopwatch"></i></div>
+    <div class="label">Avg Hours Worked</div>
+    <div class="value">{{ avg_hours_worked }}</div>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header"><h3>Today's Check-ins</h3><span class="cn-badge neutral">{{ todays_cards|length }} present</span></div>
+  <div class="cn-card-pad">
+    <div class="cn-status-grid">
+      {% for att in todays_cards %}
+        <a class="cn-status-card" href="{% url 'console:attendance_employee_detail' att.employee_id %}">
+          <span class="dot {% if att.check_out %}out{% else %}in{% endif %}"></span>
+          <div>
+            <div class="name">{{ att.employee.full_name|default:att.employee.email }}</div>
+            <div class="time">In {{ att.check_in|date:"h:i A" }}{% if att.check_out %} &middot; Out {{ att.check_out|date:"h:i A" }}{% else %} &middot; still checked in{% endif %}</div>
+          </div>
+        </a>
+      {% empty %}
+        <div class="cn-empty">No check-ins yet today.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header"><h3>Absent Today</h3><span class="cn-badge warning">{{ absent_count }} absent</span></div>
+  <div class="cn-card-pad">
+    <div class="cn-status-grid">
+      {% for emp in absent_employees %}
+        <a class="cn-status-card" href="{% url 'console:attendance_employee_detail' emp.id %}">
+          <span class="cn-avatar">{{ emp.full_name|default:emp.email|slice:":1"|upper }}</span>
+          <div class="name">{{ emp.full_name|default:emp.email }}</div>
+        </a>
+      {% empty %}
+        <div class="cn-empty">Everyone has checked in today.</div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header"><h3>Monthly Summary</h3></div>
   <div class="cn-table-wrap">
     <table class="cn-table">
-      <thead><tr><th>Employee</th><th>Check In</th><th>Check Out</th><th>Hours Worked</th></tr></thead>
+      <thead><tr><th>Month</th><th>Present</th><th>Absent</th><th>On Leave</th></tr></thead>
       <tbody>
-        {% for r in records %}
-          <tr>
-            <td class="cn-person"><span class="cn-avatar">{{ r.employee.full_name|default:r.employee.email|slice:":1"|upper }}</span>{{ r.employee }}</td>
-            <td>{{ r.check_in|date:"M j, Y H:i" }}</td>
-            <td>{{ r.check_out|date:"M j, Y H:i"|default:"-" }}</td>
-            <td><span class="cn-badge neutral">{{ r.hours_worked }} hrs</span></td>
-          </tr>
+        {% for row in month_rows %}
+          <tr><td>{{ row.label }}</td><td><span class="cn-badge success">{{ row.present }}</span></td><td><span class="cn-badge danger">{{ row.absent }}</span></td><td><span class="cn-badge warning">{{ row.on_leave }}</span></td></tr>
         {% empty %}
-          <tr><td colspan="4" class="cn-empty">No attendance records found.</td></tr>
+          <tr><td colspan="4" class="cn-empty">No attendance history yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header"><h3>Yearly Summary</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Year</th><th>Present</th><th>Absent</th><th>On Leave</th></tr></thead>
+      <tbody>
+        {% for row in year_rows %}
+          <tr><td>{{ row.year }}</td><td><span class="cn-badge success">{{ row.present }}</span></td><td><span class="cn-badge danger">{{ row.absent }}</span></td><td><span class="cn-badge warning">{{ row.on_leave }}</span></td></tr>
+        {% empty %}
+          <tr><td colspan="4" class="cn-empty">No attendance history yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>

@@ -3,11 +3,116 @@
 {% block page_title %}{{ employee.full_name|default:employee.email }}{% endblock %}
 
 {% block content %}
-<div class="cn-card cn-card-pad" style="max-width:800px;">
-  <form method="post" enctype="multipart/form-data" class="cn-django-form">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <button class="cn-btn primary" type="submit"><i class="fa-solid fa-check"></i> Save Changes</button>
-  </form>
+<div class="cn-profile-header">
+  {% if employee.profile_picture %}
+    <span class="cn-avatar xl"><img src="{{ employee.profile_picture.url }}" alt=""></span>
+  {% else %}
+    <span class="cn-avatar xl">{{ employee.full_name|default:employee.email|slice:":1"|upper }}</span>
+  {% endif %}
+  <div>
+    <h2>{{ employee.full_name|default:employee.email }}</h2>
+    <div class="meta-row">
+      <span class="cnic">{{ employee.cnic }}</span>
+      <span class="cn-badge neutral">{{ employee.get_role_display }}</span>
+      {% if employee.is_active %}<span class="cn-badge success">Active</span>{% else %}<span class="cn-badge warning">Pending</span>{% endif %}
+    </div>
+  </div>
 </div>
+
+<form method="post" enctype="multipart/form-data">
+  {% csrf_token %}
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-id-card"></i>Login &amp; Account</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>CNIC</label>{{ form.cnic }}{{ form.cnic.errors }}</div>
+      <div class="cn-field"><label>Email</label>{{ form.email }}{{ form.email.errors }}</div>
+      <div class="cn-field"><label>Role</label>{{ form.role }}{{ form.role.errors }}</div>
+      <div class="cn-field" style="flex-direction:row;align-items:center;gap:16px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;">{{ form.is_active }} Active</label>
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;">{{ form.is_staff }} Staff</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-user"></i>Personal Info</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Full Name</label>{{ form.full_name }}{{ form.full_name.errors }}</div>
+      <div class="cn-field"><label>Father's Name</label>{{ form.fathers_name }}{{ form.fathers_name.errors }}</div>
+      <div class="cn-field"><label>Date of Birth</label>{{ form.date_of_birth }}{{ form.date_of_birth.errors }}</div>
+      <div class="cn-field"><label>Gender</label>{{ form.gender }}{{ form.gender.errors }}</div>
+      <div class="cn-field"><label>Marital Status</label>{{ form.marital_status }}{{ form.marital_status.errors }}</div>
+      <div class="cn-field"><label>Contact Number</label>{{ form.contact_number }}{{ form.contact_number.errors }}</div>
+      <div class="cn-field full"><label>Residential Address</label>{{ form.residential_address }}{{ form.residential_address.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-briefcase"></i>Employment</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Date of Joining</label>{{ form.date_of_joining }}{{ form.date_of_joining.errors }}</div>
+      <div class="cn-field"><label>Reporting Manager</label>{{ form.reporting_manager_name }}{{ form.reporting_manager_name.errors }}</div>
+      <div class="cn-field"><label>Department</label>{{ form.department }}{{ form.department.errors }}</div>
+      <div class="cn-field"><label>Designation</label>{{ form.designation }}{{ form.designation.errors }}</div>
+      <div class="cn-field"><label>Employment Type</label>{{ form.employment_type }}{{ form.employment_type.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-file-image"></i>Documents</h3></div>
+    <div class="body">
+      <div class="cn-field full">
+        <div class="cn-thumb-row">
+          <div class="cn-thumb-field">
+            <label>Profile Picture</label>
+            {% if employee.profile_picture %}<img class="cn-thumb" src="{{ employee.profile_picture.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+            {{ form.profile_picture }}
+          </div>
+          <div class="cn-thumb-field">
+            <label>CNIC Front</label>
+            {% if employee.cnic_front %}<img class="cn-thumb" src="{{ employee.cnic_front.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+            {{ form.cnic_front }}
+          </div>
+          <div class="cn-thumb-field">
+            <label>CNIC Back</label>
+            {% if employee.cnic_back %}<img class="cn-thumb" src="{{ employee.cnic_back.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+            {{ form.cnic_back }}
+          </div>
+          <div class="cn-thumb-field">
+            <label>Father's CNIC</label>
+            {% if employee.father_cnic %}<img class="cn-thumb" src="{{ employee.father_cnic.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+            {{ form.father_cnic }}
+          </div>
+          <div class="cn-thumb-field">
+            <label>Degree Certificate</label>
+            {% if employee.degree_certificate %}<div class="cn-thumb-empty"><a href="{{ employee.degree_certificate.url }}" target="_blank">View file</a></div>{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+            {{ form.degree_certificate }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-phone"></i>Emergency Contact</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Contact Name</label>{{ form.emergency_contact_name }}{{ form.emergency_contact_name.errors }}</div>
+      <div class="cn-field"><label>Relationship</label>{{ form.emergency_relationship }}{{ form.emergency_relationship.errors }}</div>
+      <div class="cn-field"><label>Contact Number</label>{{ form.emergency_contact_number }}{{ form.emergency_contact_number.errors }}</div>
+      <div class="cn-field full"><label>Address</label>{{ form.emergency_contact_address }}{{ form.emergency_contact_address.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-circle-info"></i>Additional</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Blood Group</label>{{ form.blood_group }}{{ form.blood_group.errors }}</div>
+      <div class="cn-field full"><label>Previous Employer</label>{{ form.previous_employer }}{{ form.previous_employer.errors }}</div>
+      <div class="cn-field full"><label>Special Skills</label>{{ form.special_skills }}{{ form.special_skills.errors }}</div>
+    </div>
+  </div>
+
+  <button class="cn-btn primary" type="submit" style="margin-bottom:24px;"><i class="fa-solid fa-check"></i> Save Changes</button>
+</form>
 {% endblock %}

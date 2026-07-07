@@ -1,0 +1,60 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}{{ employee.full_name|default:employee.email }} — Attendance{% endblock %}
+
+{% block content %}
+<div class="cn-commandbar">
+  <div class="cn-action-group">
+    <a class="cn-btn" href="{% url 'console:attendance_list' %}"><i class="fa-solid fa-arrow-left"></i> Back</a>
+    <a class="cn-btn" href="?year={{ prev_year }}&month={{ prev_month }}"><i class="fa-solid fa-chevron-left"></i></a>
+    <span class="cn-badge neutral" style="font-size:.9rem;padding:8px 14px;">{{ month_label }}</span>
+    <a class="cn-btn" href="?year={{ next_year }}&month={{ next_month }}"><i class="fa-solid fa-chevron-right"></i></a>
+  </div>
+</div>
+
+<div class="cn-profile-header">
+  <span class="cn-avatar xl">{{ employee.full_name|default:employee.email|slice:":1"|upper }}</span>
+  <div>
+    <h2>{{ employee.full_name|default:employee.email }}</h2>
+    <div class="meta-row"><span class="cnic">{{ employee.cnic }}</span><span class="cn-badge neutral">{{ employee.get_role_display }}</span></div>
+  </div>
+</div>
+
+<div class="cn-legend">
+  <span><span class="cn-cal-cell present"></span> Present</span>
+  <span><span class="cn-cal-cell absent"></span> Absent</span>
+  <span><span class="cn-cal-cell weekend"></span> Weekend</span>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-cal-wrap cn-card-pad" style="display:flex;flex-wrap:wrap;gap:8px;">
+    {% for cell in cells %}
+      <div title="{{ cell.tooltip }}" style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+        <span class="cn-cal-cell {{ cell.type }}" style="width:28px;height:28px;"></span>
+        <span style="font-size:.7rem;color:var(--cn-muted);">{{ forloop.counter }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header"><h3>Recent Sessions</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead>
+      <tbody>
+        {% for r in recent_qs %}
+          <tr>
+            <td>{{ r.check_in|date:"M j, Y" }}</td>
+            <td>{{ r.check_in|date:"h:i A" }}</td>
+            <td>{{ r.check_out|date:"h:i A"|default:"-" }}</td>
+            <td><span class="cn-badge neutral">{{ r.hours_worked }} hrs</span></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="cn-empty">No sessions recorded.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -3,6 +3,29 @@
 {% block page_title %}Leave Requests{% endblock %}
 
 {% block content %}
+<div class="cn-kpi-grid">
+  <div class="cn-kpi-tile dark">
+    <div class="icon"><i class="fa-solid fa-list"></i></div>
+    <div class="label">Total</div>
+    <div class="value">{{ summary.total }}</div>
+  </div>
+  <div class="cn-kpi-tile c2">
+    <div class="icon"><i class="fa-solid fa-check"></i></div>
+    <div class="label">Approved</div>
+    <div class="value">{{ summary.approved }}</div>
+  </div>
+  <div class="cn-kpi-tile c5">
+    <div class="icon"><i class="fa-solid fa-xmark"></i></div>
+    <div class="label">Rejected</div>
+    <div class="value">{{ summary.rejected }}</div>
+  </div>
+  <div class="cn-kpi-tile c1">
+    <div class="icon"><i class="fa-solid fa-hourglass-half"></i></div>
+    <div class="label">Pending</div>
+    <div class="value">{{ summary.pending }}</div>
+  </div>
+</div>
+
 <form class="cn-toolbar" method="get">
   <select name="status" onchange="this.form.submit()">
     <option value="">All statuses</option>
@@ -12,7 +35,7 @@
   </select>
 </form>
 
-<div class="cn-card">
+<div class="cn-card" style="margin-bottom:18px;">
   <div class="cn-table-wrap">
     <table class="cn-table">
       <thead><tr><th>Employee</th><th>Reason</th><th>Dates</th><th>PM Status</th><th>Admin Status</th><th>Final</th><th>Actions</th></tr></thead>
@@ -52,6 +75,38 @@
           </tr>
         {% empty %}
           <tr><td colspan="7" class="cn-empty">No leave requests found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header"><h3>Monthly Breakdown</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Month</th><th>Total</th><th>Approved</th><th>Rejected</th><th>Pending</th></tr></thead>
+      <tbody>
+        {% for row in month_rows %}
+          <tr><td>{{ row.label }}</td><td>{{ row.total }}</td><td><span class="cn-badge success">{{ row.approved }}</span></td><td><span class="cn-badge danger">{{ row.rejected }}</span></td><td><span class="cn-badge warning">{{ row.pending }}</span></td></tr>
+        {% empty %}
+          <tr><td colspan="5" class="cn-empty">No history yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header"><h3>Yearly Breakdown</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Year</th><th>Total</th><th>Approved</th><th>Rejected</th><th>Pending</th></tr></thead>
+      <tbody>
+        {% for row in year_rows %}
+          <tr><td>{{ row.year }}</td><td>{{ row.total }}</td><td><span class="cn-badge success">{{ row.approved }}</span></td><td><span class="cn-badge danger">{{ row.rejected }}</span></td><td><span class="cn-badge warning">{{ row.pending }}</span></td></tr>
+        {% empty %}
+          <tr><td colspan="5" class="cn-empty">No history yet.</td></tr>
         {% endfor %}
       </tbody>
     </table>
