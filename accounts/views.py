@@ -49,7 +49,7 @@ def approval_status(request):
 
 @login_required
 def dashboard(request):
-    if request.user.is_superuser or getattr(request.user, "role", None) in ("admin", "pm"):
+    if getattr(request.user, "role", None) in ("admin", "pm"):
         return redirect('console:dashboard')
     return render(request, 'accounts/dashboard.html')
 

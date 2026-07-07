@@ -3,7 +3,7 @@
 {% block page_title %}Teams{% endblock %}
 
 {% block content %}
-{% if request.user.is_superuser or request.user.role == "admin" %}
+{% if request.user.role == "admin" %}
   <div class="cn-toolbar">
     <div class="spacer"></div>
     <a class="cn-btn primary" href="{% url 'console:team_create' %}"><i class="fa-solid fa-plus"></i> New Team</a>
@@ -22,7 +22,7 @@
         {% if team.members.count > 6 %}<span class="more">+{{ team.members.count|add:"-6" }}</span>{% endif %}
         {% if not team.members.count %}<span class="sub" style="margin:0;">No members yet</span>{% endif %}
       </div>
-      {% if request.user.is_superuser or request.user.role == "admin" %}
+      {% if request.user.role == "admin" %}
         <div class="tile-actions">
           <a class="cn-btn sm" href="{% url 'console:team_edit' team.pk %}">Edit</a>
           <form method="post" action="{% url 'console:team_delete' team.pk %}" onsubmit="return confirm('Delete this team?');">

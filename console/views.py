@@ -80,7 +80,7 @@ def _redirect_with_query(request, **extra_params):
 
 
 def _is_admin(request):
-    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"
+    return getattr(request.user, "role", None) == "admin"
 
 
 def _pm_team_member_ids(user):
@@ -1044,7 +1044,7 @@ def employee_salary_view(request):
                 amount_pkr=Decimal(request.POST.get("amount_pkr") or "0"),
                 note=(request.POST.get("note") or "").strip(),
                 paid_date=request.POST.get("paid_date") or today,
-                paid_by=request.user if getattr(request.user, "role", None) in ["pm", "admin"] or request.user.is_superuser else None,
+                paid_by=request.user if getattr(request.user, "role", None) in ["pm", "admin"] else None,
                 created_by=request.user,
             )
             redirect_employee = request.POST.get("employee_id") or redirect_employee
@@ -1119,7 +1119,7 @@ def employee_salary_view(request):
         "months": _month_options(),
         "today": today,
         "current_user_id": request.user.id,
-        "is_pm_user": role == "pm" and not request.user.is_superuser,
+        "is_pm_user": role == "pm",
     }
     return render(request, "console/employee_salary.html", context)
 

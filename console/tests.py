@@ -52,6 +52,21 @@ class ConsolePermissionTests(TestCase):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 403, name)
 
+    def test_admin_only_pages_reject_pm_even_with_is_superuser_flag(self):
+        self.pm.is_superuser = True
+        self.pm.save(update_fields=["is_superuser"])
+        self.client.force_login(self.pm)
+        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 403, name)
+
+    def test_console_rejects_employee_even_with_is_superuser_flag(self):
+        self.employee.is_superuser = True
+        self.employee.save(update_fields=["is_superuser"])
+        self.client.force_login(self.employee)
+        response = self.client.get(reverse("console:dashboard"))
+        self.assertEqual(response.status_code, 403)
+
     def test_admin_only_pages_allow_admin(self):
         self.client.force_login(self.admin)
         for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
