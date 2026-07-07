@@ -4,230 +4,99 @@
 {% block page_title %}Company Summary{% endblock %}
 
 {% block content %}
-<style>
-  :root{
-    --cs-bg:var(--cn-bg);
-    --cs-text:var(--cn-text);
-    --cs-muted:var(--cn-muted);
-    --cs-line:var(--cn-border);
-    --cs-accent:var(--cn-accent);
-    --cs-card:var(--cn-card);
-  }
-  .cs-wrap{
-    max-width:1200px;
-    margin:0 auto;
-    font-family:"Outfit", "Plus Jakarta Sans", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--cs-text);
-  }
-  .cs-filter{
-    display:flex;
-    gap:10px;
-    align-items:center;
-    margin:10px 0 16px;
-    padding:12px;
-    border-radius:14px;
-    border:1px solid var(--cs-line);
-    background:#ffffff;
-    box-shadow:0 8px 16px rgba(2,6,23,.06);
-    flex-wrap:wrap;
-  }
-  .cs-filter label{font-weight:700;font-size:.9rem;}
-  .cs-filter select{
-    min-width:180px;
-    padding:10px 12px;
-    border-radius:12px;
-    border:1px solid var(--cs-line);
-    background:#fff;
-    font-weight:600;
-    color:var(--cs-text);
-  }
-  .cs-filter select:focus{outline:2px solid rgba(255,106,0,.20);border-color:rgba(255,106,0,.45);}
-  .summary-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin:14px 0 6px;}
-  .summary-card{
-    grid-column:span 4;
-    padding:16px;
-    border-radius:16px;
-    border:1px solid var(--cs-line);
-    background:var(--cs-card);
-    box-shadow:0 10px 22px rgba(2,6,23,.08);
-  }
-  .summary-card h4{margin:0 0 6px 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--cs-muted);}
-  .summary-card .value{font-size:1.35rem;font-weight:900;}
-  .summary-card .sub{margin-top:6px;font-size:.9rem;color:var(--cs-muted);}
-  .accent{color:var(--cs-accent);}
-  .panel{
-    margin-top:16px;
-    border:1px solid var(--cs-line);
-    border-radius:16px;
-    background:var(--cs-card);
-    box-shadow:0 10px 22px rgba(2,6,23,.08);
-  }
-  .panel-header{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:14px 16px;
-    border-bottom:1px solid var(--cs-line);
-  }
-  .panel-title{margin:0;font-size:1rem;font-weight:800;}
-  .badge{
-    padding:4px 10px;
-    border-radius:999px;
-    background:rgba(255,106,0,.08);
-    color:var(--cs-accent);
-    font-size:.78rem;
-    font-weight:700;
-    border:1px solid rgba(255,106,0,.25);
-  }
-  .table-wrap{overflow:auto;}
-  table{width:100%;border-collapse:collapse;font-size:.92rem;}
-  thead th{
-    text-align:left;
-    padding:12px 16px;
-    color:var(--cs-muted);
-    font-size:.78rem;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    border-bottom:1px solid var(--cs-line);
-    background:#fafbff;
-  }
-  tbody td{padding:12px 16px;border-bottom:1px solid var(--cs-line);}
-  tbody tr:hover{background:rgba(15,23,42,.03);}
-  .cell-muted{color:var(--cs-muted);}
-  .empty-state{padding:16px;color:var(--cs-muted);}
-  .cs-title{
-    margin:0;
-    font-size:1.6rem;
-    font-weight:900;
-    letter-spacing:-.01em;
-    color:#181818;
-  }
-  .cs-subtitle{
-    font-weight:800;
-    font-size:1rem;
-    color:rgba(15,23,42,.65);
-  }
-  @media(max-width:1100px){.summary-card{grid-column:span 12;}}
-</style>
+<p class="cn-page-lede">Review company-wide income and expense totals by month or year.</p>
 
-<div class="cs-wrap">
-  <div style="display:flex;flex-direction:column;gap:6px;">
-    <h1 class="cs-title">Company Summary</h1>
-    <div class="cs-subtitle">Review totals by month or year.</div>
-  </div>
-
-  <form class="cs-filter" method="get" action="{% url 'console:company_summary' %}">
-    <label for="period">Period</label>
-    <select id="period" name="period" onchange="this.form.submit()">
-      <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
-      <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
-    </select>
-
-    <label for="year">Year</label>
-    <select id="year" name="year" onchange="this.form.submit()">
-      {% for y in year_options %}
-        <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
-      {% endfor %}
-    </select>
-
-    <label for="month">Month</label>
-    <select id="month" name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
-      {% for m, label in months %}
-        <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>
-      {% endfor %}
-    </select>
+<div class="cn-filterbar">
+  <form method="get" action="{% url 'console:company_summary' %}" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
+    <div>
+      <label>Period</label>
+      <select name="period" onchange="this.form.submit()">
+        <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+        <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+      </select>
+    </div>
+    <div>
+      <label>Year</label>
+      <select name="year" onchange="this.form.submit()">
+        {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label>Month</label>
+      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+        {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
   </form>
+</div>
 
-  <div class="summary-grid">
-    <div class="summary-card">
-      <h4>Total Income</h4>
-      <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">${{ summary.total_income_usd|floatformat:2 }}</div>
-    </div>
-    <div class="summary-card">
-      <h4>Total Expense</h4>
-      <div class="value">PKR {{ summary.total_expense_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">${{ summary.total_expense_usd|floatformat:2 }}</div>
-    </div>
-    <div class="summary-card">
-      <h4>Profit</h4>
-      <div class="value accent">PKR {{ summary.profit_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">${{ summary.profit_usd|floatformat:2 }}</div>
-    </div>
+<div class="cn-stat-grid">
+  <div class="cn-stat-card">
+    <div class="label">Total Income</div>
+    <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.total_income_usd|floatformat:2 }}</div>
   </div>
-
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Income Details</div>
-      <div class="badge">{{ incomes|length }} entries</div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>PM</th>
-            <th>Source</th>
-            <th>Description</th>
-            <th>Amount USD</th>
-            <th>Amount PKR</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for income in incomes %}
-            <tr>
-              <td>{{ income.income_date }}</td>
-              <td class="cell-muted">{{ income.pm.full_name|default:income.pm.email|default:income.pm.cnic }}</td>
-              <td class="cell-muted">{{ income.get_source_display }}</td>
-              <td>{{ income.description|default:"-" }}</td>
-              <td>${{ income.amount_usd|floatformat:2 }}</td>
-              <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="empty-state">No income entries found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div class="cn-stat-card">
+    <div class="label">Total Expense</div>
+    <div class="value">PKR {{ summary.total_expense_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.total_expense_usd|floatformat:2 }}</div>
   </div>
+  <div class="cn-stat-card">
+    <div class="label">Profit</div>
+    <div class="value accent">PKR {{ summary.profit_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.profit_usd|floatformat:2 }}</div>
+  </div>
+</div>
 
-  <div class="panel">
-    <div class="panel-header">
-      <div class="panel-title">Expense Details</div>
-      <div class="badge">{{ advances|length }} entries</div>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header">
+    <h3>Income Details</h3>
+    <span class="cn-badge neutral">{{ incomes|length }} entries</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>PM</th><th>Source</th><th>Description</th><th>Amount USD</th><th>Amount PKR</th></tr></thead>
+      <tbody>
+        {% for income in incomes %}
           <tr>
-            <th>Date</th>
-            <th>PM</th>
-            <th>Type</th>
-            <th>Notes</th>
-            <th>Amount PKR</th>
-            <th>Amount USD</th>
+            <td>{{ income.income_date }}</td>
+            <td>{{ income.pm.full_name|default:income.pm.email|default:income.pm.cnic }}</td>
+            <td>{{ income.get_source_display }}</td>
+            <td>{{ income.description|default:"-" }}</td>
+            <td>${{ income.amount_usd|floatformat:2 }}</td>
+            <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
           </tr>
-        </thead>
-        <tbody>
-          {% for advance in advances %}
-            <tr>
-              <td>{{ advance.advance_date }}</td>
-              <td class="cell-muted">{{ advance.pm.full_name|default:advance.pm.email|default:advance.pm.cnic }}</td>
-              <td class="cell-muted">{{ advance.get_advance_type_display }}</td>
-              <td>{{ advance.notes|default:"-" }}</td>
-              <td>PKR {{ advance.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>${{ advance.amount_usd|floatformat:2 }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="empty-state">No expense entries found.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+        {% empty %}
+          <tr><td colspan="6" class="cn-empty">No income entries found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header">
+    <h3>Expense Details</h3>
+    <span class="cn-badge neutral">{{ advances|length }} entries</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>PM</th><th>Type</th><th>Notes</th><th>Amount PKR</th><th>Amount USD</th></tr></thead>
+      <tbody>
+        {% for advance in advances %}
+          <tr>
+            <td>{{ advance.advance_date }}</td>
+            <td>{{ advance.pm.full_name|default:advance.pm.email|default:advance.pm.cnic }}</td>
+            <td>{{ advance.get_advance_type_display }}</td>
+            <td>{{ advance.notes|default:"-" }}</td>
+            <td>PKR {{ advance.amount_pkr|floatformat:0|intcomma }}</td>
+            <td>${{ advance.amount_usd|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="cn-empty">No expense entries found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}

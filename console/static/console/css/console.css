@@ -466,4 +466,150 @@ table.cn-table tbody tr:last-child td { border-bottom: none; }
 /* ---------------------------------------------------------------- Misc */
 
 .cn-page-lede { color: var(--cn-muted); font-size: 0.92rem; margin: -6px 0 20px; }
-.cn-action-group { display: flex; gap: 8px; flex-wrap: wrap; }
+.cn-action-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.cn-hidden { display: none !important; }
+
+/* ---------------------------------------------------------------- Hero header (page title + filter) */
+
+.cn-hero {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 20px 24px;
+  border-radius: var(--cn-radius);
+  border: 1px solid var(--cn-border);
+  background:
+    radial-gradient(600px 160px at 0% 0%, rgba(255, 102, 0, 0.08), transparent 60%),
+    linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
+  box-shadow: var(--cn-shadow);
+  margin-bottom: 18px;
+}
+
+.cn-hero h2 { margin: 0; font-size: 1.4rem; font-weight: 900; letter-spacing: -0.01em; }
+.cn-hero .sub { margin: 4px 0 0; color: var(--cn-muted); font-weight: 600; font-size: 0.9rem; }
+
+.cn-hero-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 6px;
+  border-radius: 12px;
+  background: var(--cn-bg);
+  border: 1px solid var(--cn-border);
+}
+
+.cn-hero-controls label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cn-muted);
+  margin: 0 2px 0 6px;
+}
+
+.cn-hero-controls select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--cn-border);
+  background: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+/* ---------------------------------------------------------------- Filter bar (select PM / branch / employee) */
+
+.cn-filterbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-radius: var(--cn-radius);
+  border: 1px solid var(--cn-border);
+  background: var(--cn-card);
+  box-shadow: var(--cn-shadow);
+  margin-bottom: 18px;
+}
+
+.cn-filterbar > * { flex: 0 0 auto; }
+.cn-filterbar .grow { flex: 1; min-width: 240px; }
+.cn-filterbar label { display: block; font-weight: 800; font-size: 0.78rem; color: var(--cn-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* ---------------------------------------------------------------- Searchable combobox */
+
+.cn-combobox { position: relative; width: 100%; }
+.cn-combobox input {
+  width: 100%;
+  padding: 11px 40px 11px 14px;
+  border-radius: var(--cn-radius-sm);
+  border: 1px solid var(--cn-border);
+  background: var(--cn-bg);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+.cn-combobox input:focus { outline: none; border-color: rgba(255, 102, 0, 0.5); background: #fff; box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12); }
+.cn-combobox .icon { position: absolute; top: 50%; right: 14px; transform: translateY(-50%); color: var(--cn-muted); pointer-events: none; }
+.cn-combobox .dropdown {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 25; display: none;
+  padding: 6px; border-radius: 14px; border: 1px solid var(--cn-border); background: #fff;
+  box-shadow: var(--cn-shadow-lg); max-height: 240px; overflow-y: auto;
+}
+.cn-combobox .dropdown.open { display: block; }
+.cn-combobox .option { width: 100%; padding: 9px 12px; border: none; border-radius: 10px; background: transparent; text-align: left; font-weight: 600; font-size: 0.88rem; cursor: pointer; }
+.cn-combobox .option:hover, .cn-combobox .option.is-active { background: rgba(255, 102, 0, 0.10); color: #b45309; }
+.cn-combobox .empty { padding: 10px 12px; color: var(--cn-muted); font-size: 0.85rem; }
+
+/* ---------------------------------------------------------------- Tabs */
+
+.cn-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 0 0 16px; }
+.cn-tab {
+  padding: 9px 16px; border-radius: 999px; border: 1px solid var(--cn-border);
+  background: #fff; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: var(--cn-text);
+}
+.cn-tab.active { border-color: rgba(255, 102, 0, 0.4); color: var(--cn-accent); box-shadow: 0 8px 16px rgba(255, 102, 0, 0.14); background: rgba(255, 102, 0, 0.06); }
+.cn-tab-panel[hidden] { display: none; }
+
+/* ---------------------------------------------------------------- Modal */
+
+.cn-modal-backdrop {
+  position: fixed; inset: 0; background: rgba(2, 6, 23, 0.5); display: none;
+  align-items: center; justify-content: center; padding: 18px; z-index: 999;
+}
+.cn-modal-backdrop.open { display: flex; }
+.cn-modal-card {
+  width: 100%; max-width: 640px; background: #fff; border-radius: var(--cn-radius);
+  border: 1px solid var(--cn-border); box-shadow: var(--cn-shadow-lg); overflow: hidden; max-height: 90vh; display: flex; flex-direction: column;
+}
+.cn-modal-head { padding: 16px 20px; border-bottom: 1px solid var(--cn-border); display: flex; align-items: center; justify-content: space-between; }
+.cn-modal-head .title { margin: 0; font-weight: 800; font-size: 1.02rem; }
+.cn-modal-body { padding: 20px; overflow-y: auto; }
+.cn-modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+.cn-modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+@media (max-width: 640px) { .cn-modal-grid { grid-template-columns: 1fr; } }
+
+.cn-preview-box {
+  padding: 14px 16px; border-radius: 12px; border: 1px dashed rgba(255, 102, 0, 0.4);
+  background: rgba(255, 102, 0, 0.05);
+}
+.cn-preview-box .label { color: var(--cn-muted); font-size: 0.82rem; }
+.cn-preview-box .value { display: block; font-size: 1.15rem; font-weight: 900; margin-top: 2px; }
+
+.cn-readonly {
+  padding: 10px 12px; border-radius: var(--cn-radius-sm); background: var(--cn-bg);
+  color: var(--cn-muted); font-weight: 600; font-size: 0.88rem; border: 1px solid var(--cn-border);
+}
+
+.cn-icon-btn {
+  width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--cn-border);
+  background: #fff; display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--cn-text); font-size: 0.85rem;
+}
+.cn-icon-btn:hover { box-shadow: 0 8px 16px rgba(15, 23, 42, 0.1); }
+.cn-icon-btn.danger { color: var(--cn-danger); border-color: rgba(220, 38, 38, 0.3); }
+
+.cn-balance-pos { background: var(--cn-success-bg); color: var(--cn-success); padding: 6px 12px; border-radius: 10px; display: inline-block; font-weight: 800; }
+.cn-balance-neg { background: var(--cn-danger-bg); color: var(--cn-danger); padding: 6px 12px; border-radius: 10px; display: inline-block; font-weight: 800; }
+.cn-field-group { display: contents; }

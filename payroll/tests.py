@@ -230,7 +230,7 @@ class EmployeeSalaryTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Amount paid to employee in term of salaries")
+        self.assertContains(response, "Amount paid to employees in salaries")
 
     def test_pm_summary_available_balance_uses_pm_share_before_deductions(self):
         PayrollGlobalSetting.objects.create(usd_to_pkr_rate=Decimal("100.00"))
