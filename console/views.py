@@ -84,11 +84,17 @@ def _is_admin(request):
 
 
 def _pm_team_member_ids(user):
+    """Employees managed by this PM — does not include the PM themselves."""
     teams = Team.objects.filter(project_manager=user)
     ids = set()
     for team in teams.prefetch_related("members"):
         ids.update(team.members.values_list("id", flat=True))
     return ids
+
+
+def _pm_scope_ids(user):
+    """Team members plus the PM's own id — used for attendance/leaves so a PM sees their own records too."""
+    return _pm_team_member_ids(user) | {user.id}
 
 
 # ---------------------------------------------------------------------------
@@ -105,7 +111,7 @@ def dashboard_view(request):
     if not _is_admin(request):
         member_ids = _pm_team_member_ids(request.user)
         employees_qs = employees_qs.filter(id__in=member_ids)
-        attendance_qs = attendance_qs.filter(employee_id__in=member_ids)
+        attendance_qs = attendance_qs.filter(employee_id__in=_pm_scope_ids(request.user))
 
     recent_employees = []
     for emp in employees_qs.order_by("-date_joined")[:5]:
@@ -342,9 +348,9 @@ def _attendance_base_qs(request):
     qs = Attendance.objects.select_related("employee")
     employees_qs = Employee.objects.all()
     if not _is_admin(request):
-        member_ids = _pm_team_member_ids(request.user)
-        qs = qs.filter(employee_id__in=member_ids)
-        employees_qs = employees_qs.filter(id__in=member_ids)
+        scope_ids = _pm_scope_ids(request.user)
+        qs = qs.filter(employee_id__in=scope_ids)
+        employees_qs = employees_qs.filter(id__in=scope_ids)
     return qs, employees_qs
 
 
@@ -509,8 +515,7 @@ def attendance_employee_detail(request, employee_id):
 
     employee = get_object_or_404(Employee, pk=employee_id)
     if not _is_admin(request):
-        member_ids = _pm_team_member_ids(request.user)
-        if employee.id not in member_ids:
+        if employee.id not in _pm_scope_ids(request.user):
             return render(request, "console/403.html", status=403)
 
     _, days_in_month = calendar.monthrange(year, month)
@@ -561,8 +566,7 @@ def attendance_employee_detail(request, employee_id):
 def leaves_list(request):
     qs = LeaveRequest.objects.select_related("employee").order_by("-created_at")
     if not _is_admin(request):
-        member_ids = _pm_team_member_ids(request.user)
-        qs = qs.filter(employee_id__in=member_ids) if member_ids else qs.none()
+        qs = qs.filter(employee_id__in=_pm_scope_ids(request.user))
 
     status = request.GET.get("status")
     filtered_qs = qs.filter(status=status) if status else qs

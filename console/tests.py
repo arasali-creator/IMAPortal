@@ -1,7 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from accounts.models import Employee, Team
+from attendance.models import Attendance
+from leaves.models import LeaveRequest
 
 
 class ConsolePermissionTests(TestCase):
@@ -136,6 +139,31 @@ class ConsolePermissionTests(TestCase):
 
         response_own = self.client.get(reverse("console:attendance_employee_detail", args=[self.employee.pk]))
         self.assertEqual(response_own.status_code, 200)
+
+    def test_pm_sees_own_attendance_alongside_team(self):
+        Attendance.objects.create(employee=self.employee, check_in=timezone.now())
+        Attendance.objects.create(employee=self.pm, check_in=timezone.now())
+
+        self.client.force_login(self.pm)
+        response = self.client.get(reverse("console:attendance_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["present_count"], 2)
+        self.assertEqual(response.context["total_employees"], 2)
+
+    def test_pm_can_view_own_attendance_detail(self):
+        self.client.force_login(self.pm)
+        response = self.client.get(reverse("console:attendance_employee_detail", args=[self.pm.pk]))
+        self.assertEqual(response.status_code, 200)
+
+    def test_pm_sees_own_leave_request_alongside_team(self):
+        LeaveRequest.objects.create(employee=self.employee, reason="Team leave")
+        LeaveRequest.objects.create(employee=self.pm, reason="My own leave")
+
+        self.client.force_login(self.pm)
+        response = self.client.get(reverse("console:leaves_list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["leaves"]), 2)
+        self.assertContains(response, "My own leave")
 
     def test_employee_detail_form_saves_changes(self):
         self.client.force_login(self.admin)
