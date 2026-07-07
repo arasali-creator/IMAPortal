@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block page_title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-pad" style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
+    <div class="pf-avatar" style="width:64px;height:64px;font-size:1.4rem;">
+      {% if request.user.profile_picture %}
+        <img src="{{ request.user.profile_picture.url }}" alt="">
+      {% else %}
+        {{ request.user.full_name|default:request.user.email|slice:":1"|upper }}
+      {% endif %}
+    </div>
+    <div>
+      <h2 style="margin:0;font-size:1.2rem;">{{ request.user.full_name|default:"Employee" }}</h2>
+      <p style="margin:4px 0 0;color:var(--pf-muted);">{{ request.user.designation|default:"Employee" }} &middot; {{ request.user.get_department_display|default:"—" }}</p>
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <span class="pf-badge neutral">Code: {{ request.user.employee_code|default:"—" }}</span>
+        <span class="pf-badge neutral">Joined: {{ request.user.date_of_joining|date:"d M Y"|default:"—" }}</span>
+        <span class="pf-badge neutral">{{ request.user.get_employment_type_display|default:"—" }}</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header"><h3>Personal Details</h3></div>
+  <div class="pf-card-pad pf-info-grid">
+    <div class="item"><span>Full Name</span><strong>{{ request.user.full_name|default:"—" }}</strong></div>
+    <div class="item"><span>Father's Name</span><strong>{{ request.user.fathers_name|default:"—" }}</strong></div>
+    <div class="item"><span>Date of Birth</span><strong>{{ request.user.date_of_birth|date:"d M Y"|default:"—" }}</strong></div>
+    <div class="item"><span>Gender</span><strong>{{ request.user.get_gender_display|default:"—" }}</strong></div>
+    <div class="item"><span>Marital Status</span><strong>{{ request.user.get_marital_status_display|default:"—" }}</strong></div>
+    <div class="item"><span>Blood Group</span><strong>{{ request.user.blood_group|default:"—" }}</strong></div>
+    <div class="item"><span>Contact Number</span><strong>{{ request.user.contact_number|default:"—" }}</strong></div>
+    <div class="item"><span>Email</span><strong>{{ request.user.email|default:"—" }}</strong></div>
+    <div class="item wide"><span>Residential Address</span><strong>{{ request.user.residential_address|default:"—" }}</strong></div>
+  </div>
+</div>
+
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header"><h3>Employment Details</h3></div>
+  <div class="pf-card-pad pf-info-grid">
+    <div class="item"><span>Department</span><strong>{{ request.user.get_department_display|default:"—" }}</strong></div>
+    <div class="item"><span>Designation</span><strong>{{ request.user.designation|default:"—" }}</strong></div>
+    <div class="item"><span>Employment Type</span><strong>{{ request.user.get_employment_type_display|default:"—" }}</strong></div>
+    <div class="item"><span>Reporting Manager</span><strong>{{ request.user.reporting_manager_name|default:"—" }}</strong></div>
+    <div class="item"><span>Date of Joining</span><strong>{{ request.user.date_of_joining|date:"d M Y"|default:"—" }}</strong></div>
+    <div class="item"><span>Employee Code</span><strong>{{ request.user.employee_code|default:"—" }}</strong></div>
+  </div>
+</div>
+
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header"><h3>Emergency Contact</h3></div>
+  <div class="pf-card-pad pf-info-grid">
+    <div class="item"><span>Name</span><strong>{{ request.user.emergency_contact_name|default:"—" }}</strong></div>
+    <div class="item"><span>Relationship</span><strong>{{ request.user.get_emergency_relationship_display|default:"—" }}</strong></div>
+    <div class="item"><span>Contact Number</span><strong>{{ request.user.emergency_contact_number|default:"—" }}</strong></div>
+    <div class="item wide"><span>Address</span><strong>{{ request.user.emergency_contact_address|default:"—" }}</strong></div>
+  </div>
+</div>
+
+<div class="pf-card">
+  <div class="pf-card-header"><h3>Documents</h3></div>
+  <div class="pf-card-pad" style="display:flex;gap:16px;flex-wrap:wrap;">
+    <div>
+      <p style="font-size:.82rem;font-weight:700;margin:0 0 8px;">Profile Picture</p>
+      {% if request.user.profile_picture %}<img class="pf-thumb" src="{{ request.user.profile_picture.url }}" alt="" onclick="pfOpenLightbox('{{ request.user.profile_picture.url }}')">{% else %}<div class="pf-thumb-empty">Not uploaded</div>{% endif %}
+    </div>
+    <div>
+      <p style="font-size:.82rem;font-weight:700;margin:0 0 8px;">CNIC Front</p>
+      {% if request.user.cnic_front %}<img class="pf-thumb" src="{{ request.user.cnic_front.url }}" alt="" onclick="pfOpenLightbox('{{ request.user.cnic_front.url }}')">{% else %}<div class="pf-thumb-empty">Not uploaded</div>{% endif %}
+    </div>
+    <div>
+      <p style="font-size:.82rem;font-weight:700;margin:0 0 8px;">CNIC Back</p>
+      {% if request.user.cnic_back %}<img class="pf-thumb" src="{{ request.user.cnic_back.url }}" alt="" onclick="pfOpenLightbox('{{ request.user.cnic_back.url }}')">{% else %}<div class="pf-thumb-empty">Not uploaded</div>{% endif %}
+    </div>
+    <div>
+      <p style="font-size:.82rem;font-weight:700;margin:0 0 8px;">Father's CNIC</p>
+      {% if request.user.father_cnic %}<img class="pf-thumb" src="{{ request.user.father_cnic.url }}" alt="" onclick="pfOpenLightbox('{{ request.user.father_cnic.url }}')">{% else %}<div class="pf-thumb-empty">Not uploaded</div>{% endif %}
+    </div>
+    <div>
+      <p style="font-size:.82rem;font-weight:700;margin:0 0 8px;">Degree Certificate</p>
+      {% if request.user.degree_certificate %}<div class="pf-thumb-empty" style="cursor:pointer;"><a href="{{ request.user.degree_certificate.url }}" target="_blank">View file</a></div>{% else %}<div class="pf-thumb-empty">Not uploaded</div>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div id="pf-lightbox" onclick="pfCloseLightbox(event)">
+  <span class="close">&times;</span>
+  <img id="pf-lightbox-img" src="" alt="">
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function pfOpenLightbox(src) {
+    document.getElementById("pf-lightbox-img").src = src;
+    document.getElementById("pf-lightbox").classList.add("open");
+  }
+  function pfCloseLightbox(e) {
+    if (e.target.id === "pf-lightbox" || e.target.classList.contains("close")) {
+      document.getElementById("pf-lightbox").classList.remove("open");
+    }
+  }
+</script>
+{% endblock %}

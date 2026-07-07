@@ -1,335 +1,62 @@
 {% extends "base.html" %}
-{% load static %}
 
-{% block title %}My Leave Requests{% endblock %}
+{% block page_title %}Leave{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-  <div class="page-hero">
-    <div>
-      <h1>My Leave Requests</h1>
-      <p class="muted">Submit new leave requests and track approvals.</p>
-    </div>
-    <div class="hero-badge">
-      <span>Total Requests</span>
-      <strong>{{ leaves|length }}</strong>
-    </div>
-  </div>
-
-  <!-- New Leave Form -->
-  <div class="leave-form-card">
-    <h2>Request New Leave</h2>
-    <form method="post">
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header"><h3>Request New Leave</h3><span class="pf-badge neutral">{{ leaves|length }} total requests</span></div>
+  <div class="pf-card-pad">
+    <form method="post" class="pf-form-grid">
       {% csrf_token %}
-      
-      <div class="form-group">
-        {{ form.start_date.label_tag }}
-        {{ form.start_date }}
-      </div>
-      <div class="form-group">
-        {{ form.end_date.label_tag }}
-        {{ form.end_date }}
-      </div>
-      <div class="form-group">
-        {{ form.reason.label_tag }}
-        {{ form.reason }}
-      </div>
-      <button type="submit" class="btn-submit">Submit</button>
+      <div class="pf-field">{{ form.start_date.label_tag }}{{ form.start_date }}</div>
+      <div class="pf-field">{{ form.end_date.label_tag }}{{ form.end_date }}</div>
+      <div class="pf-field full">{{ form.reason.label_tag }}{{ form.reason }}</div>
+      <div class="full"><button type="submit" class="pf-btn-outline primary" style="padding:12px 24px;">Submit Request</button></div>
     </form>
-  </div>
-
-  <!-- Leave History Month-wise -->
-  <h2 class="section-title">Leave History</h2>
-  <div class="leave-history">
-    {% regroup leaves by start_date|date:"F Y" as month_list %}
-
-    {% for month in month_list %}
-      <div class="month-section">
-        <button class="month-toggle">
-          {{ month.grouper }} <span class="toggle-icon">+</span>
-        </button>
-        <div class="month-leaves" style="display: none;">
-          <div class="table-responsive">
-            <table class="leave-history-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Reason</th>
-                  <th>Start Date</th>
-                  <th>End Date</th>
-                  <th>PM Status</th>
-                  <th>Admin Status</th>
-                  <th>Final Status</th>
-                  <th>Submitted At</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for leave in month.list %}
-                <tr>
-                  <td>{{ forloop.counter }}</td>
-                  <td>{{ leave.reason }}</td>
-                  <td>{{ leave.start_date|date:"d M Y" }}</td>
-                  <td>{{ leave.end_date|date:"d M Y" }}</td>
-                  <td class="status {{ leave.pm_status|lower }}">{{ leave.pm_status }}</td>
-                  <td class="status {{ leave.admin_status|lower }}">{{ leave.admin_status }}</td>
-                  <td class="status {{ leave.status|lower }}"><b>{{ leave.status }}</b></td>
-                  <td>{{ leave.created_at|date:"d M Y H:i" }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                  <td colspan="8" class="no-data">No leaves for this month.</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    {% empty %}
-      <p class="no-data">No leave requests yet.</p>
-    {% endfor %}
   </div>
 </div>
 
-<!-- CSS Styling -->
-<style>
-.container{
-  max-width: 1100px;
-  margin: 30px auto;
-  background: #fff;
-  padding: 24px;
-  border-radius: 18px;
-  box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-}
-.page-hero{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:20px;
-  padding:18px 20px;
-  border-radius:16px;
-  background: linear-gradient(120deg, rgba(255,102,0,0.18), rgba(255,255,255,0.95));
-  border:1px solid rgba(255,102,0,0.2);
-  margin-bottom:24px;
-}
-.page-hero h1{
-  margin:0;
-  font-size:24px;
-  color:#1f2937;
-}
-.muted{
-  margin:6px 0 0;
-  color:#6b7280;
-  font-weight:600;
-}
-.hero-badge{
-  background:#fff;
-  border-radius:14px;
-  padding:10px 14px;
-  border:1px solid rgba(255,102,0,0.25);
-  text-align:center;
-  min-width:120px;
-  box-shadow:0 6px 16px rgba(0,0,0,0.08);
-}
-.hero-badge span{
-  display:block;
-  font-size:11px;
-  text-transform:uppercase;
-  letter-spacing:.06em;
-  color:#6b7280;
-  font-weight:700;
-}
-.hero-badge strong{
-  display:block;
-  font-size:16px;
-  color:#ff6600;
-}
+<div class="pf-card">
+  <div class="pf-card-header"><h3>Leave History</h3></div>
+  {% regroup leaves by start_date|date:"F Y" as month_list %}
+  {% for month in month_list %}
+    <div class="pf-card-header" style="background:var(--pf-bg);cursor:pointer;" onclick="pfToggleMonth(this)">
+      <strong>{{ month.grouper }}</strong>
+      <span class="pf-badge neutral">{{ month.list|length }}</span>
+    </div>
+    <div class="pf-table-wrap" style="display:none;">
+      <table class="pf-table">
+        <thead><tr><th>Reason</th><th>Start</th><th>End</th><th>PM Status</th><th>Admin Status</th><th>Final</th><th>Submitted</th></tr></thead>
+        <tbody>
+          {% for leave in month.list %}
+            <tr>
+              <td>{{ leave.reason|truncatechars:40 }}</td>
+              <td>{{ leave.start_date|date:"d M Y" }}</td>
+              <td>{{ leave.end_date|date:"d M Y" }}</td>
+              <td>{% if leave.pm_status == "Approved" %}<span class="pf-badge success">{{ leave.pm_status }}</span>{% elif leave.pm_status == "Rejected" %}<span class="pf-badge danger">{{ leave.pm_status }}</span>{% else %}<span class="pf-badge warning">{{ leave.pm_status }}</span>{% endif %}</td>
+              <td>{% if leave.admin_status == "Approved" %}<span class="pf-badge success">{{ leave.admin_status }}</span>{% elif leave.admin_status == "Rejected" %}<span class="pf-badge danger">{{ leave.admin_status }}</span>{% else %}<span class="pf-badge warning">{{ leave.admin_status }}</span>{% endif %}</td>
+              <td>{% if leave.status == "Approved" %}<span class="pf-badge success">{{ leave.status }}</span>{% elif leave.status == "Rejected" %}<span class="pf-badge danger">{{ leave.status }}</span>{% else %}<span class="pf-badge warning">{{ leave.status }}</span>{% endif %}</td>
+              <td>{{ leave.created_at|date:"d M Y H:i" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% empty %}
+    <div class="pf-empty">No leave requests yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}
 
-.leave-form-card {
-  background: #fff;
-  color: #000;
-  padding: 20px;
-  border-radius: 14px;
-  margin-bottom: 30px;
-  box-shadow: 0 10px 22px rgba(0,0,0,0.08);
-  border:1px solid rgba(0,0,0,0.05);
-}
-.leave-form-card h2 {
-  margin: 0 0 15px;
-  color: #ff6600;
-}
-.leave-form-card form{
-  display:grid;
-  grid-template-columns: repeat(2, minmax(0,1fr));
-  gap:16px;
-  align-items:end;
-}
-.leave-form-card .form-group{
-  margin:0;
-}
-.leave-form-card .form-group:last-child{
-  grid-column: span 2;
-}
-.form-group {
-  margin-bottom: 15px;
-}
-.form-group input,
-.form-group textarea,
-.form-group select {
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  background: #fff;
-  color: #111827;
-  font-size: 14px;
-  font-weight:600;
-  box-sizing: border-box;
-}
-.form-group label{
-  display:block;
-  margin-bottom:6px;
-  font-weight:700;
-  color:#1f2937;
-}
-.form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: #ff6600;
-  box-shadow: 0 0 0 3px rgba(255,102,0,0.2);
-}
-.btn-submit {
-  background-color: #ff6600;
-  color: #fff;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 999px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  min-height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  grid-column: span 2;
-}
-.btn-submit:hover {
-  background-color: #e65c00;
-  transform: translateY(-1px);
-}
-.section-title{
-  margin: 10px 0 16px;
-  color:#1f2937;
-}
-.month-section {
-  margin-bottom: 15px;
-  border-radius: 12px;
-  overflow: hidden;
-  border: 1px solid rgba(255,102,0,0.4);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.06);
-}
-.month-toggle {
-  width: 100%;
-  background-color: #ff6600;
-  color: #fff;
-  padding: 12px 15px;
-  text-align: left;
-  font-size: 16px;
-  font-weight: bold;
-  border: none;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.month-toggle:hover {
-  background-color: #e65c00;
-}
-.toggle-icon {
-  font-weight: bold;
-  transition: transform 0.2s ease;
-}
-.table-responsive {
-  overflow-x: auto;
-}
-.leave-history-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-top: 0;
-}
-.leave-history-table th,
-.leave-history-table td {
-  border-bottom: 1px solid #eee;
-  padding: 12px;
-  text-align: center;
-}
-.leave-history-table th {
-  background-color: #ff6600;
-  color: #fff;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  font-size: 12px;
-}
-.leave-history-table tbody tr:nth-child(even){
-  background:#f9fafb;
-}
-.leave-history-table td.status.approved {
-  background-color: #d4edda;
-  color: #155724;
-  font-weight: bold;
-}
-.leave-history-table td.status.pending {
-  background-color: #fff3cd;
-  color: #856404;
-  font-weight: bold;
-}
-.leave-history-table td.status.rejected {
-  background-color: #f8d7da;
-  color: #721c24;
-  font-weight: bold;
-}
-.no-data {
-  text-align: center;
-  color: #888;
-  font-style: italic;
-}
-@media (max-width: 768px) {
-  .page-hero{
-    flex-direction:column;
-    align-items:flex-start;
-  }
-  .leave-form-card form{
-    grid-template-columns: 1fr;
-  }
-  .leave-form-card .form-group:last-child{
-    grid-column: span 1;
-  }
-  .btn-submit{
-    grid-column: span 1;
-  }
-  .leave-history-table th,
-  .leave-history-table td {
-    padding: 8px;
-  }
-}
-</style>
-
-<!-- JS for Collapse -->
+{% block extra_scripts %}
 <script>
-document.querySelectorAll('.month-toggle').forEach(button => {
-  button.addEventListener('click', () => {
-    const monthLeaves = button.nextElementSibling;
-    if (monthLeaves.style.display === "none") {
-      monthLeaves.style.display = "block";
-      button.querySelector('.toggle-icon').textContent = "-";
-    } else {
-      monthLeaves.style.display = "none";
-      button.querySelector('.toggle-icon').textContent = "+";
-    }
+  function pfToggleMonth(header) {
+    const table = header.nextElementSibling;
+    table.style.display = table.style.display === "none" ? "block" : "none";
+  }
+  document.addEventListener("DOMContentLoaded", function () {
+    const first = document.querySelector(".pf-table-wrap");
+    if (first) first.style.display = "block";
   });
-});
 </script>
 {% endblock %}

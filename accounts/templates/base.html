@@ -6,247 +6,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     {% load static %}
-    <link rel="stylesheet" href="{% static 'css/styles.css' %}" />
-    <style>
-      body {
-        margin: 0;
-        background: var(--op-bg);
-      }
-
-      .layout {
-        display: flex;
-        min-height: 100vh;
-      }
-      .main-content {
-        width: 100%;
-        display: flex;
-        justify-content: center;
-      }
-      .main-area {
-        width: 78%;
-      }
-      /* Sidebar */
-      .sidebar {
-        width: 18%;
-        min-width: 230px;
-        background: #fff;
-        color: #111827;
-        display: flex;
-        justify-content: flex-start;
-        flex-direction: column;
-        padding: 22px 16px;
-        transition: transform 0.3s ease;
-        border-radius: 0 22px 22px 0;
-        box-shadow: 4px 0 18px rgba(0, 0, 0, 0.12);
-        border-right: 1px solid rgba(0,0,0,0.05);
-        position: sticky;
-        top: 0;
-        height: 100vh;
-        overflow: hidden;
-      }
-      .sidebar h2 {
-        font-size: 18px;
-        text-align: left;
-        margin: 6px 0 12px;
-        font-weight: 800;
-        color: #ff6600;
-      }
-      .sidebar hr {
-        border: none;
-        border-top: 1px solid rgba(0, 0, 0, 0.08);
-        margin: 10px 0 18px 0;
-      }
-      .sidebar a {
-        color: #1f2937;
-        text-decoration: none;
-        padding: 12px 14px;
-        margin: 6px 0;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        transition: all 0.2s ease;
-        font-size: 16px;
-        font-weight: 700;
-        background: #f9fafb;
-        border: 1px solid rgba(0,0,0,0.05);
-      }
-      .sidebar a:hover {
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-        transform: translateY(-2px);
-        background: rgba(255,102,0,0.08);
-        border-color: rgba(255,102,0,0.3);
-      }
-      .sidebar .active {
-        background: rgba(255,102,0,0.12);
-        color: #ff6600;
-        font-weight: 600;
-        border-color: rgba(255,102,0,0.4);
-      }
-      .sidebar .active i {
-        color: #ff6600;
-      }
-      /* Hover + Active styles */
-      .sidebar a:hover,
-      .sidebar .active {
-        box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
-      }
-      .sidebar a:hover i,
-      .sidebar .active i {
-        color: #ff6600;
-      }
-      .sidebar a i {
-        font-size: 18px;
-        color: #ff6600;
-      }
-
-      /* Top bar */
-      .topbar {
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        background: #fff;
-        padding: 15px 20px;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        position: sticky;
-        top: 0;
-        z-index: 10;
-      }
-      .topbar .menu-toggle {
-        font-size: 20px;
-        cursor: pointer;
-      }
-
-      /* Main content */
-      .main-content {
-        flex: 1;
-        padding: 20px;
-      }
-
-      /* Messages */
-      .messages {
-        list-style: none;
-        padding: 0;
-      }
-      .content-wrapper{width: 78%;}
-      
-      .message {
-        padding: 10px;
-        margin-bottom: 10px;
-        border-radius: 6px;
-      }
-      .message.success {
-        background: #d4edda;
-        color: #155724;
-      }
-      .message.error {
-        background: #f8d7da;
-        color: #721c24;
-      }
-      .message.warning {
-        background: #fff3cd;
-        color: #856404;
-      }
-      .message.info {
-        background: #d1ecf1;
-        color: #0c5460;
-      }
-
-      /* Responsive */
-      @media (max-width: 768px) {
-        .sidebar {
-          position: fixed;
-          top: 0;
-          left: 0;
-          height: 100%;
-          transform: translateX(-100%);
-          z-index: 1000;
-        }
-        .sidebar.active {
-          transform: translateX(0);
-        }
-        .topbar .menu-toggle {
-          display: block;
-        }
-        .layout {
-          flex-direction: column;
-        }
-        .main-content {
-          padding: 15px;
-        }
-      }
-    </style>
-
-    <!-- FontAwesome for icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{% static 'css/portal.css' %}" />
   </head>
-  <body>
-    <div class="layout">
-      <!-- Sidebar -->
-      <aside class="sidebar" id="sidebar">
-  <h2>IMA Office Portal</h2>
-  <hr />
-  
-  <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
-    <i class="fa fa-home"></i> Dashboard
-  </a>
-  
-  <a href="{% url 'attendance:dashboard' %}" class="{% if request.path == '/attendance/dashboard/' %}active{% endif %}">
-    <i class="fa fa-calendar-check"></i> Attendance
-  </a>
-  {% if request.user.is_authenticated and request.user.role == 'pm' %}
-  <a href="{% url 'payroll:my_summary' %}" class="{% if request.path == '/payroll/my-summary/' %}active{% endif %}">
-    <i class="fa fa-wallet"></i> My Payroll
-  </a>
-  {% endif %}
-  {% if request.user.is_authenticated and request.user.role == 'employee' %}
-  <a href="{% url 'payroll:employee_salary_summary' %}" class="{% if request.path == '/payroll/salary-summary/' %}active{% endif %}">
-    <i class="fa fa-money-check-dollar"></i> Salary
-  </a>
-  {% endif %}
+  <body class="portal-body">
+    <div class="portal-shell">
+      <div class="portal-backdrop" id="portal-backdrop" onclick="togglePortalSidebar()"></div>
+      <aside class="portal-sidebar" id="portal-sidebar">
+        <div class="portal-brand">
+          <div class="mark">IM</div>
+          <div class="title">IMA Office Portal</div>
+        </div>
 
-  <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/leaves/my-leaves/' %}active{% endif %}">
-    <i class="fa fa-plane-departure"></i> Apply Leave
-  </a>
+        <nav class="portal-nav">
+          <div class="portal-nav-label">Main</div>
+          <a href="{% url 'dashboard' %}" class="{% if request.path == '/dashboard/' %}active{% endif %}">
+            <i class="fa-solid fa-gauge-high"></i> Dashboard
+          </a>
+          <a href="{% url 'attendance:dashboard' %}" class="{% if request.path == '/attendance/dashboard/' %}active{% endif %}">
+            <i class="fa-solid fa-calendar-check"></i> My Attendance
+          </a>
+          <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/leaves/my-leaves/' %}active{% endif %}">
+            <i class="fa-solid fa-plane-departure"></i> Leave
+          </a>
 
-  {% block sidebar_extra %}{% endblock %}
+          {% block sidebar_extra %}{% endblock %}
 
-  <a href="{% url 'dashboard' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
-    <i class="fa fa-user"></i> Profile
-  </a>
-  
-  <a href="{% url 'logout' %}"><i class="fa fa-sign-out-alt"></i> Logout</a>
-</aside>
-
-
-      <div class="main-area">
-        <!-- Top bar -->
-
-        <!-- Main Content -->
-        <main class="main-content">
-          {% if messages %}
-          <ul class="messages">
-            {% for m in messages %}
-            <li class="message {{ m.tags }}">{{ m }}</li>
-            {% endfor %}
-          </ul>
+          <div class="portal-nav-label">Personal</div>
+          {% if request.user.is_authenticated and request.user.role == 'pm' %}
+          <a href="{% url 'payroll:my_summary' %}" class="{% if request.path == '/payroll/my-summary/' %}active{% endif %}">
+            <i class="fa-solid fa-wallet"></i> My Payroll
+          </a>
           {% endif %}
+          {% if request.user.is_authenticated and request.user.role == 'employee' %}
+          <a href="{% url 'payroll:employee_salary_summary' %}" class="{% if request.path == '/payroll/salary-summary/' %}active{% endif %}">
+            <i class="fa-solid fa-money-check-dollar"></i> Salary &amp; Payslips
+          </a>
+          {% endif %}
+          <a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
+            <i class="fa-solid fa-user"></i> My Profile
+          </a>
+        </nav>
 
-          <div class="content-wrapper">
-            {% block page_header %}{% endblock %}
-            {% block content %}{% endblock %}
+        <div class="portal-sidebar-footer">
+          <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket" style="color:var(--pf-muted);"></i> Logout</a>
+        </div>
+      </aside>
+
+      <div class="portal-main">
+        <header class="portal-topbar">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <button class="portal-menu-toggle" onclick="togglePortalSidebar()" aria-label="Toggle menu">
+              <i class="fa-solid fa-bars"></i>
+            </button>
+            <h1>{% block page_title %}Dashboard{% endblock %}</h1>
           </div>
-        </main>
+          <div class="portal-user">
+            <div class="avatar">
+              {% if request.user.profile_picture %}
+                <img src="{{ request.user.profile_picture.url }}" alt="">
+              {% else %}
+                {{ request.user.full_name|default:request.user.email|slice:":1"|upper }}
+              {% endif %}
+            </div>
+            <div class="meta">
+              <div class="name">{{ request.user.full_name|default:request.user.email }}</div>
+              <div class="role">{{ request.user.get_role_display }}</div>
+            </div>
+          </div>
+        </header>
+
+        <div class="portal-content">
+          {% if messages %}
+            <ul class="portal-messages">
+              {% for m in messages %}<li class="{{ m.tags }}">{{ m }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+          {% block page_header %}{% endblock %}
+          {% block content %}{% endblock %}
+        </div>
       </div>
     </div>
 
     <script>
-      function toggleSidebar() {
-        document.getElementById("sidebar").classList.toggle("active");
+      function togglePortalSidebar() {
+        document.getElementById("portal-sidebar").classList.toggle("open");
+        document.getElementById("portal-backdrop").classList.toggle("open");
       }
     </script>
+    {% block extra_scripts %}{% endblock %}
   </body>
 </html>

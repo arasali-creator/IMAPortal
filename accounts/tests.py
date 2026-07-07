@@ -1,8 +1,58 @@
 from django.db import connection
 from django.test import TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from accounts.models import Employee
+from attendance.models import Attendance
+from leaves.models import LeaveRequest
+
+
+class EmployeeDashboardTests(TestCase):
+    def setUp(self):
+        self.employee = Employee.objects.create_user(
+            cnic="6666666666666",
+            email="dashboard-employee@example.com",
+            password="testpass123",
+            full_name="Dashboard Employee",
+            role="employee",
+            is_active=True,
+        )
+        self.admin = Employee.objects.create_user(
+            cnic="7777777777777",
+            email="dashboard-admin@example.com",
+            password="testpass123",
+            full_name="Dashboard Admin",
+            role="admin",
+            is_active=True,
+        )
+
+    def test_employee_dashboard_renders_with_real_stats(self):
+        today = timezone.localdate()
+        Attendance.objects.create(employee=self.employee, check_in=timezone.now())
+        LeaveRequest.objects.create(employee=self.employee, reason="Sick", status="Approved")
+        LeaveRequest.objects.create(employee=self.employee, reason="Pending one", status="Pending")
+
+        self.client.force_login(self.employee)
+        response = self.client.get(reverse("dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["present_days"], 1)
+        self.assertTrue(response.context["is_checked_in"])
+        self.assertEqual(response.context["leave_totals"]["pending"], 1)
+        self.assertEqual(response.context["leave_totals"]["approved"], 1)
+        self.assertContains(response, "Dashboard Employee")
+
+    def test_admin_still_redirects_to_console_dashboard(self):
+        self.client.force_login(self.admin)
+        response = self.client.get(reverse("dashboard"))
+        self.assertRedirects(response, reverse("console:dashboard"))
+
+    def test_profile_page_renders(self):
+        self.client.force_login(self.employee)
+        response = self.client.get(reverse("profile"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dashboard Employee")
 
 
 class EmployeeDeletionCleanupTests(TestCase):

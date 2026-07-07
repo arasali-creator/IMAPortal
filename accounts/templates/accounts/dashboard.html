@@ -1,417 +1,109 @@
 {% extends 'base.html' %}
 
-{% block page_header %}
-<div class="app-hero">
-  <div class="app-hero-head">
-    <div>
-      <h1 class="app-hero-title">Dashboard</h1>
-      <p class="app-hero-sub">Your profile snapshot, documents, and personal details.</p>
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="pf-hero">
+  <p class="greeting">Hi, {{ request.user.full_name|default:request.user.email }} 👋</p>
+  <p class="date">{{ today|date:"l, j F Y" }}</p>
+  <div class="clock" id="pf-clock">--:--:--</div>
+  <div class="clock-label">Current time</div>
+
+  <div class="pf-checkin-row">
+    <div class="stat">
+      <div class="label">Check In</div>
+      <div class="value">{{ today_attendance.check_in|date:"h:i A"|default:"—" }}</div>
     </div>
+    <div class="stat">
+      <div class="label">Status</div>
+      <div class="value">{% if is_checked_in %}Checked In{% elif today_attendance %}Checked Out{% else %}Not In{% endif %}</div>
+    </div>
+    <div class="stat">
+      <div class="label">Check Out</div>
+      <div class="value">{{ today_attendance.check_out|date:"h:i A"|default:"—" }}</div>
+    </div>
+  </div>
+
+  {% if is_checked_in %}
+    <a class="pf-btn secondary" href="{% url 'attendance:check_out' %}"><i class="fa-solid fa-arrow-right-from-bracket"></i> Check Out</a>
+  {% else %}
+    <a class="pf-btn" href="{% url 'attendance:check_in' %}"><i class="fa-solid fa-arrow-right-to-bracket"></i> Check In</a>
+  {% endif %}
+</div>
+
+<div class="pf-kpi-grid">
+  <div class="pf-kpi-card purple">
+    <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="value">{{ attendance_pct }}%</div>
+    <div class="label">Attendance &middot; {{ today|date:"F Y" }}</div>
+  </div>
+  <div class="pf-kpi-card green">
+    <div class="icon"><i class="fa-solid fa-check"></i></div>
+    <div class="value">{{ present_days }}</div>
+    <div class="label">Days Present</div>
+  </div>
+  <div class="pf-kpi-card red">
+    <div class="icon"><i class="fa-solid fa-xmark"></i></div>
+    <div class="value">{{ absent_days }}</div>
+    <div class="label">Days Absent</div>
+  </div>
+  <div class="pf-kpi-card amber">
+    <div class="icon"><i class="fa-solid fa-plane-departure"></i></div>
+    <div class="value">{{ leave_days }}</div>
+    <div class="label">Days on Leave</div>
+  </div>
+</div>
+
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header">
+    <h3>Leave Requests</h3>
+    <a class="pf-btn-outline primary" href="{% url 'my_leave_requests' %}">Apply for Leave</a>
+  </div>
+  <div class="pf-card-pad" style="display:flex;gap:24px;flex-wrap:wrap;">
+    <div><span class="pf-badge warning">{{ leave_totals.pending }} Pending</span></div>
+    <div><span class="pf-badge success">{{ leave_totals.approved }} Approved</span></div>
+    <div><span class="pf-badge danger">{{ leave_totals.rejected }} Rejected</span></div>
+  </div>
+</div>
+
+<div class="pf-card">
+  <div class="pf-card-header">
+    <h3>Recent Leave Requests</h3>
+    <a class="pf-btn-outline" href="{% url 'my_leave_requests' %}">View All &rarr;</a>
+  </div>
+  <div class="pf-table-wrap">
+    <table class="pf-table">
+      <thead><tr><th>Reason</th><th>Dates</th><th>Status</th><th>Submitted</th></tr></thead>
+      <tbody>
+        {% for leave in recent_leaves %}
+          <tr>
+            <td>{{ leave.reason|truncatechars:40 }}</td>
+            <td>{{ leave.start_date|date:"M j" }} &rarr; {{ leave.end_date|date:"M j" }}</td>
+            <td>
+              {% if leave.status == "Approved" %}<span class="pf-badge success">Approved</span>
+              {% elif leave.status == "Rejected" %}<span class="pf-badge danger">Rejected</span>
+              {% else %}<span class="pf-badge warning">Pending</span>{% endif %}
+            </td>
+            <td>{{ leave.created_at|date:"M j, Y" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="pf-empty">No leave requests yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
 
-{% block content %}
-<div class="employee-dashboard">
-  <section class="profile-hero">
-    <div class="hero-left">
-      <div class="avatar">
-        {% if request.user.profile_picture %}
-          <img src="{{ request.user.profile_picture.url }}" alt="Profile photo">
-        {% else %}
-          <span>{{ request.user.get_short_name|default:"U"|slice:":1" }}</span>
-        {% endif %}
-      </div>
-      <div>
-        <h1>{{ request.user.full_name|default:"Employee" }}</h1>
-        <p class="muted">{{ request.user.designation|default:"Employee" }} · {{ request.user.department|default:"—" }}</p>
-        <div class="chips">
-          <span class="chip">Code: {{ request.user.employee_code|default:"—" }}</span>
-          <span class="chip">Joined: {{ request.user.date_of_joining|date:"d M Y"|default:"—" }}</span>
-          <span class="chip">Status: {{ request.user.employment_type|default:"—" }}</span>
-        </div>
-      </div>
-    </div>
-    <div class="hero-right">
-      <div class="hero-card">
-        <p class="value">{{ request.user.contact_number|default:"—" }}</p>
-      </div>
-      <div class="hero-card">
-        <p class="value">{{ request.user.email|default:"—" }}</p>
-      </div>
-
-    </div>
-  </section>
-
-  <section class="info-grid">
-    <div class="info-card full-width">
-      <h2>Personal Details</h2>
-      <div class="info-list">
-        <div><span>Full Name</span><strong>{{ request.user.full_name|default:"—" }}</strong></div>
-        <div><span>Father's Name</span><strong>{{ request.user.fathers_name|default:"—" }}</strong></div>
-        <div><span>Date of Birth</span><strong>{{ request.user.date_of_birth|date:"d M Y"|default:"—" }}</strong></div>
-        <div><span>Gender</span><strong>{{ request.user.gender|default:"—" }}</strong></div>
-        <div><span>Marital Status</span><strong>{{ request.user.marital_status|default:"—" }}</strong></div>
-        <div><span>Blood Group</span><strong>{{ request.user.blood_group|default:"—" }}</strong></div>
-        <div class="wide"><span>Residential Address</span><strong>{{ request.user.residential_address|default:"—" }}</strong></div>
-      </div>
-    </div>
-
-    <div class="info-card">
-      <h2>Employment Details</h2>
-      <div class="info-list">
-        <div><span>Department</span><strong>{{ request.user.department|default:"—" }}</strong></div>
-        <div><span>Designation</span><strong>{{ request.user.designation|default:"—" }}</strong></div>
-        <div><span>Employment Type</span><strong>{{ request.user.employment_type|default:"—" }}</strong></div>
-        <div><span>Reporting Manager</span><strong>{{ request.user.reporting_manager_name|default:"—" }}</strong></div>
-        <div><span>Date of Joining</span><strong>{{ request.user.date_of_joining|date:"d M Y"|default:"—" }}</strong></div>
-        <div><span>Employee Code</span><strong>{{ request.user.employee_code|default:"—" }}</strong></div>
-      </div>
-    </div>
-
-    <div class="info-card">
-      <h2>Emergency Contact</h2>
-      <div class="info-list">
-        <div><span>Name</span><strong>{{ request.user.emergency_contact_name|default:"—" }}</strong></div>
-        <div><span>Relationship</span><strong>{{ request.user.emergency_relationship|default:"—" }}</strong></div>
-        <div><span>Contact Number</span><strong>{{ request.user.emergency_contact_number|default:"—" }}</strong></div>
-        <div class="wide"><span>Address</span><strong>{{ request.user.emergency_contact_address|default:"—" }}</strong></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="docs-section">
-    <h2>Documents</h2>
-    <div class="doc-grid">
-      <div class="doc-card">
-        <h3>Profile Picture</h3>
-        {% if request.user.profile_picture %}
-          <img class="thumbnail" src="{{ request.user.profile_picture.url }}" alt="Profile Picture">
-        {% else %}
-          <p class="empty">Not Uploaded</p>
-        {% endif %}
-      </div>
-
-      <div class="doc-card">
-        <h3>CNIC Front</h3>
-        {% if request.user.cnic_front %}
-          <img class="thumbnail" src="{{ request.user.cnic_front.url }}" alt="CNIC Front">
-        {% else %}
-          <p class="empty">Not Uploaded</p>
-        {% endif %}
-      </div>
-
-      <div class="doc-card">
-        <h3>CNIC Back</h3>
-        {% if request.user.cnic_back %}
-          <img class="thumbnail" src="{{ request.user.cnic_back.url }}" alt="CNIC Back">
-        {% else %}
-          <p class="empty">Not Uploaded</p>
-        {% endif %}
-      </div>
-
-      <div class="doc-card">
-        <h3>Degree Certificate</h3>
-        {% if request.user.degree_certificate %}
-          <img class="thumbnail pdf-preview" src="https://img.icons8.com/ios-filled/100/000000/pdf.png"
-               data-pdf="{{ request.user.degree_certificate.url }}" alt="Degree Certificate">
-        {% else %}
-          <p class="empty">Not Uploaded</p>
-        {% endif %}
-      </div>
-
-      <div class="doc-card">
-        <h3>Father's CNIC</h3>
-        {% if request.user.father_cnic %}
-          <img class="thumbnail" src="{{ request.user.father_cnic.url }}" alt="Father CNIC">
-        {% else %}
-          <p class="empty">Not Uploaded</p>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-</div>
-
-<div id="lightbox-overlay">
-  <span id="lightbox-close">&times;</span>
-  <img id="lightbox-img" src="">
-  <iframe id="lightbox-pdf" src="" frameborder="0"></iframe>
-</div>
-
-<style>
-  .employee-dashboard{
-    display:flex;
-    flex-direction:column;
-    gap:26px;
-  }
-  .profile-hero{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    gap:24px;
-    padding:24px;
-    border-radius:18px;
-    background: linear-gradient(120deg, rgba(255,102,0,0.18), rgba(255,255,255,0.95));
-    box-shadow: 0 10px 24px rgba(0,0,0,0.08);
-    border:1px solid rgba(255,102,0,0.2);
-  }
-  .hero-left{
-    display:flex;
-    gap:18px;
-    align-items:center;
-  }
-  .avatar{
-    width:72px;
-    height:72px;
-    border-radius:20px;
-    background:#fff;
-    border:2px solid rgba(255,102,0,0.4);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    overflow:hidden;
-    font-weight:900;
-    font-size:26px;
-    color:#ff6600;
-  }
-  .avatar img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-  }
-  .profile-hero h1{
-    margin:0;
-    font-size:26px;
-    color:#1f2937;
-  }
-  .muted{
-    color:#6b7280;
-    margin:4px 0 12px;
-    font-weight:600;
-  }
-  .chips{
-    display:flex;
-    flex-wrap:wrap;
-    gap:8px;
-  }
-  .chip{
-    padding:6px 10px;
-    border-radius:999px;
-    background:#fff;
-    border:1px solid rgba(255,102,0,0.3);
-    font-size:12px;
-    font-weight:700;
-    color:#ff6600;
-  }
-  .hero-right{
-    display:grid;
-    gap:12px;
-  }
-  .hero-card{
-    background:#fff;
-    border-radius:12px;
-    padding:12px 14px;
-    box-shadow:0 6px 16px rgba(0,0,0,0.08);
-    border:1px solid rgba(0,0,0,0.05);
-  }
-  .hero-card .label{
-    margin:0;
-    font-size:12px;
-    color:#6b7280;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-  }
-  .hero-card .value{
-    margin:0px 0 0;
-    font-size:14px;
-    font-weight:700;
-    color:#111827;
-    word-break:break-word;
-  }
-
-  .info-grid{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:20px;
-  }
-  .info-card.full-width{
-    grid-column: span 2;
-  }
-  .info-card{
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
-    box-shadow:0 12px 24px rgba(0,0,0,0.08);
-    border:1px solid rgba(0,0,0,0.05);
-  }
-  .info-card h2{
-    margin:0 0 16px;
-    font-size:18px;
-    color:#ff6600;
-  }
-  .info-list{
-    display:grid;
-    grid-template-columns: repeat(2, minmax(0,1fr));
-    gap:14px 22px;
-  }
-  .info-list div{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-  }
-  .info-list div span{
-    font-size:12px;
-    color:#6b7280;
-    font-weight:700;
-    text-transform:uppercase;
-    letter-spacing:.04em;
-  }
-  .info-list div strong{
-    font-size:14px;
-    color:#1f2937;
-    font-weight:700;
-  }
-  .info-list .wide{
-    grid-column: span 2;
-  }
-
-  .docs-section h2{
-    margin:0 0 16px;
-    font-size:20px;
-    color:#1f2937;
-  }
-  .doc-grid{
-    display:grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap:18px;
-  }
-  .doc-card{
-    background:#fff;
-    border-radius:16px;
-    padding:16px;
-    box-shadow:0 10px 20px rgba(0,0,0,0.08);
-    border:1px solid rgba(0,0,0,0.05);
-    transition: transform .2s ease, box-shadow .2s ease;
-  }
-  .doc-card:hover{
-    transform: translateY(-2px);
-    box-shadow:0 14px 26px rgba(0,0,0,0.12);
-  }
-  .doc-card h3{
-    margin:0 0 12px;
-    font-size:15px;
-    color:#ff6600;
-  }
-  .thumbnail{
-    width:100%;
-    height:220px;
-    border-radius:12px;
-    border:1px solid rgba(0,0,0,0.08);
-    object-fit:cover;
-    cursor:pointer;
-    transition:transform 0.2s ease;
-  }
-  .thumbnail:hover{
-    transform:translateY(-3px);
-  }
-  .empty{
-    margin:0;
-    color:#6b7280;
-    font-weight:600;
-  }
-
-  #lightbox-overlay {
-    display: none;
-    position: fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background: rgba(0,0,0,0.8);
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    flex-direction: column;
-  }
-  #lightbox-img, #lightbox-pdf {
-    max-width: 90%;
-    max-height: 90%;
-    border-radius: 10px;
-    display: none;
-    background:#fff;
-  }
-  #lightbox-close {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    color: #fff;
-    font-size: 40px;
-    cursor: pointer;
-  }
-
-  @media (max-width: 1100px){
-    .profile-hero{
-      flex-direction:column;
-      align-items:flex-start;
-    }
-    .hero-right{
-      width:100%;
-      grid-template-columns: repeat(2, minmax(0,1fr));
-    }
-  }
-  @media (max-width: 900px){
-    .info-grid{
-      grid-template-columns: 1fr;
-    }
-    .info-card.full-width{
-      grid-column: span 1;
-    }
-    .info-list{
-      grid-template-columns: 1fr;
-    }
-    .info-list .wide{
-      grid-column: span 1;
-    }
-  }
-  @media (max-width: 640px){
-    .hero-right{
-      grid-template-columns: 1fr;
-    }
-    .profile-hero{
-      padding:18px;
-    }
-  }
-</style>
-
+{% block extra_scripts %}
 <script>
-  const overlay = document.getElementById('lightbox-overlay');
-  const lightboxImg = document.getElementById('lightbox-img');
-  const lightboxPdf = document.getElementById('lightbox-pdf');
-  const closeBtn = document.getElementById('lightbox-close');
-
-  document.querySelectorAll('.thumbnail').forEach(el => {
-    el.addEventListener('click', () => {
-      if(el.classList.contains('pdf-preview')) {
-        lightboxImg.style.display = 'none';
-        lightboxPdf.src = el.dataset.pdf;
-        lightboxPdf.style.display = 'block';
-      } else {
-        lightboxPdf.style.display = 'none';
-        lightboxImg.src = el.src;
-        lightboxImg.style.display = 'block';
-      }
-      overlay.style.display = 'flex';
-    });
-  });
-
-  overlay.addEventListener('click', e => {
-    if(e.target === overlay || e.target === closeBtn) {
-      overlay.style.display = 'none';
-      lightboxImg.style.display = 'none';
-      lightboxPdf.style.display = 'none';
-      lightboxPdf.src = '';
-    }
-  });
+  function pfUpdateClock() {
+    const el = document.getElementById("pf-clock");
+    if (!el) return;
+    const now = new Date();
+    el.textContent = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  }
+  pfUpdateClock();
+  setInterval(pfUpdateClock, 1000);
 </script>
 {% endblock %}

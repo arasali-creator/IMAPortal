@@ -1,9 +1,16 @@
+from datetime import date, timedelta
+
 from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_GET, require_http_methods
+
+from attendance.models import Attendance
+from leaves.models import LeaveRequest
 from .forms import EmployeeRegistrationForm, CNICLoginForm
 from .models import Employee, PasswordResetRequest
 
@@ -51,7 +58,64 @@ def approval_status(request):
 def dashboard(request):
     if getattr(request.user, "role", None) in ("admin", "pm"):
         return redirect('console:dashboard')
-    return render(request, 'accounts/dashboard.html')
+
+    employee = request.user
+    today = timezone.localdate()
+    month_start = today.replace(day=1)
+
+    working_days_so_far = sum(
+        1 for d in range(1, today.day + 1) if date(today.year, today.month, d).weekday() < 5
+    )
+
+    present_dates = set(
+        Attendance.objects.filter(employee=employee, check_in__date__gte=month_start, check_in__date__lte=today)
+        .values_list("check_in__date", flat=True).distinct()
+    )
+    present_days = len(present_dates)
+
+    approved_leaves_month = LeaveRequest.objects.filter(
+        employee=employee, status="Approved", start_date__lte=today, end_date__gte=month_start,
+    )
+    leave_dates = set()
+    for leave in approved_leaves_month:
+        cursor = max(leave.start_date, month_start)
+        end = min(leave.end_date, today)
+        while cursor <= end:
+            if cursor.weekday() < 5 and cursor not in present_dates:
+                leave_dates.add(cursor)
+            cursor += timedelta(days=1)
+    leave_days = len(leave_dates)
+
+    absent_days = max(working_days_so_far - present_days - leave_days, 0)
+    attendance_pct = round((present_days / working_days_so_far) * 100) if working_days_so_far else 0
+
+    today_attendance = Attendance.objects.filter(employee=employee, check_in__date=today).order_by("-check_in").first()
+    is_checked_in = bool(today_attendance and not today_attendance.check_out)
+
+    leave_totals = LeaveRequest.objects.filter(employee=employee).aggregate(
+        pending=Count("id", filter=Q(status="Pending")),
+        approved=Count("id", filter=Q(status="Approved")),
+        rejected=Count("id", filter=Q(status="Rejected")),
+    )
+    recent_leaves = LeaveRequest.objects.filter(employee=employee).order_by("-created_at")[:5]
+
+    context = {
+        "today": today,
+        "attendance_pct": attendance_pct,
+        "present_days": present_days,
+        "absent_days": absent_days,
+        "leave_days": leave_days,
+        "is_checked_in": is_checked_in,
+        "today_attendance": today_attendance,
+        "leave_totals": leave_totals,
+        "recent_leaves": recent_leaves,
+    }
+    return render(request, 'accounts/dashboard.html', context)
+
+
+@login_required
+def profile_view(request):
+    return render(request, 'accounts/profile.html')
 
 def logout_view(request):
     logout(request)
