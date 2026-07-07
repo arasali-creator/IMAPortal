@@ -4,105 +4,110 @@
 {% block page_title %}Branches Expenses{% endblock %}
 
 {% block content %}
-<div class="cn-hero">
-  <div>
-    <h2>Branches Expenses</h2>
-    <div class="sub">Manage expenses by branch — {{ current_month_label }}</div>
-  </div>
-  <div class="cn-action-group">
-    <button class="cn-btn" type="button" onclick="openModal('branch-modal')"><i class="fa-solid fa-plus"></i> Add Branch</button>
-    <button class="cn-btn" type="button" onclick="openModal('edit-branch-modal')" {% if not selected_branch %}disabled{% endif %}>Edit Branch</button>
-    <button class="cn-btn danger" type="button" onclick="openModal('delete-branch-modal')" {% if not selected_branch %}disabled{% endif %}>Delete Branch</button>
-    <button class="cn-btn" type="button" onclick="openModal('fixed-modal')" {% if not selected_branch %}disabled{% endif %}>Add Fixed Expense</button>
-    <button class="cn-btn primary" type="button" onclick="openModal('expense-modal')" {% if not selected_branch %}disabled{% endif %}>Pay Expense</button>
-  </div>
-</div>
-
-<div class="cn-filterbar">
-  <form method="get" action="{% url 'console:branch_expenses' %}" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;width:100%;">
-    <div class="grow">
-      <label>Branch</label>
-      <select name="branch" class="cn-input" onchange="this.form.submit()">
-        <option value="">Choose a branch</option>
-        {% for branch in branches %}
-          <option value="{{ branch.id }}" {% if selected_branch and branch.id == selected_branch.id %}selected{% endif %}>{{ branch.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Period</label>
-      <select name="period" onchange="this.form.submit()">
-        <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
-        <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
-      </select>
-    </div>
-    <div>
-      <label>Year</label>
-      <select name="year" onchange="this.form.submit()">
-        {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Month</label>
-      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
-        {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
-      </select>
-    </div>
+<div class="cn-commandbar">
+  <p class="cn-page-lede" style="margin:0;">Pick a branch to view and manage its expenses — {{ current_month_label }}.</p>
+  <form class="period-group" method="get" action="{% url 'console:branch_expenses' %}">
+    <input type="hidden" name="branch" value="{{ selected_branch.id }}">
+    <select name="period" onchange="this.form.submit()">
+      <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+      <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+    </select>
+    <select name="year" onchange="this.form.submit()">
+      {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+      {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
   </form>
 </div>
 
-{% if selected_branch %}
-  <div class="cn-stat-grid">
-    <div class="cn-stat-card">
-      <div class="label">Total Expenses</div>
-      <div class="value">PKR {{ summary.total_expenses_pkr|floatformat:0|intcomma }}</div>
+<div class="cn-split">
+  <aside class="cn-split-nav">
+    <div class="search-box">
+      <input type="text" id="branch-filter-input" placeholder="Search branch..." oninput="filterEntityList(this, 'branch-entity-list')">
     </div>
-    <div class="cn-stat-card">
-      <div class="label">Paid Expenses</div>
-      <div class="value">PKR {{ summary.paid_expenses_pkr|floatformat:0|intcomma }}</div>
+    <div class="cn-entity-list" id="branch-entity-list">
+      {% for branch in branches %}
+        <a class="cn-entity-item {% if selected_branch and branch.id == selected_branch.id %}active{% endif %}" data-search="{{ branch.name|lower }}"
+           href="?branch={{ branch.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
+          <span class="cn-avatar"><i class="fa-solid fa-building"></i></span>
+          {{ branch.name }}
+        </a>
+      {% empty %}
+        <div class="cn-empty">No branches yet.</div>
+      {% endfor %}
     </div>
-    <div class="cn-stat-card">
-      <div class="label">Need To Pay</div>
-      <div class="value accent">PKR {{ summary.need_to_pay_pkr|floatformat:0|intcomma }}</div>
+    <div style="padding:12px;border-top:1px solid var(--cn-border);">
+      <button class="cn-btn" style="width:100%;" type="button" onclick="openModal('branch-modal')"><i class="fa-solid fa-plus"></i> Add Branch</button>
     </div>
-  </div>
+  </aside>
 
-  <div class="cn-card">
-    <div class="cn-card-header">
-      <h3>Expenses Details</h3>
-      <span class="cn-badge neutral">{{ expenses|length }} entries</span>
-    </div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Note</th><th>Amount</th><th>Paid By</th><th>Fixed Expense</th><th>Actions</th></tr></thead>
-        <tbody>
-          {% for exp in expenses %}
-            <tr>
-              <td>{{ exp.paid_date }}</td>
-              <td>{{ exp.note }}</td>
-              <td>PKR {{ exp.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>{{ exp.paid_by.full_name|default:exp.paid_by.email|default:"-" }}</td>
-              <td>{{ exp.fixed_expense.name|default:"-" }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button" title="Edit" onclick="openEditExpense(this)"
-                    data-id="{{ exp.id }}" data-note="{{ exp.note|escape }}" data-amount="{{ exp.amount_pkr }}"
-                    data-date="{{ exp.paid_date }}" data-paidby="{{ exp.paid_by_id|default_if_none:'' }}"
-                    data-fixed="{{ exp.fixed_expense_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
-                  <button class="cn-icon-btn danger" type="button" title="Delete" onclick="openDeleteExpense(this)" data-id="{{ exp.id }}"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="cn-empty">No expenses found for this branch.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+  <div class="cn-split-main">
+    {% if selected_branch %}
+      <div class="cn-toolbar" style="margin-bottom:18px;">
+        <h3 style="margin:0;font-size:1.05rem;">{{ selected_branch.name }}</h3>
+        <div class="spacer"></div>
+        <div class="cn-action-group">
+          <button class="cn-btn" type="button" onclick="openModal('edit-branch-modal')">Rename</button>
+          <button class="cn-btn danger" type="button" onclick="openModal('delete-branch-modal')">Delete</button>
+          <button class="cn-btn" type="button" onclick="openModal('fixed-modal')">Add Fixed Expense</button>
+          <button class="cn-btn primary" type="button" onclick="openModal('expense-modal')">Pay Expense</button>
+        </div>
+      </div>
+
+      <div class="cn-kpi-grid">
+        <div class="cn-kpi-tile c5">
+          <div class="icon"><i class="fa-solid fa-receipt"></i></div>
+          <div class="label">Total Expenses</div>
+          <div class="value">PKR {{ summary.total_expenses_pkr|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="cn-kpi-tile c3">
+          <div class="icon"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="label">Paid Expenses</div>
+          <div class="value">PKR {{ summary.paid_expenses_pkr|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="cn-kpi-tile c1">
+          <div class="icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div class="label">Need To Pay</div>
+          <div class="value">PKR {{ summary.need_to_pay_pkr|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+
+      <div class="cn-card">
+        <div class="cn-card-header"><h3>Expenses Details</h3><span class="cn-badge neutral">{{ expenses|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Note</th><th>Amount</th><th>Paid By</th><th>Fixed Expense</th><th>Actions</th></tr></thead>
+            <tbody>
+              {% for exp in expenses %}
+                <tr>
+                  <td>{{ exp.paid_date }}</td>
+                  <td>{{ exp.note }}</td>
+                  <td>PKR {{ exp.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>{{ exp.paid_by.full_name|default:exp.paid_by.email|default:"-" }}</td>
+                  <td>{{ exp.fixed_expense.name|default:"-" }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button" onclick="openEditExpense(this)"
+                        data-id="{{ exp.id }}" data-note="{{ exp.note|escape }}" data-amount="{{ exp.amount_pkr }}"
+                        data-date="{{ exp.paid_date }}" data-paidby="{{ exp.paid_by_id|default_if_none:'' }}"
+                        data-fixed="{{ exp.fixed_expense_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
+                      <button class="cn-icon-btn danger" type="button" onclick="openDeleteExpense(this)" data-id="{{ exp.id }}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="cn-empty">No expenses found for this branch.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="cn-card cn-empty">Select a branch from the list to view its expenses.</div>
+    {% endif %}
   </div>
-{% else %}
-  <div class="cn-card cn-empty">Choose a branch from the dropdown above to view its expenses.</div>
-{% endif %}
+</div>
 
 <div id="branch-modal" class="cn-modal-backdrop" onclick="closeOnBackdrop(event, 'branch-modal')">
   <div class="cn-modal-card">
@@ -270,6 +275,15 @@
   function openModal(id){document.getElementById(id).classList.add('open');}
   function closeModal(id){document.getElementById(id).classList.remove('open');}
   function closeOnBackdrop(e,id){if(e.target.id===id){closeModal(id);}}
+
+  function filterEntityList(input, listId){
+    const query = input.value.trim().toLowerCase();
+    document.querySelectorAll(`#${listId} .cn-entity-item`).forEach((item) => {
+      const match = !query || (item.dataset.search || "").includes(query);
+      item.style.display = match ? "flex" : "none";
+    });
+  }
+
   const fixedSelect = document.querySelector('#expense-modal select[name="fixed_expense"]');
   const amountInput = document.querySelector('#expense-modal input[name="amount"]');
   if (fixedSelect && amountInput){

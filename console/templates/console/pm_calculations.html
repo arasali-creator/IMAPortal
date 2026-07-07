@@ -4,14 +4,10 @@
 {% block page_title %}PM Calculations{% endblock %}
 
 {% block content %}
-<div class="cn-hero">
-  <div>
-    <h2>PM Calculations</h2>
-    <div class="sub">Select a PM to see their income, advances, and available balance.</div>
-  </div>
-  <form class="cn-hero-controls" method="get" action="{% url 'console:pm_calculations' %}">
+<div class="cn-commandbar">
+  <p class="cn-page-lede" style="margin:0;">Pick a PM from the list to see their income, advances, and available balance.</p>
+  <form class="period-group" method="get" action="{% url 'console:pm_calculations' %}">
     <input type="hidden" name="pm" value="{{ selected_pm.id }}">
-    <label>Period</label>
     <select name="period" onchange="this.form.submit()">
       <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
       <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
@@ -25,149 +21,152 @@
   </form>
 </div>
 
-<div class="cn-filterbar">
-  <form method="get" action="{% url 'console:pm_calculations' %}" style="width:100%;display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
-    <input type="hidden" name="period" value="{{ period }}">
-    <input type="hidden" name="year" value="{{ year }}">
-    <input type="hidden" name="month" value="{{ month }}">
-    <div class="grow">
-      <label>Select PM</label>
-      <div class="cn-combobox" id="pm-combobox" hidden>
-        <input id="pm-search" type="text" placeholder="Search PM by name, email or CNIC" autocomplete="off" spellcheck="false">
-        <span class="icon"><i class="fa-solid fa-magnifying-glass"></i></span>
-        <div id="pm-search-dropdown" class="dropdown" role="listbox" aria-label="PM suggestions"></div>
-      </div>
-      <select id="pm-select" class="cn-input" name="pm" onchange="this.form.submit()">
-        <option value="">Choose a PM</option>
-        {% for pm in pms %}
-          <option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>{{ pm.full_name|default:pm.email|default:pm.cnic }}</option>
-        {% endfor %}
-      </select>
+<div class="cn-split">
+  <aside class="cn-split-nav">
+    <div class="search-box">
+      <input type="text" id="pm-filter-input" placeholder="Search PM..." oninput="filterEntityList(this, 'pm-entity-list')">
     </div>
-  </form>
+    <div class="cn-entity-list" id="pm-entity-list">
+      {% for pm in pms %}
+        <a class="cn-entity-item {% if selected_pm and pm.id == selected_pm.id %}active{% endif %}" data-search="{{ pm.full_name|default:pm.email|default:pm.cnic|lower }}"
+           href="?pm={{ pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
+          <span class="cn-avatar">{{ pm.full_name|default:pm.email|slice:":1"|upper }}</span>
+          {{ pm.full_name|default:pm.email|default:pm.cnic }}
+        </a>
+      {% empty %}
+        <div class="cn-empty">No PMs found.</div>
+      {% endfor %}
+    </div>
+  </aside>
+
+  <div class="cn-split-main">
+    {% if selected_pm and summary %}
+      <div class="cn-card-header" style="border:none;padding:0 0 14px;">
+        <h3 style="font-size:1.15rem;">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</h3>
+        <div class="cn-action-group">
+          <a class="cn-btn" href="{% url 'console:employee_salary' %}?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">Employee Salary</a>
+          <button class="cn-btn primary" type="button" onclick="openModal('income-modal')"><i class="fa-solid fa-plus"></i> Add Income</button>
+          <button class="cn-btn" type="button" onclick="openModal('advance-modal')"><i class="fa-solid fa-plus"></i> Add Advance</button>
+        </div>
+      </div>
+
+      <div class="cn-kpi-grid">
+        <div class="cn-kpi-tile c1">
+          <div class="icon"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="label">Total Income</div>
+          <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
+          <div class="sub">${{ summary.total_income_usd|floatformat:2 }}</div>
+        </div>
+        <div class="cn-kpi-tile c3">
+          <div class="icon"><i class="fa-solid fa-money-bill-transfer"></i></div>
+          <div class="label">Amount Paid</div>
+          <div class="value">PKR {{ summary.cash_online_pkr|floatformat:0|intcomma }}</div>
+          <div class="sub">${{ summary.cash_online_usd|floatformat:2 }}</div>
+        </div>
+        <div class="cn-kpi-tile c5">
+          <div class="icon"><i class="fa-solid fa-share-nodes"></i></div>
+          <div class="label">Jobs &amp; Connects Divided</div>
+          <div class="value">PKR {{ summary.jobs_connects_divided_pkr|floatformat:0|intcomma }}</div>
+          <div class="sub">${{ summary.jobs_connects_divided_usd|floatformat:2 }}</div>
+        </div>
+        <div class="cn-kpi-tile {% if summary.available_balance_pkr < 0 %}c5{% else %}c2{% endif %}">
+          <div class="icon"><i class="fa-solid fa-wallet"></i></div>
+          <div class="label">Available Balance</div>
+          <div class="value">PKR {{ summary.available_balance_pkr|floatformat:0|intcomma }}</div>
+        </div>
+      </div>
+
+      <div class="cn-card" style="margin-bottom:18px;">
+        <div class="cn-card-header"><h3>PM Income Details</h3><span class="cn-badge neutral">{{ incomes|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Source</th><th>Description</th><th>Amount USD</th><th>Amount PKR</th><th>PM Share PKR</th><th>Actions</th></tr></thead>
+            <tbody>
+              {% for income in incomes %}
+                <tr>
+                  <td>{{ income.income_date }}</td>
+                  <td>{{ income.get_source_display }}</td>
+                  <td>{{ income.description|default:"-" }}</td>
+                  <td>${{ income.amount_usd|floatformat:2 }}</td>
+                  <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ income.pm_share_pkr|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button" onclick="openEditIncome(this)"
+                        data-id="{{ income.id }}" data-note="{{ income.description|escape }}" data-amount="{{ income.amount_usd }}"
+                        data-date="{{ income.withdrawn_at|default:income.income_date }}" data-withdrawnby="{{ income.withdrawn_by_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
+                      <button class="cn-icon-btn danger" type="button" onclick="openDeleteIncome(this)" data-id="{{ income.id }}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="7" class="cn-empty">No income entries found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="cn-card" style="margin-bottom:18px;">
+        <div class="cn-card-header"><h3>PM Advance Details</h3><span class="cn-badge neutral">{{ advances|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Type</th><th>Notes</th><th>Amount PKR</th><th>Amount USD</th><th>Actions</th></tr></thead>
+            <tbody>
+              {% for advance in advances %}
+                <tr>
+                  <td>{{ advance.advance_date }}</td>
+                  <td>{{ advance.get_advance_type_display }}</td>
+                  <td>{{ advance.notes|default:"-" }}</td>
+                  <td>PKR {{ advance.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>${{ advance.amount_usd|floatformat:2 }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button" onclick="openEditAdvance(this)"
+                        data-id="{{ advance.id }}" data-type="{{ advance.advance_type }}" data-note="{{ advance.notes|escape }}"
+                        data-amount="{{ advance.amount_pkr }}" data-date="{{ advance.advance_date }}" data-paidby="{{ advance.paid_by_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
+                      <button class="cn-icon-btn danger" type="button" onclick="openDeleteAdvance(this)" data-id="{{ advance.id }}"><i class="fa-solid fa-trash"></i></button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="cn-empty">No advance entries found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="cn-card">
+        <div class="cn-card-header">
+          <h3>Amount paid to employees in salaries</h3>
+          <span class="cn-badge neutral">{{ salary_rows|length }} employees</span>
+        </div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Employee</th><th>Salary Income</th><th>Expenses</th><th>Salary Paid</th><th>Remaining Balance</th><th>PM Share Applied</th></tr></thead>
+            <tbody>
+              {% for row in salary_rows %}
+                <tr>
+                  <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
+                  <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.pm_share_pkr|floatformat:0|intcomma }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="6" class="cn-empty">No employee salary balances found.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    {% else %}
+      <div class="cn-card cn-empty">Select a PM from the list to view their calculations.</div>
+    {% endif %}
+  </div>
 </div>
-
-{% if selected_pm and summary %}
-  <div class="cn-card-header" style="border:none;padding:0 0 14px;">
-    <h3 style="font-size:1.1rem;">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</h3>
-    <div class="cn-action-group">
-      <a class="cn-btn" href="{% url 'console:employee_salary' %}?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">Employee Salary</a>
-      <button class="cn-btn primary" type="button" onclick="openModal('income-modal')"><i class="fa-solid fa-plus"></i> Add Income</button>
-      <button class="cn-btn" type="button" onclick="openModal('advance-modal')"><i class="fa-solid fa-plus"></i> Add Advance</button>
-    </div>
-  </div>
-
-  <div class="cn-stat-grid">
-    <div class="cn-stat-card">
-      <div class="label">Total Income</div>
-      <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.total_income_usd|floatformat:2 }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Amount Paid</div>
-      <div class="value">PKR {{ summary.cash_online_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.cash_online_usd|floatformat:2 }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Jobs &amp; Connects Divided</div>
-      <div class="value">PKR {{ summary.jobs_connects_divided_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.jobs_connects_divided_usd|floatformat:2 }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Available Balance</div>
-      <div class="value">
-        <span class="{% if summary.available_balance_pkr < 0 %}cn-balance-neg{% else %}cn-balance-pos{% endif %}">PKR {{ summary.available_balance_pkr|floatformat:0|intcomma }}</span>
-      </div>
-    </div>
-  </div>
-
-  <div class="cn-card" style="margin-bottom:18px;">
-    <div class="cn-card-header"><h3>PM Income Details</h3><span class="cn-badge neutral">{{ incomes|length }} entries</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Source</th><th>Description</th><th>Amount USD</th><th>Amount PKR</th><th>PM Share PKR</th><th>Actions</th></tr></thead>
-        <tbody>
-          {% for income in incomes %}
-            <tr>
-              <td>{{ income.income_date }}</td>
-              <td>{{ income.get_source_display }}</td>
-              <td>{{ income.description|default:"-" }}</td>
-              <td>${{ income.amount_usd|floatformat:2 }}</td>
-              <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ income.pm_share_pkr|floatformat:0|intcomma }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button" onclick="openEditIncome(this)"
-                    data-id="{{ income.id }}" data-note="{{ income.description|escape }}" data-amount="{{ income.amount_usd }}"
-                    data-date="{{ income.withdrawn_at|default:income.income_date }}" data-withdrawnby="{{ income.withdrawn_by_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
-                  <button class="cn-icon-btn danger" type="button" onclick="openDeleteIncome(this)" data-id="{{ income.id }}"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="7" class="cn-empty">No income entries found.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="cn-card" style="margin-bottom:18px;">
-    <div class="cn-card-header"><h3>PM Advance Details</h3><span class="cn-badge neutral">{{ advances|length }} entries</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Type</th><th>Notes</th><th>Amount PKR</th><th>Amount USD</th><th>Actions</th></tr></thead>
-        <tbody>
-          {% for advance in advances %}
-            <tr>
-              <td>{{ advance.advance_date }}</td>
-              <td>{{ advance.get_advance_type_display }}</td>
-              <td>{{ advance.notes|default:"-" }}</td>
-              <td>PKR {{ advance.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>${{ advance.amount_usd|floatformat:2 }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button" onclick="openEditAdvance(this)"
-                    data-id="{{ advance.id }}" data-type="{{ advance.advance_type }}" data-note="{{ advance.notes|escape }}"
-                    data-amount="{{ advance.amount_pkr }}" data-date="{{ advance.advance_date }}" data-paidby="{{ advance.paid_by_id|default_if_none:'' }}"><i class="fa-solid fa-pen"></i></button>
-                  <button class="cn-icon-btn danger" type="button" onclick="openDeleteAdvance(this)" data-id="{{ advance.id }}"><i class="fa-solid fa-trash"></i></button>
-                </div>
-              </td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="cn-empty">No advance entries found.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="cn-card">
-    <div class="cn-card-header">
-      <h3>Amount paid to employees in salaries</h3>
-      <span class="cn-badge neutral">{{ salary_rows|length }} employees</span>
-    </div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Employee</th><th>Salary Income</th><th>Expenses</th><th>Salary Paid</th><th>Remaining Balance</th><th>PM Share Applied</th></tr></thead>
-        <tbody>
-          {% for row in salary_rows %}
-            <tr>
-              <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
-              <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.pm_share_pkr|floatformat:0|intcomma }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="6" class="cn-empty">No employee salary balances found.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-{% endif %}
 
 <div id="edit-income-modal" class="cn-modal-backdrop" onclick="closeOnBackdrop(event, 'edit-income-modal')">
   <div class="cn-modal-card">
@@ -358,88 +357,15 @@
   function openModal(id){document.getElementById(id).classList.add('open');}
   function closeModal(id){document.getElementById(id).classList.remove('open');}
   function closeOnBackdrop(e,id){if(e.target.id===id){closeModal(id);}}
-  (function(){
-    const select = document.getElementById('pm-select');
-    const combobox = document.getElementById('pm-combobox');
-    const input = document.getElementById('pm-search');
-    const dropdown = document.getElementById('pm-search-dropdown');
-    if(!select || !combobox || !input || !dropdown){return;}
 
-    const options = Array.from(select.options).filter(o => o.value).map(o => ({ value: o.value, label: o.text.trim() }));
-    let filteredOptions = options.slice();
-    let activeIndex = -1;
-    let suppressBlur = false;
-
-    const selectedOption = options.find(o => o.value === select.value);
-    input.value = selectedOption ? selectedOption.label : '';
-    select.style.display = 'none';
-    combobox.hidden = false;
-
-    function closeDropdown(){ dropdown.classList.remove('open'); activeIndex = -1; }
-    function openDropdown(){ if(filteredOptions.length || input.value.trim()){ dropdown.classList.add('open'); } }
-
-    function renderOptions(){
-      dropdown.innerHTML = '';
-      if(!filteredOptions.length){
-        const empty = document.createElement('div');
-        empty.className = 'empty';
-        empty.textContent = 'No PM found for this search.';
-        dropdown.appendChild(empty);
-        activeIndex = -1;
-        openDropdown();
-        return;
-      }
-      filteredOptions.forEach((option, index) => {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.className = 'option' + (index === activeIndex ? ' is-active' : '');
-        button.textContent = option.label;
-        button.addEventListener('mousedown', () => { suppressBlur = true; });
-        button.addEventListener('click', () => selectPm(option));
-        dropdown.appendChild(button);
-      });
-      openDropdown();
-    }
-
-    function filterOptions(term){
-      const query = term.trim().toLowerCase();
-      filteredOptions = !query ? options.slice() : options.filter(o => o.label.toLowerCase().includes(query));
-      activeIndex = filteredOptions.length ? 0 : -1;
-      renderOptions();
-    }
-
-    function selectPm(option){
-      select.value = option.value;
-      input.value = option.label;
-      closeDropdown();
-      select.form.submit();
-    }
-
-    input.addEventListener('focus', () => filterOptions(input.value));
-    input.addEventListener('input', () => filterOptions(input.value));
-    input.addEventListener('keydown', function(event){
-      const wasOpen = dropdown.classList.contains('open');
-      if(!wasOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp')){ filterOptions(input.value); }
-      if(event.key === 'ArrowDown'){
-        if(filteredOptions.length){ activeIndex = wasOpen ? (activeIndex < filteredOptions.length - 1 ? activeIndex + 1 : 0) : 0; renderOptions(); }
-        event.preventDefault();
-      } else if(event.key === 'ArrowUp'){
-        if(filteredOptions.length){ activeIndex = wasOpen ? (activeIndex > 0 ? activeIndex - 1 : filteredOptions.length - 1) : filteredOptions.length - 1; renderOptions(); }
-        event.preventDefault();
-      } else if(event.key === 'Enter'){
-        if(filteredOptions.length){ event.preventDefault(); selectPm(filteredOptions[Math.max(activeIndex, 0)]); }
-      } else if(event.key === 'Escape'){ closeDropdown(); }
+  function filterEntityList(input, listId){
+    const query = input.value.trim().toLowerCase();
+    document.querySelectorAll(`#${listId} .cn-entity-item`).forEach((item) => {
+      const match = !query || (item.dataset.search || "").includes(query);
+      item.style.display = match ? "flex" : "none";
     });
-    input.addEventListener('blur', function(){
-      window.setTimeout(function(){
-        if(suppressBlur){ suppressBlur = false; input.focus(); return; }
-        const selected = options.find(o => o.value === select.value);
-        input.value = selected ? selected.label : '';
-        closeDropdown();
-      }, 120);
-    });
-    document.addEventListener('click', function(event){ if(!combobox.contains(event.target)){ closeDropdown(); } });
-  })();
+  }
+
   function openEditIncome(btn){
     document.getElementById('edit-income-id').value = btn.dataset.id;
     document.getElementById('edit-income-note').value = btn.dataset.note || '';

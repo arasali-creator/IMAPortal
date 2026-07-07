@@ -613,3 +613,164 @@ table.cn-table tbody tr:last-child td { border-bottom: none; }
 .cn-balance-pos { background: var(--cn-success-bg); color: var(--cn-success); padding: 6px 12px; border-radius: 10px; display: inline-block; font-weight: 800; }
 .cn-balance-neg { background: var(--cn-danger-bg); color: var(--cn-danger); padding: 6px 12px; border-radius: 10px; display: inline-block; font-weight: 800; }
 .cn-field-group { display: contents; }
+
+/* ---------------------------------------------------------------- Command bar (slim, replaces the big gradient hero) */
+
+.cn-commandbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.cn-commandbar .period-group {
+  display: flex;
+  gap: 6px;
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: 999px;
+  padding: 5px;
+  box-shadow: var(--cn-shadow);
+}
+
+.cn-commandbar .period-group select {
+  border: none;
+  background: transparent;
+  font-weight: 700;
+  font-size: 0.84rem;
+  padding: 7px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+.cn-commandbar .period-group select:hover { background: var(--cn-bg); }
+
+/* ---------------------------------------------------------------- KPI tiles (bold, colorful) */
+
+.cn-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.cn-kpi-tile {
+  border-radius: 18px;
+  padding: 20px 22px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.16);
+}
+
+.cn-kpi-tile::after {
+  content: "";
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.cn-kpi-tile .icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+  font-size: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.cn-kpi-tile .label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.88;
+  position: relative;
+  z-index: 1;
+}
+
+.cn-kpi-tile .value {
+  font-size: 1.7rem;
+  font-weight: 900;
+  margin-top: 6px;
+  letter-spacing: -0.01em;
+  position: relative;
+  z-index: 1;
+}
+
+.cn-kpi-tile .sub {
+  font-size: 0.82rem;
+  opacity: 0.85;
+  margin-top: 6px;
+  position: relative;
+  z-index: 1;
+}
+
+.cn-kpi-tile.c1 { background: linear-gradient(135deg, #ff8a3d 0%, #ff6600 100%); }
+.cn-kpi-tile.c2 { background: linear-gradient(135deg, #34d399 0%, #059669 100%); }
+.cn-kpi-tile.c3 { background: linear-gradient(135deg, #60a5fa 0%, #2563eb 100%); }
+.cn-kpi-tile.c4 { background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%); }
+.cn-kpi-tile.c5 { background: linear-gradient(135deg, #f472b6 0%, #db2777 100%); }
+.cn-kpi-tile.dark { background: linear-gradient(135deg, #2b2f3a 0%, #12141c 100%); }
+
+/* ---------------------------------------------------------------- Master-detail split layout */
+
+.cn-split { display: flex; gap: 18px; align-items: flex-start; }
+
+.cn-split-nav {
+  width: 280px;
+  flex-shrink: 0;
+  background: var(--cn-card);
+  border: 1px solid var(--cn-border);
+  border-radius: var(--cn-radius);
+  box-shadow: var(--cn-shadow);
+  overflow: hidden;
+  position: sticky;
+  top: 84px;
+}
+
+.cn-split-nav .search-box { padding: 12px; border-bottom: 1px solid var(--cn-border); }
+.cn-split-nav .search-box input {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: var(--cn-radius-sm);
+  border: 1px solid var(--cn-border);
+  background: var(--cn-bg);
+  font-size: 0.85rem;
+}
+
+.cn-entity-list { max-height: 60vh; overflow-y: auto; }
+
+.cn-entity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  text-decoration: none;
+  color: var(--cn-text);
+  border-bottom: 1px solid var(--cn-border);
+  font-weight: 700;
+  font-size: 0.88rem;
+  border-left: 3px solid transparent;
+}
+.cn-entity-item:last-child { border-bottom: none; }
+.cn-entity-item:hover { background: var(--cn-bg); }
+.cn-entity-item.active { background: rgba(255, 102, 0, 0.08); border-left-color: var(--cn-accent); color: var(--cn-accent); }
+.cn-entity-item .cn-avatar { margin-right: 0; }
+
+.cn-split-main { flex: 1; min-width: 0; }
+
+@media (max-width: 900px) {
+  .cn-split { flex-direction: column; }
+  .cn-split-nav { width: 100%; position: static; max-height: none; }
+}

@@ -5,14 +5,16 @@
 {% block content %}
 <p class="cn-page-lede">A quick snapshot of employees, attendance, and recent activity.</p>
 
-<div class="cn-stat-grid">
-  <div class="cn-stat-card">
+<div class="cn-kpi-grid">
+  <div class="cn-kpi-tile c1">
+    <div class="icon"><i class="fa-solid fa-users"></i></div>
     <div class="label">Total Employees</div>
-    <div class="value accent">{{ employees_count }}</div>
+    <div class="value">{{ employees_count }}</div>
   </div>
-  <div class="cn-stat-card">
+  <div class="cn-kpi-tile c2">
+    <div class="icon"><i class="fa-solid fa-calendar-check"></i></div>
     <div class="label">Present Today</div>
-    <div class="value accent">{{ attendance_today }}</div>
+    <div class="value">{{ attendance_today }}</div>
   </div>
 </div>
 

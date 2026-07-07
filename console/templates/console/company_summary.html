@@ -4,47 +4,40 @@
 {% block page_title %}Company Summary{% endblock %}
 
 {% block content %}
-<p class="cn-page-lede">Review company-wide income and expense totals by month or year.</p>
-
-<div class="cn-filterbar">
-  <form method="get" action="{% url 'console:company_summary' %}" style="display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
-    <div>
-      <label>Period</label>
-      <select name="period" onchange="this.form.submit()">
-        <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
-        <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
-      </select>
-    </div>
-    <div>
-      <label>Year</label>
-      <select name="year" onchange="this.form.submit()">
-        {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
-      </select>
-    </div>
-    <div>
-      <label>Month</label>
-      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
-        {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
-      </select>
-    </div>
+<div class="cn-commandbar">
+  <p class="cn-page-lede" style="margin:0;">Company-wide income and expense totals by month or year.</p>
+  <form class="period-group" method="get" action="{% url 'console:company_summary' %}">
+    <select name="period" onchange="this.form.submit()">
+      <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+      <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+    </select>
+    <select name="year" onchange="this.form.submit()">
+      {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+      {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
   </form>
 </div>
 
-<div class="cn-stat-grid">
-  <div class="cn-stat-card">
+<div class="cn-kpi-grid">
+  <div class="cn-kpi-tile c1">
+    <div class="icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
     <div class="label">Total Income</div>
     <div class="value">PKR {{ summary.total_income_pkr|floatformat:0|intcomma }}</div>
-    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.total_income_usd|floatformat:2 }}</div>
+    <div class="sub">${{ summary.total_income_usd|floatformat:2 }}</div>
   </div>
-  <div class="cn-stat-card">
+  <div class="cn-kpi-tile c5">
+    <div class="icon"><i class="fa-solid fa-arrow-trend-down"></i></div>
     <div class="label">Total Expense</div>
     <div class="value">PKR {{ summary.total_expense_pkr|floatformat:0|intcomma }}</div>
-    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.total_expense_usd|floatformat:2 }}</div>
+    <div class="sub">${{ summary.total_expense_usd|floatformat:2 }}</div>
   </div>
-  <div class="cn-stat-card">
+  <div class="cn-kpi-tile c2">
+    <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
     <div class="label">Profit</div>
-    <div class="value accent">PKR {{ summary.profit_pkr|floatformat:0|intcomma }}</div>
-    <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ summary.profit_usd|floatformat:2 }}</div>
+    <div class="value">PKR {{ summary.profit_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">${{ summary.profit_usd|floatformat:2 }}</div>
   </div>
 </div>
 

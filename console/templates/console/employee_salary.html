@@ -4,15 +4,11 @@
 {% block page_title %}Employee Salary{% endblock %}
 
 {% block content %}
-<div class="cn-hero">
-  <div>
-    <h2>Employee Salary</h2>
-    <div class="sub">Manage team salary income, employee expenses, and available balances.</div>
-  </div>
-  <form class="cn-hero-controls" method="get">
+<div class="cn-commandbar">
+  <p class="cn-page-lede" style="margin:0;">Manage team salary income, employee expenses, and available balances.</p>
+  <form class="period-group" method="get">
     {% if selected_pm %}<input type="hidden" name="pm" value="{{ selected_pm.id }}">{% endif %}
     {% if selected_employee %}<input type="hidden" name="employee" value="{{ selected_employee.id }}">{% endif %}
-    <label>Period</label>
     <select name="period" onchange="this.form.submit()">
       <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
       <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
@@ -26,204 +22,216 @@
   </form>
 </div>
 
-<div class="cn-filterbar">
-  <form method="get" style="width:100%;display:flex;gap:12px;align-items:end;flex-wrap:wrap;">
-    <input type="hidden" name="period" value="{{ period }}">
-    <input type="hidden" name="year" value="{{ year }}">
-    <input type="hidden" name="month" value="{{ month }}">
-    {% if not is_pm_user %}
-      <div class="grow">
-        <label for="pm-select">PM</label>
-        <select id="pm-select" class="cn-input" name="pm" onchange="this.form.submit()">
-          <option value="">Select PM</option>
-          {% for pm in pms %}<option value="{{ pm.id }}" {% if selected_pm and pm.id == selected_pm.id %}selected{% endif %}>{{ pm.full_name|default:pm.email|default:pm.cnic }}</option>{% endfor %}
-        </select>
+<div class="cn-split">
+  {% if not is_pm_user %}
+    <aside class="cn-split-nav">
+      <div class="search-box">
+        <input type="text" id="pm-filter-input" placeholder="Search PM..." oninput="filterEntityList(this, 'pm-entity-list')">
       </div>
-    {% else %}
-      <input type="hidden" name="pm" value="{{ selected_pm.id }}">
-      <div class="grow"><label>PM</label><div class="cn-readonly">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</div></div>
+      <div class="cn-entity-list" id="pm-entity-list">
+        {% for pm in pms %}
+          <a class="cn-entity-item {% if selected_pm and pm.id == selected_pm.id %}active{% endif %}" data-search="{{ pm.full_name|default:pm.email|default:pm.cnic|lower }}"
+             href="?pm={{ pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
+            <span class="cn-avatar">{{ pm.full_name|default:pm.email|slice:":1"|upper }}</span>
+            {{ pm.full_name|default:pm.email|default:pm.cnic }}
+          </a>
+        {% empty %}
+          <div class="cn-empty">No PMs found.</div>
+        {% endfor %}
+      </div>
+    </aside>
+  {% endif %}
+
+  <div class="cn-split-main">
+    {% if selected_pm %}
+      <div class="cn-toolbar" style="margin-bottom:18px;">
+        <select id="employee-select" onchange="location.href=this.value" style="min-width:220px;">
+          <option value="?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">All team members</option>
+          {% for employee in team_members %}
+            <option value="?pm={{ selected_pm.id }}&employee={{ employee.id }}&period={{ period }}&year={{ year }}&month={{ month }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>
+          {% endfor %}
+        </select>
+        <div class="spacer"></div>
+        <div class="cn-action-group">
+          <button class="cn-btn primary" type="button" onclick="openModal('salary-modal')"><i class="fa-solid fa-plus"></i> Add Salary</button>
+          <button class="cn-btn" type="button" onclick="openModal('expense-modal')"><i class="fa-solid fa-plus"></i> Add Expense</button>
+          <button class="cn-btn" type="button" onclick="openModal('payment-modal')"><i class="fa-solid fa-plus"></i> Pay Salary</button>
+        </div>
+      </div>
     {% endif %}
-    <div class="grow">
-      <label for="employee-select">Employee</label>
-      <select id="employee-select" class="cn-input" name="employee" onchange="this.form.submit()" {% if not selected_pm %}disabled{% endif %}>
-        <option value="">All team members</option>
-        {% for employee in team_members %}<option value="{{ employee.id }}" {% if selected_employee and employee.id == selected_employee.id %}selected{% endif %}>{{ employee.full_name|default:employee.email|default:employee.cnic }}</option>{% endfor %}
-      </select>
-    </div>
-    <div class="cn-action-group">
-      <button class="cn-btn primary" type="button" onclick="openModal('salary-modal')" {% if not selected_pm %}disabled{% endif %}>Add Salary</button>
-      <button class="cn-btn" type="button" onclick="openModal('expense-modal')" {% if not selected_pm %}disabled{% endif %}>Add Expense</button>
-      <button class="cn-btn" type="button" onclick="openModal('payment-modal')" {% if not selected_pm %}disabled{% endif %}>Pay Salary</button>
-    </div>
-  </form>
+
+    {% if selected_pm and salary_data %}
+      <div class="cn-kpi-grid">
+        <div class="cn-kpi-tile c1">
+          <div class="icon"><i class="fa-solid fa-arrow-trend-up"></i></div>
+          <div class="label">Total Income</div>
+          <div class="value">PKR {{ salary_data.total_income_pkr|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="cn-kpi-tile c5">
+          <div class="icon"><i class="fa-solid fa-receipt"></i></div>
+          <div class="label">Total Expenses</div>
+          <div class="value">PKR {{ salary_data.total_expenses_pkr|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="cn-kpi-tile c3">
+          <div class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+          <div class="label">Total Paid</div>
+          <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
+        </div>
+        <div class="cn-kpi-tile c2">
+          <div class="icon"><i class="fa-solid fa-wallet"></i></div>
+          <div class="label">Available Balance</div>
+          <div class="value">PKR {{ salary_data.total_balance_pkr|floatformat:0|intcomma }}</div>
+          <div class="sub">${{ salary_data.total_balance_usd|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      <div class="cn-tabs">
+        <button class="cn-tab active" type="button" data-tab-target="summary-tab" onclick="showTab(this)">Employee Summary</button>
+        <button class="cn-tab" type="button" data-tab-target="salary-tab" onclick="showTab(this)">Salary Entries</button>
+        <button class="cn-tab" type="button" data-tab-target="expense-tab" onclick="showTab(this)">Expense Entries</button>
+        <button class="cn-tab" type="button" data-tab-target="payment-tab" onclick="showTab(this)">Salary Paid</button>
+      </div>
+
+      <section id="summary-tab" class="cn-tab-panel cn-card">
+        <div class="cn-card-header"><h3>Team Balance Summary</h3><span class="cn-badge neutral">{{ salary_data.employee_rows|length }} employees</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Employee</th><th>Total Income</th><th>Total Expenses</th><th>Total Paid</th><th>Available Balance</th></tr></thead>
+            <tbody>
+              {% for row in salary_data.employee_rows %}
+                <tr>
+                  <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
+                  <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
+                  <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="cn-empty">No salary or expense records found for this filter.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="salary-tab" class="cn-tab-panel cn-card" hidden>
+        <div class="cn-card-header"><h3>Salary Entries</h3><span class="cn-badge neutral">{{ salary_data.salaries|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Employee</th><th>Type</th><th>Upwork Profile</th><th>Project</th><th>Units</th><th>Rate</th><th>Income</th><th>Action</th></tr></thead>
+            <tbody>
+              {% for salary in salary_data.salaries %}
+                <tr>
+                  <td>{{ salary.work_date }}</td>
+                  <td>{{ salary.employee.full_name|default:salary.employee.email|default:salary.employee.cnic }}</td>
+                  <td>{{ salary.get_salary_type_display }}</td>
+                  <td>{{ salary.upwork_profile_name }}</td>
+                  <td>{{ salary.project_name }}</td>
+                  <td>{% if salary.salary_type == "fixed_budget" %}{{ salary.entries_email|floatformat:2 }} entries/email{% else %}{{ salary.number_of_hours|floatformat:2 }} hours{% endif %}</td>
+                  <td>{% if salary.salary_type == "fixed_budget" %}PKR {{ salary.per_entry_rate|floatformat:2 }}{% else %}PKR {{ salary.per_hour_rate|floatformat:2 }}{% endif %}</td>
+                  <td>PKR {{ salary.income_amount|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button"
+                        data-salary-id="{{ salary.id }}" data-employee-id="{{ salary.employee_id }}" data-salary-type="{{ salary.salary_type }}"
+                        data-upwork-profile-name="{{ salary.upwork_profile_name }}" data-project-name="{{ salary.project_name }}"
+                        data-entries-email="{{ salary.entries_email|default_if_none:'' }}" data-per-entry-rate="{{ salary.per_entry_rate|default_if_none:'' }}"
+                        data-number-of-hours="{{ salary.number_of_hours|default_if_none:'' }}" data-per-hour-rate="{{ salary.per_hour_rate|default_if_none:'' }}"
+                        data-work-date="{{ salary.work_date|date:'Y-m-d' }}" onclick="openSalaryEditModal(this)"><i class="fa-solid fa-pen"></i></button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary">
+                        <input type="hidden" name="salary_id" value="{{ salary.id }}">
+                        <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if not salary_data.salaries %}<div class="cn-empty">No salary entries yet.</div>{% endif %}
+        </div>
+      </section>
+
+      <section id="expense-tab" class="cn-tab-panel cn-card" hidden>
+        <div class="cn-card-header"><h3>Expense Entries</h3><span class="cn-badge neutral">{{ salary_data.expenses|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Employee</th><th>Expense Type</th><th>Note</th><th>Paid By</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody>
+              {% for expense in salary_data.expenses %}
+                <tr>
+                  <td>{{ expense.paid_date }}</td>
+                  <td>{{ expense.employee.full_name|default:expense.employee.email|default:expense.employee.cnic }}</td>
+                  <td>{{ expense.get_expense_type_display }}</td>
+                  <td>{{ expense.note|default:"-" }}</td>
+                  <td>{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
+                  <td>PKR {{ expense.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button"
+                        data-expense-id="{{ expense.id }}" data-employee-id="{{ expense.employee_id }}" data-expense-type="{{ expense.expense_type }}"
+                        data-note="{{ expense.note }}" data-amount-pkr="{{ expense.amount_pkr }}" data-paid-date="{{ expense.paid_date|date:'Y-m-d' }}"
+                        data-paid-by-id="{{ expense.paid_by_id|default:selected_pm.id }}"
+                        data-paid-by-label="{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
+                        onclick="openExpenseEditModal(this)"><i class="fa-solid fa-pen"></i></button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary_expense">
+                        <input type="hidden" name="expense_id" value="{{ expense.id }}">
+                        <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if not salary_data.expenses %}<div class="cn-empty">No expense entries yet.</div>{% endif %}
+        </div>
+      </section>
+
+      <section id="payment-tab" class="cn-tab-panel cn-card" hidden>
+        <div class="cn-card-header"><h3>Salary Paid</h3><span class="cn-badge neutral">{{ salary_data.payments|length }} entries</span></div>
+        <div class="cn-table-wrap">
+          <table class="cn-table">
+            <thead><tr><th>Date</th><th>Employee</th><th>Paid By</th><th>Note</th><th>Amount</th><th>Action</th></tr></thead>
+            <tbody>
+              {% for payment in salary_data.payments %}
+                <tr>
+                  <td>{{ payment.paid_date }}</td>
+                  <td>{{ payment.employee.full_name|default:payment.employee.email|default:payment.employee.cnic }}</td>
+                  <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
+                  <td>{{ payment.note|default:"-" }}</td>
+                  <td>PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</td>
+                  <td>
+                    <div class="cn-action-group">
+                      <button class="cn-icon-btn" type="button"
+                        data-payment-id="{{ payment.id }}" data-employee-id="{{ payment.employee_id }}" data-amount-pkr="{{ payment.amount_pkr }}"
+                        data-note="{{ payment.note }}" data-paid-date="{{ payment.paid_date|date:'Y-m-d' }}" data-paid-by-id="{{ payment.paid_by_id|default:'' }}"
+                        data-paid-by-label="{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
+                        onclick="openPaymentEditModal(this)"><i class="fa-solid fa-pen"></i></button>
+                      <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="delete_salary_payment">
+                        <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                        <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% if not salary_data.payments %}<div class="cn-empty">No salary payments yet.</div>{% endif %}
+        </div>
+      </section>
+    {% else %}
+      <div class="cn-card cn-empty">Select a PM from the list to manage employee salaries.</div>
+    {% endif %}
+  </div>
 </div>
-
-{% if selected_pm and salary_data %}
-  <div class="cn-stat-grid">
-    <div class="cn-stat-card">
-      <div class="label">Total Income</div>
-      <div class="value">PKR {{ salary_data.total_income_pkr|floatformat:0|intcomma }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Total Expenses</div>
-      <div class="value">PKR {{ salary_data.total_expenses_pkr|floatformat:0|intcomma }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Total Paid</div>
-      <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
-    </div>
-    <div class="cn-stat-card">
-      <div class="label">Available Balance</div>
-      <div class="value"><span class="cn-balance-pos">PKR {{ salary_data.total_balance_pkr|floatformat:0|intcomma }}</span></div>
-      <div class="sub" style="color:var(--cn-muted);font-size:.85rem;margin-top:6px;">${{ salary_data.total_balance_usd|floatformat:2 }}</div>
-    </div>
-  </div>
-
-  <div class="cn-tabs">
-    <button class="cn-tab active" type="button" data-tab-target="summary-tab" onclick="showTab(this)">Employee Summary</button>
-    <button class="cn-tab" type="button" data-tab-target="salary-tab" onclick="showTab(this)">Salary Entries</button>
-    <button class="cn-tab" type="button" data-tab-target="expense-tab" onclick="showTab(this)">Expense Entries</button>
-    <button class="cn-tab" type="button" data-tab-target="payment-tab" onclick="showTab(this)">Salary Paid</button>
-  </div>
-
-  <section id="summary-tab" class="cn-tab-panel cn-card">
-    <div class="cn-card-header"><h3>Team Balance Summary</h3><span class="cn-badge neutral">{{ salary_data.employee_rows|length }} employees</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Employee</th><th>Total Income</th><th>Total Expenses</th><th>Total Paid</th><th>Available Balance</th></tr></thead>
-        <tbody>
-          {% for row in salary_data.employee_rows %}
-            <tr>
-              <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
-              <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
-              <td>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</td>
-            </tr>
-          {% empty %}
-            <tr><td colspan="5" class="cn-empty">No salary or expense records found for this filter.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-
-  <section id="salary-tab" class="cn-tab-panel cn-card" hidden>
-    <div class="cn-card-header"><h3>Salary Entries</h3><span class="cn-badge neutral">{{ salary_data.salaries|length }} entries</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Employee</th><th>Type</th><th>Upwork Profile</th><th>Project</th><th>Units</th><th>Rate</th><th>Income</th><th>Action</th></tr></thead>
-        <tbody>
-          {% for salary in salary_data.salaries %}
-            <tr>
-              <td>{{ salary.work_date }}</td>
-              <td>{{ salary.employee.full_name|default:salary.employee.email|default:salary.employee.cnic }}</td>
-              <td>{{ salary.get_salary_type_display }}</td>
-              <td>{{ salary.upwork_profile_name }}</td>
-              <td>{{ salary.project_name }}</td>
-              <td>{% if salary.salary_type == "fixed_budget" %}{{ salary.entries_email|floatformat:2 }} entries/email{% else %}{{ salary.number_of_hours|floatformat:2 }} hours{% endif %}</td>
-              <td>{% if salary.salary_type == "fixed_budget" %}PKR {{ salary.per_entry_rate|floatformat:2 }}{% else %}PKR {{ salary.per_hour_rate|floatformat:2 }}{% endif %}</td>
-              <td>PKR {{ salary.income_amount|floatformat:0|intcomma }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button"
-                    data-salary-id="{{ salary.id }}" data-employee-id="{{ salary.employee_id }}" data-salary-type="{{ salary.salary_type }}"
-                    data-upwork-profile-name="{{ salary.upwork_profile_name }}" data-project-name="{{ salary.project_name }}"
-                    data-entries-email="{{ salary.entries_email|default_if_none:'' }}" data-per-entry-rate="{{ salary.per_entry_rate|default_if_none:'' }}"
-                    data-number-of-hours="{{ salary.number_of_hours|default_if_none:'' }}" data-per-hour-rate="{{ salary.per_hour_rate|default_if_none:'' }}"
-                    data-work-date="{{ salary.work_date|date:'Y-m-d' }}" onclick="openSalaryEditModal(this)"><i class="fa-solid fa-pen"></i></button>
-                  <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_salary">
-                    <input type="hidden" name="salary_id" value="{{ salary.id }}">
-                    <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% if not salary_data.salaries %}<div class="cn-empty">No salary entries yet.</div>{% endif %}
-    </div>
-  </section>
-
-  <section id="expense-tab" class="cn-tab-panel cn-card" hidden>
-    <div class="cn-card-header"><h3>Expense Entries</h3><span class="cn-badge neutral">{{ salary_data.expenses|length }} entries</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Employee</th><th>Expense Type</th><th>Note</th><th>Paid By</th><th>Amount</th><th>Action</th></tr></thead>
-        <tbody>
-          {% for expense in salary_data.expenses %}
-            <tr>
-              <td>{{ expense.paid_date }}</td>
-              <td>{{ expense.employee.full_name|default:expense.employee.email|default:expense.employee.cnic }}</td>
-              <td>{{ expense.get_expense_type_display }}</td>
-              <td>{{ expense.note|default:"-" }}</td>
-              <td>{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
-              <td>PKR {{ expense.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button"
-                    data-expense-id="{{ expense.id }}" data-employee-id="{{ expense.employee_id }}" data-expense-type="{{ expense.expense_type }}"
-                    data-note="{{ expense.note }}" data-amount-pkr="{{ expense.amount_pkr }}" data-paid-date="{{ expense.paid_date|date:'Y-m-d' }}"
-                    data-paid-by-id="{{ expense.paid_by_id|default:selected_pm.id }}"
-                    data-paid-by-label="{{ expense.paid_by.full_name|default:expense.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
-                    onclick="openExpenseEditModal(this)"><i class="fa-solid fa-pen"></i></button>
-                  <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_salary_expense">
-                    <input type="hidden" name="expense_id" value="{{ expense.id }}">
-                    <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% if not salary_data.expenses %}<div class="cn-empty">No expense entries yet.</div>{% endif %}
-    </div>
-  </section>
-
-  <section id="payment-tab" class="cn-tab-panel cn-card" hidden>
-    <div class="cn-card-header"><h3>Salary Paid</h3><span class="cn-badge neutral">{{ salary_data.payments|length }} entries</span></div>
-    <div class="cn-table-wrap">
-      <table class="cn-table">
-        <thead><tr><th>Date</th><th>Employee</th><th>Paid By</th><th>Note</th><th>Amount</th><th>Action</th></tr></thead>
-        <tbody>
-          {% for payment in salary_data.payments %}
-            <tr>
-              <td>{{ payment.paid_date }}</td>
-              <td>{{ payment.employee.full_name|default:payment.employee.email|default:payment.employee.cnic }}</td>
-              <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}</td>
-              <td>{{ payment.note|default:"-" }}</td>
-              <td>PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</td>
-              <td>
-                <div class="cn-action-group">
-                  <button class="cn-icon-btn" type="button"
-                    data-payment-id="{{ payment.id }}" data-employee-id="{{ payment.employee_id }}" data-amount-pkr="{{ payment.amount_pkr }}"
-                    data-note="{{ payment.note }}" data-paid-date="{{ payment.paid_date|date:'Y-m-d' }}" data-paid-by-id="{{ payment.paid_by_id|default:'' }}"
-                    data-paid-by-label="{{ payment.paid_by.full_name|default:payment.paid_by.email|default:selected_pm.full_name|default:selected_pm.email }}"
-                    onclick="openPaymentEditModal(this)"><i class="fa-solid fa-pen"></i></button>
-                  <form method="post">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="delete_salary_payment">
-                    <input type="hidden" name="payment_id" value="{{ payment.id }}">
-                    <button class="cn-icon-btn danger" type="submit"><i class="fa-solid fa-trash"></i></button>
-                  </form>
-                </div>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-      {% if not salary_data.payments %}<div class="cn-empty">No salary payments yet.</div>{% endif %}
-    </div>
-  </section>
-{% else %}
-  <div class="cn-card cn-empty">Select a PM to manage employee salaries.</div>
-{% endif %}
 
 {% if selected_pm %}
   <div id="salary-modal" class="cn-modal-backdrop" onclick="closeOnBackdrop(event, 'salary-modal')">
@@ -445,6 +453,14 @@
   function openModal(id){ document.getElementById(id)?.classList.add("open"); }
   function closeModal(id){ document.getElementById(id)?.classList.remove("open"); }
   function closeOnBackdrop(event, id){ if(event.target.id === id){ closeModal(id); } }
+
+  function filterEntityList(input, listId){
+    const query = input.value.trim().toLowerCase();
+    document.querySelectorAll(`#${listId} .cn-entity-item`).forEach((item) => {
+      const match = !query || (item.dataset.search || "").includes(query);
+      item.style.display = match ? "flex" : "none";
+    });
+  }
 
   function showTab(button){
     document.querySelectorAll(".cn-tab").forEach((btn) => btn.classList.remove("active"));
