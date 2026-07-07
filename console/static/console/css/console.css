@@ -122,7 +122,22 @@ a { color: inherit; }
   margin-top: auto;
   padding-top: 14px;
   border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
 }
+
+.console-sidebar-footer a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--cn-radius-sm);
+  color: var(--cn-sidebar-text);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+.console-sidebar-footer a:hover { background: var(--cn-sidebar-hover); color: #fff; }
 
 .console-main {
   flex: 1;
