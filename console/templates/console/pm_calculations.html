@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "console/base.html" %}
 {% load humanize %}
 
 {% block content %}
@@ -360,7 +360,7 @@
       <h2 class="pm-title">PM Calculations</h2>
       <div class="pm-subtitle">Select a PM to see totals.</div>
     </div>
-    <form class="pm-period" method="get" action="{% url 'admin:pm_calculations' %}">
+    <form class="pm-period" method="get" action="{% url 'console:pm_calculations' %}">
       <label>Period</label>
       <input type="hidden" name="pm" value="{{ selected_pm.id }}">
       <select name="period" onchange="this.form.submit()">
@@ -380,7 +380,7 @@
     </form>
   </div>
 
-  <form class="pm-filter" method="get" action="{% url 'admin:pm_calculations' %}">
+  <form class="pm-filter" method="get" action="{% url 'console:pm_calculations' %}">
     <input type="hidden" name="period" value="{{ period }}">
     <input type="hidden" name="year" value="{{ year }}">
     <input type="hidden" name="month" value="{{ month }}">
@@ -412,7 +412,7 @@
     <div class="pm-header">
       <h3 class="pm-name">{{ selected_pm.full_name|default:selected_pm.email|default:selected_pm.cnic }}</h3>
       <div class="pm-actions">
-        <a class="pm-action" href="{% url 'admin:employee_salary' %}?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
+        <a class="pm-action" href="{% url 'console:employee_salary' %}?pm={{ selected_pm.id }}&period={{ period }}&year={{ year }}&month={{ month }}">
           Employee Salary
         </a>
         <button class="pm-action primary" type="button" onclick="openModal('income-modal')">

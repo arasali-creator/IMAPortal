@@ -1,0 +1,120 @@
+from django.test import TestCase
+from django.urls import reverse
+
+from accounts.models import Employee, Team
+
+
+class ConsolePermissionTests(TestCase):
+    def setUp(self):
+        self.admin = Employee.objects.create_user(
+            cnic="5555555555555",
+            email="console-admin@example.com",
+            password="testpass123",
+            full_name="Console Admin",
+            role="admin",
+            is_active=True,
+            is_staff=True,
+        )
+        self.pm = Employee.objects.create_user(
+            cnic="6666666666666",
+            email="console-pm@example.com",
+            password="testpass123",
+            full_name="Console PM",
+            role="pm",
+            is_active=True,
+            is_staff=True,
+        )
+        self.employee = Employee.objects.create_user(
+            cnic="7777777777777",
+            email="console-employee@example.com",
+            password="testpass123",
+            full_name="Console Employee",
+            role="employee",
+            is_active=True,
+        )
+        self.pending_employee = Employee.objects.create_user(
+            cnic="8888888888888",
+            email="console-pending@example.com",
+            password="testpass123",
+            full_name="Console Pending",
+            role="employee",
+            is_active=False,
+        )
+        self.team = Team.objects.create(name="Console Team", project_manager=self.pm)
+        self.team.members.add(self.employee)
+
+    def test_admin_only_pages_reject_non_superuser_pm(self):
+        self.client.force_login(self.pm)
+        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 403, name)
+
+    def test_admin_only_pages_allow_admin(self):
+        self.client.force_login(self.admin)
+        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+            response = self.client.get(reverse(name))
+            self.assertEqual(response.status_code, 200, name)
+
+    def test_plain_employee_is_denied_console_access(self):
+        self.client.force_login(self.employee)
+        response = self.client.get(reverse("console:dashboard"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_pm_sees_only_own_team_in_employees_list(self):
+        other_pm = Employee.objects.create_user(
+            cnic="9999999999999",
+            email="console-other-pm@example.com",
+            password="testpass123",
+            full_name="Other PM",
+            role="pm",
+            is_active=True,
+        )
+        other_team_member = Employee.objects.create_user(
+            cnic="1010101010101",
+            email="console-other-member@example.com",
+            password="testpass123",
+            full_name="Other Team Member",
+            role="employee",
+            is_active=True,
+        )
+        Team.objects.create(name="Other Team", project_manager=other_pm).members.add(other_team_member)
+
+        self.client.force_login(self.pm)
+        response = self.client.get(reverse("console:employees_list"))
+        self.assertContains(response, "Console Employee")
+        self.assertNotContains(response, "Other Team Member")
+
+    def test_admin_approve_action_activates_employee(self):
+        self.client.force_login(self.admin)
+        response = self.client.post(reverse("console:employee_approve", args=[self.pending_employee.pk]))
+        self.assertEqual(response.status_code, 302)
+        self.pending_employee.refresh_from_db()
+        self.assertTrue(self.pending_employee.is_active)
+
+    def test_pm_cannot_approve_employee(self):
+        self.client.force_login(self.pm)
+        response = self.client.post(reverse("console:employee_approve", args=[self.pending_employee.pk]))
+        self.assertEqual(response.status_code, 403)
+        self.pending_employee.refresh_from_db()
+        self.assertFalse(self.pending_employee.is_active)
+
+    def test_admin_promote_then_demote_employee(self):
+        self.client.force_login(self.admin)
+        self.client.post(reverse("console:employee_promote", args=[self.employee.pk]))
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.role, "pm")
+
+        self.client.post(reverse("console:employee_demote", args=[self.employee.pk]))
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.role, "employee")
+
+    def test_pm_can_approve_own_team_leave(self):
+        from leaves.models import LeaveRequest
+
+        leave = LeaveRequest.objects.create(employee=self.employee, reason="Test leave")
+        self.client.force_login(self.pm)
+        response = self.client.post(reverse("console:leave_approve", args=[leave.pk]))
+        self.assertEqual(response.status_code, 302)
+        leave.refresh_from_db()
+        self.assertEqual(leave.pm_status, "Approved")
+        self.assertEqual(leave.status, "Approved")

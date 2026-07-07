@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "console/base.html" %}
 {% load humanize %}
 
 {% block content %}
@@ -182,7 +182,7 @@
     </div>
   </div>
 
-  <form class="be-filter" method="get" action="{% url 'admin:branch_expenses' %}">
+  <form class="be-filter" method="get" action="{% url 'console:branch_expenses' %}">
     <label for="branch">Branch</label>
     <select id="branch" name="branch" onchange="this.form.submit()">
       <option value="">Choose a branch</option>

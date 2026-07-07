@@ -1,4 +1,4 @@
-{% extends "admin/base_site.html" %}
+{% extends "console/base.html" %}
 {% load humanize %}
 
 {% block content %}
@@ -117,7 +117,7 @@
     <div class="cs-subtitle">Review totals by month or year.</div>
   </div>
 
-  <form class="cs-filter" method="get" action="{% url 'admin:company_summary' %}">
+  <form class="cs-filter" method="get" action="{% url 'console:company_summary' %}">
     <label for="period">Period</label>
     <select id="period" name="period" onchange="this.form.submit()">
       <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>

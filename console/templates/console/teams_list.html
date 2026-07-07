@@ -1,0 +1,46 @@
+{% extends "console/base.html" %}
+
+{% block page_header %}
+<h2>Teams</h2>
+{% endblock %}
+
+{% block content %}
+<style>
+  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
+  .cn-actions{margin-bottom:14px;}
+  .btn{padding:8px 16px;border-radius:999px;border:1px solid rgba(15,23,42,.15);background:#fff;color:#0f172a;font-weight:700;cursor:pointer;text-decoration:none;display:inline-block;font-size:.85rem;}
+  .btn.primary{background:linear-gradient(180deg,#ff7a1a,#ff6600);color:#fff;border-color:transparent;}
+  .cn-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;}
+  .cn-card{grid-column:span 4;padding:16px;border-radius:16px;border:1px solid rgba(15,23,42,.10);background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);}
+  .cn-card h3{margin:0 0 6px 0;}
+  .cn-card .sub{color:rgba(15,23,42,.6);font-size:.9rem;margin-bottom:10px;}
+  .cn-card .actions{display:flex;gap:8px;margin-top:10px;}
+  @media(max-width:900px){.cn-card{grid-column:span 12;}}
+</style>
+<div class="cn-wrap">
+  {% if request.user.is_superuser or request.user.role == "admin" %}
+    <div class="cn-actions">
+      <a class="btn primary" href="{% url 'console:team_create' %}">+ New Team</a>
+    </div>
+  {% endif %}
+  <div class="cn-grid">
+    {% for team in teams %}
+      <div class="cn-card">
+        <h3>{{ team.name }}</h3>
+        <div class="sub">PM: {{ team.project_manager.full_name|default:team.project_manager.email }} &middot; {{ team.members.count }} members</div>
+        {% if request.user.is_superuser or request.user.role == "admin" %}
+          <div class="actions">
+            <a class="btn" href="{% url 'console:team_edit' team.pk %}">Edit</a>
+            <form method="post" action="{% url 'console:team_delete' team.pk %}" onsubmit="return confirm('Delete this team?');">
+              {% csrf_token %}
+              <button class="btn" type="submit">Delete</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+    {% empty %}
+      <p>No teams found.</p>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends "console/base.html" %}
+
+{% block page_header %}<h2>Employees</h2>{% endblock %}
+
+{% block content %}
+<style>
+  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
+  .cn-filter{display:flex;gap:10px;margin-bottom:14px;}
+  .cn-filter input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.15);}
+  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{text-align:left;padding:10px 16px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
+  tbody td{padding:10px 16px;border-bottom:1px solid rgba(15,23,42,.10);vertical-align:middle;}
+  .pill{padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;background:rgba(255,102,0,.10);color:#ff6600;}
+  .pill.inactive{background:rgba(239,68,68,.10);color:#b91c1c;}
+  .btn{padding:6px 12px;border-radius:8px;border:1px solid rgba(15,23,42,.15);background:#fff;color:#0f172a;font-weight:700;cursor:pointer;font-size:.82rem;text-decoration:none;display:inline-block;}
+  .btn.primary{background:linear-gradient(180deg,#ff7a1a,#ff6600);color:#fff;border-color:transparent;}
+  .action-group{display:flex;gap:6px;flex-wrap:wrap;}
+</style>
+<div class="cn-wrap">
+  <form class="cn-filter" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="Search by name, CNIC, or email">
+    <button class="btn" type="submit">Search</button>
+  </form>
+
+  <div class="cn-panel">
+    <table>
+      <thead>
+        <tr><th>Name</th><th>CNIC</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+      </thead>
+      <tbody>
+        {% for employee in employees %}
+          <tr>
+            <td><a href="{% url 'console:employee_detail' employee.pk %}">{{ employee.full_name|default:employee.email }}</a></td>
+            <td>{{ employee.cnic }}</td>
+            <td>{{ employee.email }}</td>
+            <td>{{ employee.get_role_display }}</td>
+            <td>
+              {% if employee.is_active %}<span class="pill">Active</span>{% else %}<span class="pill inactive">Pending</span>{% endif %}
+            </td>
+            <td>
+              <div class="action-group">
+                <a class="btn" href="{% url 'console:employee_detail' employee.pk %}">Edit</a>
+                {% if request.user.is_superuser or request.user.role == "admin" %}
+                  {% if not employee.is_active %}
+                    <form method="post" action="{% url 'console:employee_approve' employee.pk %}">
+                      {% csrf_token %}
+                      <button class="btn primary" type="submit">Approve</button>
+                    </form>
+                  {% endif %}
+                  {% if employee.role == "employee" %}
+                    <form method="post" action="{% url 'console:employee_promote' employee.pk %}">
+                      {% csrf_token %}
+                      <button class="btn" type="submit">Promote to PM</button>
+                    </form>
+                  {% elif employee.role == "pm" %}
+                    <form method="post" action="{% url 'console:employee_demote' employee.pk %}">
+                      {% csrf_token %}
+                      <button class="btn" type="submit">Demote to Employee</button>
+                    </form>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6">No employees found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

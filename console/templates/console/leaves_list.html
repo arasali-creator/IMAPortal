@@ -1,0 +1,62 @@
+{% extends "console/base.html" %}
+
+{% block page_header %}<h2>Leave Requests</h2>{% endblock %}
+
+{% block content %}
+<style>
+  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
+  .cn-filter{margin-bottom:14px;}
+  .cn-filter select{padding:10px 12px;border-radius:10px;border:1px solid rgba(15,23,42,.15);min-width:180px;}
+  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{text-align:left;padding:10px 16px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
+  tbody td{padding:10px 16px;border-bottom:1px solid rgba(15,23,42,.10);}
+  .pill{padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;}
+  .pill.Pending{background:rgba(255,102,0,.10);color:#ff6600;}
+  .pill.Approved{background:rgba(34,197,94,.10);color:#15803d;}
+  .pill.Rejected{background:rgba(239,68,68,.10);color:#b91c1c;}
+  .btn{padding:6px 12px;border-radius:8px;border:1px solid rgba(15,23,42,.15);background:#fff;color:#0f172a;font-weight:700;cursor:pointer;font-size:.8rem;}
+  .action-group{display:flex;gap:6px;}
+</style>
+<div class="cn-wrap">
+  <form class="cn-filter" method="get">
+    <select name="status" onchange="this.form.submit()">
+      <option value="">All statuses</option>
+      <option value="Pending" {% if status == "Pending" %}selected{% endif %}>Pending</option>
+      <option value="Approved" {% if status == "Approved" %}selected{% endif %}>Approved</option>
+      <option value="Rejected" {% if status == "Rejected" %}selected{% endif %}>Rejected</option>
+    </select>
+  </form>
+  <div class="cn-panel">
+    <table>
+      <thead><tr><th>Employee</th><th>Reason</th><th>Dates</th><th>PM Status</th><th>Admin Status</th><th>Final</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for leave in leaves %}
+          <tr>
+            <td>{{ leave.employee }}</td>
+            <td>{{ leave.reason|truncatechars:40 }}</td>
+            <td>{{ leave.start_date }} &rarr; {{ leave.end_date }}</td>
+            <td><span class="pill {{ leave.pm_status }}">{{ leave.pm_status }}</span></td>
+            <td><span class="pill {{ leave.admin_status }}">{{ leave.admin_status }}</span></td>
+            <td><span class="pill {{ leave.status }}">{{ leave.status }}</span></td>
+            <td>
+              <div class="action-group">
+                <form method="post" action="{% url 'console:leave_approve' leave.pk %}">
+                  {% csrf_token %}
+                  <button class="btn" type="submit">Approve</button>
+                </form>
+                <form method="post" action="{% url 'console:leave_reject' leave.pk %}">
+                  {% csrf_token %}
+                  <button class="btn" type="submit">Reject</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7">No leave requests found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

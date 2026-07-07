@@ -1,16 +1,19 @@
+from datetime import timedelta
 from decimal import Decimal
 from urllib.parse import urlencode
 
-from django.contrib import admin, messages
-from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
-from django.template.response import TemplateResponse
-from django.urls import path
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseRedirect, JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-from accounts.models import Employee
+from accounts.decorators import role_required
+from accounts.models import Employee, Notification, PasswordResetRequest, Team
+from accounts.utils import notifications_queryset_for_user, sync_notifications
 from attendance.models import Attendance
+from leaves.models import LeaveRequest
+from leaves.utils import apply_leave_decision
 from payroll.models import (
     Branch,
     BranchExpense,
@@ -20,10 +23,19 @@ from payroll.models import (
     FixedExpense,
     PMAdvance,
     PMIncome,
+    PMSplitSetting,
     PayrollGlobalSetting,
 )
 from payroll.utils import calculate_pm_available_balance, summarize_employee_salary, team_members_for_pm
 
+from .forms import EmployeeEditForm, TeamForm
+
+STAFF_ROLES = ("admin", "pm")
+
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
 
 def _format_time(dt):
     if not dt:
@@ -33,18 +45,9 @@ def _format_time(dt):
 
 def _month_options():
     return [
-        (1, "January"),
-        (2, "February"),
-        (3, "March"),
-        (4, "April"),
-        (5, "May"),
-        (6, "June"),
-        (7, "July"),
-        (8, "August"),
-        (9, "September"),
-        (10, "October"),
-        (11, "November"),
-        (12, "December"),
+        (1, "January"), (2, "February"), (3, "March"), (4, "April"),
+        (5, "May"), (6, "June"), (7, "July"), (8, "August"),
+        (9, "September"), (10, "October"), (11, "November"), (12, "December"),
     ]
 
 
@@ -71,20 +74,36 @@ def _redirect_with_query(request, **extra_params):
     return HttpResponseRedirect(f"{request.path}?{query}" if query else request.path)
 
 
-_original_index = admin.site.index
-_original_get_urls = admin.site.get_urls
+def _is_admin(request):
+    return request.user.is_superuser or getattr(request.user, "role", None) == "admin"
 
 
-def _office_portal_index(self, request, extra_context=None):
-    extra_context = extra_context or {}
+def _pm_team_member_ids(user):
+    teams = Team.objects.filter(project_manager=user)
+    ids = set()
+    for team in teams.prefetch_related("members"):
+        ids.update(team.members.values_list("id", flat=True))
+    return ids
 
+
+# ---------------------------------------------------------------------------
+# Dashboard
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def dashboard_view(request):
     today = timezone.localdate()
 
-    employees_count = Employee.objects.count()
-    attendance_today = Attendance.objects.filter(check_in__date=today).count()
+    employees_qs = Employee.objects.all()
+    attendance_qs = Attendance.objects.select_related("employee")
+    if not _is_admin(request):
+        member_ids = _pm_team_member_ids(request.user)
+        employees_qs = employees_qs.filter(id__in=member_ids)
+        attendance_qs = attendance_qs.filter(employee_id__in=member_ids)
 
     recent_employees = []
-    for emp in Employee.objects.order_by("-date_joined")[:5]:
+    for emp in employees_qs.order_by("-date_joined")[:5]:
         recent_employees.append(
             {
                 "name": emp.full_name or emp.email or emp.cnic,
@@ -96,7 +115,7 @@ def _office_portal_index(self, request, extra_context=None):
         )
 
     recent_attendance = []
-    for log in Attendance.objects.select_related("employee").order_by("-check_in")[:5]:
+    for log in attendance_qs.order_by("-check_in")[:5]:
         recent_attendance.append(
             {
                 "employee": str(log.employee),
@@ -107,26 +126,282 @@ def _office_portal_index(self, request, extra_context=None):
             }
         )
 
-    extra_context.update(
+    context = {
+        "employees_count": employees_qs.count(),
+        "attendance_today": attendance_qs.filter(check_in__date=today).count(),
+        "recent_employees": recent_employees,
+        "recent_attendance": recent_attendance,
+    }
+    return render(request, "console/dashboard.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Employees
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def employees_list(request):
+    qs = Employee.objects.all().order_by("-date_joined")
+    if not _is_admin(request):
+        qs = qs.filter(teams__project_manager=request.user).distinct()
+
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(full_name__icontains=q) | qs.filter(cnic__icontains=q) | qs.filter(email__icontains=q)
+
+    return render(request, "console/employees_list.html", {"employees": qs, "q": q})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def employee_detail(request, pk):
+    qs = Employee.objects.all()
+    if not _is_admin(request):
+        qs = qs.filter(teams__project_manager=request.user).distinct()
+    employee = get_object_or_404(qs, pk=pk)
+
+    if request.method == "POST":
+        form = EmployeeEditForm(request.POST, request.FILES, instance=employee)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Employee updated.")
+            return redirect("console:employee_detail", pk=employee.pk)
+    else:
+        form = EmployeeEditForm(instance=employee)
+
+    return render(request, "console/employee_detail.html", {"employee": employee, "form": form})
+
+
+@login_required
+@role_required("admin")
+def employee_approve(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == "POST":
+        employee.is_active = True
+        employee.save(update_fields=["is_active"])
+        messages.success(request, f"{employee} approved.")
+    return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
+
+
+@login_required
+@role_required("admin")
+def employee_promote(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == "POST":
+        employee.role = "pm"
+        employee.save(update_fields=["role"])
+        messages.success(request, f"{employee} promoted to Project Manager.")
+    return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
+
+
+@login_required
+@role_required("admin")
+def employee_demote(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == "POST":
+        employee.role = "employee"
+        employee.save(update_fields=["role"])
+        messages.success(request, f"{employee} demoted to Employee.")
+    return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
+
+
+# ---------------------------------------------------------------------------
+# Teams
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def teams_list(request):
+    qs = Team.objects.select_related("project_manager").prefetch_related("members")
+    if not _is_admin(request):
+        qs = qs.filter(project_manager=request.user)
+    return render(request, "console/teams_list.html", {"teams": qs})
+
+
+@login_required
+@role_required("admin")
+def team_create(request):
+    if request.method == "POST":
+        form = TeamForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Team created.")
+            return redirect("console:teams_list")
+    else:
+        form = TeamForm()
+    return render(request, "console/team_form.html", {"form": form, "team": None})
+
+
+@login_required
+@role_required("admin")
+def team_edit(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    if request.method == "POST":
+        form = TeamForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Team updated.")
+            return redirect("console:teams_list")
+    else:
+        form = TeamForm(instance=team)
+    return render(request, "console/team_form.html", {"form": form, "team": team})
+
+
+@login_required
+@role_required("admin")
+def team_delete(request, pk):
+    team = get_object_or_404(Team, pk=pk)
+    if request.method == "POST":
+        team.delete()
+        messages.success(request, "Team deleted.")
+    return redirect("console:teams_list")
+
+
+# ---------------------------------------------------------------------------
+# Notifications
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def notifications_list(request):
+    cutoff = timezone.now() - timedelta(days=30)
+    sync_notifications(cutoff)
+    qs = notifications_queryset_for_user(request.user, Notification.objects.filter(action_time__gte=cutoff))
+    return render(
+        request,
+        "console/notifications_list.html",
         {
-            "employees_count": employees_count,
-            "attendance_today": attendance_today,
-            "recent_employees": recent_employees,
-            "recent_attendance": recent_attendance,
-        }
+            "notifications": qs.order_by("-action_time"),
+            "notif_total": qs.count(),
+            "notif_unread": qs.filter(is_read=False).count(),
+        },
     )
 
-    return _original_index(request, extra_context=extra_context)
+
+@login_required
+@role_required(*STAFF_ROLES)
+def notification_mark_read(request, pk):
+    qs = notifications_queryset_for_user(request.user, Notification.objects.all())
+    qs.filter(pk=pk).update(is_read=True)
+    return redirect(request.META.get("HTTP_REFERER") or "console:notifications_list")
 
 
-admin.site.index = _office_portal_index.__get__(admin.site, admin.site.__class__)
+@login_required
+@role_required(*STAFF_ROLES)
+def notification_mark_all_read(request):
+    qs = notifications_queryset_for_user(request.user, Notification.objects.all())
+    qs.update(is_read=True)
+    return redirect(request.META.get("HTTP_REFERER") or "console:notifications_list")
 
 
-@staff_member_required
+@login_required
+def notification_unread_count(request):
+    cutoff = timezone.now() - timedelta(days=30)
+    sync_notifications(cutoff)
+    qs = notifications_queryset_for_user(request.user, Notification.objects.filter(action_time__gte=cutoff))
+    return JsonResponse({"ok": True, "count": qs.filter(is_read=False).count()})
+
+
+# ---------------------------------------------------------------------------
+# Password reset requests
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("admin")
+def password_resets_list(request):
+    qs = PasswordResetRequest.objects.select_related("employee").order_by("-created_at")
+    return render(request, "console/password_resets_list.html", {"requests": qs})
+
+
+@login_required
+@role_required("admin")
+def password_reset_mark_resolved(request, pk):
+    reset_request = get_object_or_404(PasswordResetRequest, pk=pk)
+    if request.method == "POST":
+        reset_request.status = "resolved"
+        reset_request.resolved_at = timezone.now()
+        reset_request.save(update_fields=["status", "resolved_at"])
+        messages.success(request, "Marked resolved.")
+    return redirect("console:password_resets_list")
+
+
+# ---------------------------------------------------------------------------
+# Attendance
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def attendance_list(request):
+    qs = Attendance.objects.select_related("employee").order_by("-check_in")
+    if not _is_admin(request):
+        qs = qs.filter(employee_id__in=_pm_team_member_ids(request.user))
+
+    employee_id = request.GET.get("employee")
+    if employee_id:
+        qs = qs.filter(employee_id=employee_id)
+
+    employees_qs = Employee.objects.all()
+    if not _is_admin(request):
+        employees_qs = employees_qs.filter(id__in=_pm_team_member_ids(request.user))
+
+    return render(
+        request,
+        "console/attendance_list.html",
+        {"records": qs[:200], "employees": employees_qs, "selected_employee": employee_id},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Leave requests
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
+def leaves_list(request):
+    qs = LeaveRequest.objects.select_related("employee").order_by("-created_at")
+    if not _is_admin(request):
+        member_ids = _pm_team_member_ids(request.user)
+        qs = qs.filter(employee_id__in=member_ids) if member_ids else qs.none()
+
+    status = request.GET.get("status")
+    if status:
+        qs = qs.filter(status=status)
+
+    return render(request, "console/leaves_list.html", {"leaves": qs, "status": status})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def leave_approve(request, pk):
+    leave = get_object_or_404(LeaveRequest.objects.select_related("employee"), pk=pk)
+    if request.method == "POST":
+        if apply_leave_decision(request, leave, "Approved"):
+            messages.success(request, "Leave approved.")
+        else:
+            messages.error(request, "You are not allowed to approve.")
+    return redirect(request.META.get("HTTP_REFERER") or "console:leaves_list")
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def leave_reject(request, pk):
+    leave = get_object_or_404(LeaveRequest.objects.select_related("employee"), pk=pk)
+    if request.method == "POST":
+        if apply_leave_decision(request, leave, "Rejected"):
+            messages.success(request, "Leave rejected.")
+        else:
+            messages.error(request, "You are not allowed to reject.")
+    return redirect(request.META.get("HTTP_REFERER") or "console:leaves_list")
+
+
+# ---------------------------------------------------------------------------
+# PM calculations (admin only) — ported from office_portal/custom_admin.py
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("admin")
 def pm_calculations_view(request):
-    if not (request.user.is_superuser or getattr(request.user, "role", None) == "admin"):
-        return TemplateResponse(request, "admin/403.html", status=403)
-
     pms = Employee.objects.filter(role="pm").order_by("full_name", "email")
     paid_by_users = Employee.objects.filter(role__in=["pm", "admin"]).order_by("full_name", "email")
     today = timezone.localdate()
@@ -344,45 +619,42 @@ def pm_calculations_view(request):
             "available_balance_pkr": available_balance_pkr,
         }
 
-    context = admin.site.each_context(request)
-    year_options = _year_options(today)
-    months = _month_options()
-    context.update(
-        {
-            "title": "PM Calculations",
-            "pms": pms,
-            "selected_pm": selected_pm,
-            "summary": summary,
-            "incomes": incomes,
-            "advances": advances,
-            "salary_rows": salary_data["employee_rows"],
-            "salary_entries": salary_data["salaries"],
-            "salary_expenses": salary_data["expenses"],
-            "salary_payments": salary_data["payments"],
-            "paid_by_users": paid_by_users,
-            "today": today,
-            "current_user_id": request.user.id,
-            "period": period,
-            "year": year,
-            "month": month,
-            "year_options": year_options,
-            "months": months,
-        }
-    )
-    return TemplateResponse(request, "admin/pm_calculations.html", context)
+    context = {
+        "title": "PM Calculations",
+        "pms": pms,
+        "selected_pm": selected_pm,
+        "summary": summary,
+        "incomes": incomes,
+        "advances": advances,
+        "salary_rows": salary_data["employee_rows"],
+        "salary_entries": salary_data["salaries"],
+        "salary_expenses": salary_data["expenses"],
+        "salary_payments": salary_data["payments"],
+        "paid_by_users": paid_by_users,
+        "today": today,
+        "current_user_id": request.user.id,
+        "period": period,
+        "year": year,
+        "month": month,
+        "year_options": _year_options(today),
+        "months": _month_options(),
+    }
+    return render(request, "console/pm_calculations.html", context)
 
 
-@staff_member_required
+# ---------------------------------------------------------------------------
+# Employee salary (admin + pm, scoped to own team) — ported
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required(*STAFF_ROLES)
 def employee_salary_view(request):
     role = getattr(request.user, "role", None)
-    if not (request.user.is_superuser or role in ["admin", "pm"]):
-        return TemplateResponse(request, "admin/403.html", status=403)
-
     today = timezone.localdate()
     period, year, month = _current_period(request, today)
     pms = Employee.objects.filter(role="pm").order_by("full_name", "email")
 
-    if request.user.is_superuser or role == "admin":
+    if _is_admin(request):
         selected_pm_id = request.GET.get("pm")
         selected_pm = get_object_or_404(pms, pk=selected_pm_id) if selected_pm_id else None
     else:
@@ -436,7 +708,7 @@ def employee_salary_view(request):
         if action == "delete_salary":
             salary_id = request.POST.get("salary_id")
             salary = EmployeeSalary.objects.filter(pk=salary_id).first()
-            if salary and (request.user.is_superuser or role == "admin" or salary.pm_id == request.user.id):
+            if salary and (_is_admin(request) or salary.pm_id == request.user.id):
                 redirect_employee = str(salary.employee_id)
                 salary.delete()
                 messages.success(request, "Salary entry deleted.")
@@ -446,7 +718,7 @@ def employee_salary_view(request):
         if action == "edit_salary":
             salary_id = request.POST.get("salary_id")
             salary = EmployeeSalary.objects.filter(pk=salary_id).first()
-            if salary and (request.user.is_superuser or role == "admin" or salary.pm_id == request.user.id):
+            if salary and (_is_admin(request) or salary.pm_id == request.user.id):
                 redirect_employee = request.POST.get("employee_id") or str(salary.employee_id)
                 salary.employee_id = request.POST.get("employee_id") or salary.employee_id
                 salary.salary_type = request.POST.get("salary_type") or "fixed_budget"
@@ -490,7 +762,7 @@ def employee_salary_view(request):
         if action == "delete_salary_expense":
             expense_id = request.POST.get("expense_id")
             expense = EmployeeSalaryExpense.objects.filter(pk=expense_id).first()
-            if expense and (request.user.is_superuser or role == "admin" or expense.pm_id == request.user.id):
+            if expense and (_is_admin(request) or expense.pm_id == request.user.id):
                 redirect_employee = str(expense.employee_id)
                 expense.delete()
                 messages.success(request, "Expense entry deleted.")
@@ -500,7 +772,7 @@ def employee_salary_view(request):
         if action == "edit_salary_expense":
             expense_id = request.POST.get("expense_id")
             expense = EmployeeSalaryExpense.objects.filter(pk=expense_id).first()
-            if expense and (request.user.is_superuser or role == "admin" or expense.pm_id == request.user.id):
+            if expense and (_is_admin(request) or expense.pm_id == request.user.id):
                 redirect_employee = request.POST.get("employee_id") or str(expense.employee_id)
                 expense.employee_id = request.POST.get("employee_id") or expense.employee_id
                 expense.expense_type = request.POST.get("expense_type") or "other"
@@ -538,7 +810,7 @@ def employee_salary_view(request):
         if action == "delete_salary_payment":
             payment_id = request.POST.get("payment_id")
             payment = EmployeeSalaryPayment.objects.filter(pk=payment_id).first()
-            if payment and (request.user.is_superuser or role == "admin" or payment.pm_id == request.user.id):
+            if payment and (_is_admin(request) or payment.pm_id == request.user.id):
                 redirect_employee = str(payment.employee_id)
                 payment.delete()
                 messages.success(request, "Salary payment deleted.")
@@ -548,7 +820,7 @@ def employee_salary_view(request):
         if action == "edit_salary_payment":
             payment_id = request.POST.get("payment_id")
             payment = EmployeeSalaryPayment.objects.filter(pk=payment_id).first()
-            if payment and (request.user.is_superuser or role == "admin" or payment.pm_id == request.user.id):
+            if payment and (_is_admin(request) or payment.pm_id == request.user.id):
                 redirect_employee = request.POST.get("employee_id") or str(payment.employee_id)
                 payment.employee_id = request.POST.get("employee_id") or payment.employee_id
                 payment.amount_pkr = Decimal(request.POST.get("amount_pkr") or "0")
@@ -583,55 +855,84 @@ def employee_salary_view(request):
             employee=selected_employee,
         )
 
-    context = admin.site.each_context(request)
-    context.update(
-        {
-            "title": "Employee Salary",
-            "pms": pms,
-            "selected_pm": selected_pm,
-            "team_members": team_members,
-            "selected_employee": selected_employee,
-            "salary_data": salary_data,
-            "salary_type_choices": EmployeeSalary.SALARY_TYPE_CHOICES,
-            "expense_type_choices": EmployeeSalaryExpense.EXPENSE_TYPE_CHOICES,
-            "period": period,
-            "year": year,
-            "month": month,
-            "year_options": _year_options(today),
-            "months": _month_options(),
-            "today": today,
-            "current_user_id": request.user.id,
-            "is_pm_user": role == "pm" and not request.user.is_superuser,
-        }
-    )
-    return TemplateResponse(request, "admin/employee_salary.html", context)
+    context = {
+        "title": "Employee Salary",
+        "pms": pms,
+        "selected_pm": selected_pm,
+        "team_members": team_members,
+        "selected_employee": selected_employee,
+        "salary_data": salary_data,
+        "salary_type_choices": EmployeeSalary.SALARY_TYPE_CHOICES,
+        "expense_type_choices": EmployeeSalaryExpense.EXPENSE_TYPE_CHOICES,
+        "period": period,
+        "year": year,
+        "month": month,
+        "year_options": _year_options(today),
+        "months": _month_options(),
+        "today": today,
+        "current_user_id": request.user.id,
+        "is_pm_user": role == "pm" and not request.user.is_superuser,
+    }
+    return render(request, "console/employee_salary.html", context)
 
 
-@staff_member_required
+# ---------------------------------------------------------------------------
+# Global settings (admin only) — now editable
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("admin")
 def global_settings_view(request):
-    if not (request.user.is_superuser or getattr(request.user, "role", None) == "admin"):
-        return TemplateResponse(request, "admin/403.html", status=403)
-
     setting = PayrollGlobalSetting.objects.order_by("-updated_at").first()
-    context = admin.site.each_context(request)
-    context.update(
-        {
-            "title": "Global Settings",
-            "setting": setting,
-        }
+    splits = PMSplitSetting.objects.select_related("pm").order_by("pm__full_name", "pm__email")
+    pms_without_split = Employee.objects.filter(role="pm").exclude(
+        id__in=splits.values_list("pm_id", flat=True)
     )
-    return TemplateResponse(request, "admin/global_settings.html", context)
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "update_rate":
+            rate = request.POST.get("usd_to_pkr_rate") or "0"
+            try:
+                if setting:
+                    setting.usd_to_pkr_rate = Decimal(rate)
+                    setting.save()
+                else:
+                    PayrollGlobalSetting.objects.create(usd_to_pkr_rate=Decimal(rate))
+                messages.success(request, "USD to PKR rate updated.")
+            except Exception as exc:
+                messages.error(request, f"Could not update rate: {exc}")
+        elif action == "update_split":
+            pm_id = request.POST.get("pm_id")
+            percent = request.POST.get("pm_share_percent") or "50"
+            if pm_id:
+                try:
+                    split, _created = PMSplitSetting.objects.get_or_create(pm_id=pm_id)
+                    split.pm_share_percent = Decimal(percent)
+                    split.save()
+                    messages.success(request, "PM split updated.")
+                except Exception as exc:
+                    messages.error(request, f"Could not update split: {exc}")
+        return redirect("console:global_settings")
+
+    context = {
+        "title": "Global Settings",
+        "setting": setting,
+        "splits": splits,
+        "pms_without_split": pms_without_split,
+    }
+    return render(request, "console/global_settings.html", context)
 
 
-@staff_member_required
+# ---------------------------------------------------------------------------
+# Company summary (admin only) — ported
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("admin")
 def company_summary_view(request):
-    if not (request.user.is_superuser or getattr(request.user, "role", None) == "admin"):
-        return TemplateResponse(request, "admin/403.html", status=403)
-
     today = timezone.localdate()
-    period = request.GET.get("period", "month")
-    year = int(request.GET.get("year", today.year))
-    month = int(request.GET.get("month", today.month))
+    period, year, month = _current_period(request, today)
 
     incomes = PMIncome.objects.all()
     advances = PMAdvance.objects.all()
@@ -664,45 +965,27 @@ def company_summary_view(request):
         "profit_pkr": total_income_pkr - total_expense_pkr,
     }
 
-    current_year = today.year
-    year_options = list(range(current_year - 4, current_year + 1))
-    months = [
-        (1, "January"),
-        (2, "February"),
-        (3, "March"),
-        (4, "April"),
-        (5, "May"),
-        (6, "June"),
-        (7, "July"),
-        (8, "August"),
-        (9, "September"),
-        (10, "October"),
-        (11, "November"),
-        (12, "December"),
-    ]
-
-    context = admin.site.each_context(request)
-    context.update(
-        {
-            "title": "Company Summary",
-            "period": period,
-            "year": year,
-            "month": month,
-            "year_options": year_options,
-            "months": months,
-            "summary": summary,
-            "incomes": incomes.select_related("pm").order_by("-income_date", "-created_at"),
-            "advances": advances.select_related("pm").order_by("-advance_date", "-created_at"),
-        }
-    )
-    return TemplateResponse(request, "admin/company_summary.html", context)
+    context = {
+        "title": "Company Summary",
+        "period": period,
+        "year": year,
+        "month": month,
+        "year_options": _year_options(today),
+        "months": _month_options(),
+        "summary": summary,
+        "incomes": incomes.select_related("pm").order_by("-income_date", "-created_at"),
+        "advances": advances.select_related("pm").order_by("-advance_date", "-created_at"),
+    }
+    return render(request, "console/company_summary.html", context)
 
 
-@staff_member_required
+# ---------------------------------------------------------------------------
+# Branch expenses (admin only) — ported
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("admin")
 def branch_expenses_view(request):
-    if not (request.user.is_superuser or getattr(request.user, "role", None) == "admin"):
-        return TemplateResponse(request, "admin/403.html", status=403)
-
     today = timezone.localdate()
     period = request.GET.get("period", "month")
     year = int(request.GET.get("year", today.year))
@@ -719,10 +1002,9 @@ def branch_expenses_view(request):
         if action == "add_branch":
             name = (request.POST.get("branch_name") or "").strip()
             if name:
-                branch, _ = Branch.objects.get_or_create(name=name)
+                branch, _created = Branch.objects.get_or_create(name=name)
                 period_qs = f"period={period}&year={year}&month={month}"
-                return_url = f"{request.path}?branch={branch.id}&{period_qs}"
-                return HttpResponseRedirect(return_url)
+                return HttpResponseRedirect(f"{request.path}?branch={branch.id}&{period_qs}")
         if action == "edit_branch":
             branch_id = request.POST.get("branch_id")
             name = (request.POST.get("branch_name") or "").strip()
@@ -760,7 +1042,7 @@ def branch_expenses_view(request):
                         if Decimal(amount or "0.00") > (fixed.amount_pkr or Decimal("0.00")):
                             amount = fixed.amount_pkr
                     except FixedExpense.DoesNotExist:
-                        fixed = None
+                        pass
                 BranchExpense.objects.create(
                     branch_id=branch_id,
                     note=note,
@@ -807,15 +1089,10 @@ def branch_expenses_view(request):
     if selected_branch:
         fixed_expenses = fixed_expenses.filter(branch=selected_branch)
         if period == "year":
-            expenses = BranchExpense.objects.filter(
-                branch=selected_branch,
-                paid_date__year=year,
-            )
+            expenses = BranchExpense.objects.filter(branch=selected_branch, paid_date__year=year)
         else:
             expenses = BranchExpense.objects.filter(
-                branch=selected_branch,
-                paid_date__year=year,
-                paid_date__month=month,
+                branch=selected_branch, paid_date__year=year, paid_date__month=month
             )
 
     total_expenses_pkr = Decimal("0.00")
@@ -836,61 +1113,29 @@ def branch_expenses_view(request):
         need_to_pay = Decimal("0.00")
 
     paid_by_users = Employee.objects.filter(role__in=["pm", "admin"]).order_by("full_name", "email")
-    current_year = today.year
-    year_options = list(range(current_year - 4, current_year + 1))
-    months = [
-        (1, "January"),
-        (2, "February"),
-        (3, "March"),
-        (4, "April"),
-        (5, "May"),
-        (6, "June"),
-        (7, "July"),
-        (8, "August"),
-        (9, "September"),
-        (10, "October"),
-        (11, "November"),
-        (12, "December"),
-    ]
+    months = _month_options()
 
-    context = admin.site.each_context(request)
-    context.update(
-        {
-            "title": "Branches Expenses",
-            "branches": branches,
-            "selected_branch": selected_branch,
-            "expenses": expenses.select_related("paid_by", "fixed_expense").order_by("-paid_date", "-created_at"),
-            "fixed_expenses": fixed_expenses,
-            "paid_by_users": paid_by_users,
-            "current_user_id": request.user.id,
-            "period": period,
-            "year": year,
-            "month": month,
-            "year_options": year_options,
-            "months": months,
-            "summary": {
-                "total_expenses_pkr": total_expenses_pkr,
-                "paid_expenses_pkr": total_expenses_pkr,
-                "need_to_pay_pkr": need_to_pay,
-            },
-            "current_month_label": (
-                f"{dict(months).get(month, month)} {year}" if period == "month" else str(year)
-            ),
-            "today": today,
-        }
-    )
-    return TemplateResponse(request, "admin/branch_expenses.html", context)
-
-def _office_portal_get_urls(self):
-    urls = _original_get_urls()
-    custom = [
-        path("employee-salary/", employee_salary_view, name="employee_salary"),
-        path("pm-calculations/", pm_calculations_view, name="pm_calculations"),
-        path("company-summary/", company_summary_view, name="company_summary"),
-        path("branch-expenses/", branch_expenses_view, name="branch_expenses"),
-        path("global-settings/", global_settings_view, name="global_settings"),
-    ]
-    return custom + urls
-
-
-admin.site.get_urls = _office_portal_get_urls.__get__(admin.site, admin.site.__class__)
+    context = {
+        "title": "Branches Expenses",
+        "branches": branches,
+        "selected_branch": selected_branch,
+        "expenses": expenses.select_related("paid_by", "fixed_expense").order_by("-paid_date", "-created_at"),
+        "fixed_expenses": fixed_expenses,
+        "paid_by_users": paid_by_users,
+        "current_user_id": request.user.id,
+        "period": period,
+        "year": year,
+        "month": month,
+        "year_options": _year_options(today),
+        "months": months,
+        "summary": {
+            "total_expenses_pkr": total_expenses_pkr,
+            "paid_expenses_pkr": total_expenses_pkr,
+            "need_to_pay_pkr": need_to_pay,
+        },
+        "current_month_label": (
+            f"{dict(months).get(month, month)} {year}" if period == "month" else str(year)
+        ),
+        "today": today,
+    }
+    return render(request, "console/branch_expenses.html", context)

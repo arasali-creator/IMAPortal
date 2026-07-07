@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block sidebar_extra %}
+  <hr />
+  <a href="{% url 'console:dashboard' %}" class="{% if request.path == '/console/' %}active{% endif %}">
+    <i class="fa fa-gauge"></i> Console
+  </a>
+  <a href="{% url 'console:employees_list' %}" class="{% if '/console/employees/' in request.path %}active{% endif %}">
+    <i class="fa fa-users"></i> Employees
+  </a>
+  <a href="{% url 'console:teams_list' %}" class="{% if '/console/teams/' in request.path %}active{% endif %}">
+    <i class="fa fa-people-group"></i> Teams
+  </a>
+  <a href="{% url 'console:attendance_list' %}" class="{% if request.path == '/console/attendance/' %}active{% endif %}">
+    <i class="fa fa-calendar-check"></i> Attendance
+  </a>
+  <a href="{% url 'console:leaves_list' %}" class="{% if request.path == '/console/leaves/' %}active{% endif %}">
+    <i class="fa fa-plane-departure"></i> Leave Requests
+  </a>
+  {% if request.user.is_superuser or request.user.role == "admin" %}
+  <a href="{% url 'console:pm_calculations' %}" class="{% if request.path == '/console/pm-calculations/' %}active{% endif %}">
+    <i class="fa fa-calculator"></i> PM Calculations
+  </a>
+  {% endif %}
+  <a href="{% url 'console:employee_salary' %}" class="{% if request.path == '/console/employee-salary/' %}active{% endif %}">
+    <i class="fa fa-money-check-dollar"></i> Employee Salary
+  </a>
+  {% if request.user.is_superuser or request.user.role == "admin" %}
+  <a href="{% url 'console:company_summary' %}" class="{% if request.path == '/console/company-summary/' %}active{% endif %}">
+    <i class="fa fa-chart-line"></i> Company Summary
+  </a>
+  <a href="{% url 'console:branch_expenses' %}" class="{% if request.path == '/console/branch-expenses/' %}active{% endif %}">
+    <i class="fa fa-building"></i> Branches Expenses
+  </a>
+  <a href="{% url 'console:global_settings' %}" class="{% if request.path == '/console/global-settings/' %}active{% endif %}">
+    <i class="fa fa-sliders"></i> Global Settings
+  </a>
+  <a href="{% url 'console:password_resets_list' %}" class="{% if request.path == '/console/password-resets/' %}active{% endif %}">
+    <i class="fa fa-key"></i> Password Resets
+  </a>
+  {% endif %}
+  <a href="{% url 'console:notifications_list' %}" class="{% if request.path == '/console/notifications/' %}active{% endif %}">
+    <i class="fa fa-bell"></i> Notifications
+  </a>
+  <hr />
+{% endblock %}

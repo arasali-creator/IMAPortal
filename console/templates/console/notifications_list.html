@@ -1,0 +1,54 @@
+{% extends "console/base.html" %}
+
+{% block page_header %}<h2>Notifications</h2>{% endblock %}
+
+{% block content %}
+<style>
+  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
+  .cn-summary{display:flex;gap:14px;margin-bottom:14px;}
+  .cn-badge{padding:8px 14px;border-radius:999px;background:rgba(255,102,0,.10);color:#ff6600;font-weight:700;font-size:.85rem;}
+  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);overflow:auto;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{text-align:left;padding:10px 16px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
+  tbody td{padding:10px 16px;border-bottom:1px solid rgba(15,23,42,.10);}
+  .btn{padding:6px 12px;border-radius:8px;border:1px solid rgba(15,23,42,.15);background:#fff;color:#0f172a;font-weight:700;cursor:pointer;font-size:.8rem;text-decoration:none;}
+  .pill{padding:4px 10px;border-radius:999px;font-size:.78rem;font-weight:700;}
+  .pill.unread{background:rgba(255,102,0,.10);color:#ff6600;}
+  .pill.read{background:rgba(15,23,42,.08);color:rgba(15,23,42,.6);}
+</style>
+<div class="cn-wrap">
+  <div class="cn-summary">
+    <span class="cn-badge">{{ notif_total }} total</span>
+    <span class="cn-badge">{{ notif_unread }} unread</span>
+    <form method="post" action="{% url 'console:notification_mark_all_read' %}">
+      {% csrf_token %}
+      <button class="btn" type="submit">Mark all read</button>
+    </form>
+  </div>
+  <div class="cn-panel">
+    <table>
+      <thead><tr><th>When</th><th>Actor</th><th>Item</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for n in notifications %}
+          <tr>
+            <td>{{ n.action_time|date:"Y-m-d H:i" }}</td>
+            <td>{{ n.actor|default:"-" }}</td>
+            <td>{% if n.url %}<a href="{{ n.url }}">{{ n.object_repr }}</a>{% else %}{{ n.object_repr }}{% endif %}</td>
+            <td>{% if n.is_read %}<span class="pill read">Read</span>{% else %}<span class="pill unread">Unread</span>{% endif %}</td>
+            <td>
+              {% if not n.is_read %}
+                <form method="post" action="{% url 'console:notification_mark_read' n.pk %}">
+                  {% csrf_token %}
+                  <button class="btn" type="submit">Mark read</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No notifications.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

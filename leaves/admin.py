@@ -1,7 +1,5 @@
 # leaves/admin.py
 from django.contrib import admin, messages
-from django.contrib.admin.models import LogEntry, CHANGE
-from django.contrib.contenttypes.models import ContentType
 from django.db.models import Count, Q
 from django.db.models.functions import TruncMonth, TruncYear
 from django.urls import path
@@ -11,6 +9,7 @@ from django.utils.html import format_html
 from unfold.admin import ModelAdmin
 
 from .models import LeaveRequest
+from .utils import apply_leave_decision
 from accounts.models import Employee, Team
 
 
@@ -90,42 +89,13 @@ class LeaveRequestAdmin(ModelAdmin):
         ]
         return custom + urls
 
-    def _apply_decision(self, request, obj: LeaveRequest, decision: str):
-        role = getattr(request.user, "role", None)
-
-        if role == "pm":
-            obj.pm_status = decision
-        elif role == "admin" or request.user.is_superuser:
-            obj.admin_status = decision
-        else:
-            return False
-
-        # final status rules (same as your logic)
-        if decision == "Approved":
-            if obj.pm_status == "Approved" or obj.admin_status == "Approved":
-                obj.status = "Approved"
-        else:  # Rejected
-            if obj.pm_status == "Rejected" and obj.admin_status == "Rejected":
-                obj.status = "Rejected"
-
-        obj.save()
-        LogEntry.objects.log_action(
-            user_id=request.user.pk,
-            content_type_id=ContentType.objects.get_for_model(obj).pk,
-            object_id=obj.pk,
-            object_repr=str(obj),
-            action_flag=CHANGE,
-            change_message=f"Leave {decision.lower()} by {role or 'user'}",
-        )
-        return True
-
     def card_approve(self, request, pk: int):
         obj = LeaveRequest.objects.select_related("employee").filter(pk=pk).first()
         if not obj:
             self.message_user(request, "Leave not found.", level=messages.ERROR)
             return redirect("..")
 
-        ok = self._apply_decision(request, obj, "Approved")
+        ok = apply_leave_decision(request, obj, "Approved")
         if ok:
             self.message_user(request, "Leave approved.", level=messages.SUCCESS)
         else:
@@ -138,7 +108,7 @@ class LeaveRequestAdmin(ModelAdmin):
             self.message_user(request, "Leave not found.", level=messages.ERROR)
             return redirect("..")
 
-        ok = self._apply_decision(request, obj, "Rejected")
+        ok = apply_leave_decision(request, obj, "Rejected")
         if ok:
             self.message_user(request, "Leave rejected.", level=messages.WARNING)
         else:
@@ -230,7 +200,7 @@ class LeaveRequestAdmin(ModelAdmin):
     def approve_leave(self, request, queryset):
         updated = 0
         for leave in queryset:
-            if self._apply_decision(request, leave, "Approved"):
+            if apply_leave_decision(request, leave, "Approved"):
                 updated += 1
         self.message_user(request, f"{updated} leave(s) approved.", level=messages.SUCCESS)
 
@@ -238,7 +208,7 @@ class LeaveRequestAdmin(ModelAdmin):
     def reject_leave(self, request, queryset):
         updated = 0
         for leave in queryset:
-            if self._apply_decision(request, leave, "Rejected"):
+            if apply_leave_decision(request, leave, "Rejected"):
                 updated += 1
         self.message_user(request, f"{updated} leave(s) rejected.", level=messages.WARNING)
 

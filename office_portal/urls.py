@@ -2,13 +2,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
-from django.conf import settings
-from django.conf.urls.static import static
-from . import custom_admin  # noqa: F401
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('console/', include('console.urls')),
     path('', include('accounts.urls')),
     path("attendance/", include("attendance.urls")),
     path("payroll/", include("payroll.urls")),

@@ -1,0 +1,72 @@
+{% extends "console/base.html" %}
+{% load humanize %}
+
+{% block page_header %}<h2>Console</h2>{% endblock %}
+
+{% block content %}
+<style>
+  .cn-wrap{font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#0f172a;}
+  .cn-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px;margin-bottom:16px;}
+  .cn-card{grid-column:span 6;padding:16px;border-radius:16px;border:1px solid rgba(15,23,42,.10);background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);}
+  .cn-card h4{margin:0 0 6px 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(15,23,42,.6);}
+  .cn-card .value{font-size:1.6rem;font-weight:900;color:#ff6600;}
+  .cn-panel{border:1px solid rgba(15,23,42,.10);border-radius:16px;background:#fff;box-shadow:0 10px 22px rgba(2,6,23,.08);margin-bottom:16px;}
+  .cn-panel-header{padding:14px 16px;border-bottom:1px solid rgba(15,23,42,.10);font-weight:800;}
+  table{width:100%;border-collapse:collapse;font-size:.92rem;}
+  thead th{text-align:left;padding:10px 16px;color:rgba(15,23,42,.6);font-size:.78rem;text-transform:uppercase;border-bottom:1px solid rgba(15,23,42,.10);}
+  tbody td{padding:10px 16px;border-bottom:1px solid rgba(15,23,42,.10);}
+  @media(max-width:900px){.cn-card{grid-column:span 12;}}
+</style>
+<div class="cn-wrap">
+  <div class="cn-grid">
+    <div class="cn-card">
+      <h4>Total Employees</h4>
+      <div class="value">{{ employees_count }}</div>
+    </div>
+    <div class="cn-card">
+      <h4>Present Today</h4>
+      <div class="value">{{ attendance_today }}</div>
+    </div>
+  </div>
+
+  <div class="cn-panel">
+    <div class="cn-panel-header">Recently Joined</div>
+    <table>
+      <thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Role</th><th>Joined</th></tr></thead>
+      <tbody>
+        {% for emp in recent_employees %}
+          <tr>
+            <td>{{ emp.name }}</td>
+            <td>{{ emp.email }}</td>
+            <td>{{ emp.department }}</td>
+            <td>{{ emp.role }}</td>
+            <td>{{ emp.date_joined|date:"Y-m-d" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No employees yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cn-panel">
+    <div class="cn-panel-header">Recent Attendance</div>
+    <table>
+      <thead><tr><th>Employee</th><th>Date</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead>
+      <tbody>
+        {% for row in recent_attendance %}
+          <tr>
+            <td>{{ row.employee }}</td>
+            <td>{{ row.date }}</td>
+            <td>{{ row.check_in }}</td>
+            <td>{{ row.check_out }}</td>
+            <td>{{ row.hours_worked }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5">No attendance records yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

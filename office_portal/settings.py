@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "accounts",
     "attendance",
     "leaves",
+    "console",
     "payroll.apps.PayrollConfig",
     "django.contrib.humanize",
         # ✅ Slick Reporting
@@ -241,40 +242,16 @@ UNFOLD = {
                         "permission": "accounts.utils.can_view_leaves",
                     },
                     {
-                        "title": _("PM Calculations"),
-                        "icon": "calculate",
-                        "link": reverse_lazy("admin:pm_calculations"),
-                        "permission": "accounts.utils.can_view_pm_calculations",
-                    },
-                    {
-                        "title": _("Employee Salary"),
-                        "icon": "payments",
-                        "link": reverse_lazy("admin:employee_salary"),
-                        "permission": "accounts.utils.can_view_employee_salary",
-                    },
-                    {
                         "title": _("My Payroll"),
                         "icon": "account_balance_wallet",
                         "link": reverse_lazy("payroll:my_summary"),
                         "permission": "accounts.utils.can_view_my_payroll",
                     },
                     {
-                        "title": _("Company Summary"),
-                        "icon": "insights",
-                        "link": reverse_lazy("admin:company_summary"),
-                        "permission": "accounts.utils.can_view_company_summary",
-                    },
-                    {
-                        "title": _("Branches Expenses"),
-                        "icon": "account_balance",
-                        "link": reverse_lazy("admin:branch_expenses"),
-                        "permission": "accounts.utils.can_view_branch_expenses",
-                    },
-                    {
-                        "title": _("Global Settings"),
-                        "icon": "tune",
-                        "link": reverse_lazy("admin:global_settings"),
-                        "permission": "accounts.utils.can_view_global_settings",
+                        "title": _("Open Console"),
+                        "icon": "dashboard",
+                        "link": "/console/",
+                        "permission": "accounts.utils.can_view_pm_calculations",
                     },
                     {
                         "title": _("Notifications"),

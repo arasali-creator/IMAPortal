@@ -120,7 +120,7 @@ class EmployeeSalaryTests(TestCase):
     def test_employee_salary_page_renders_for_pm(self):
         self.client.force_login(self.pm)
 
-        response = self.client.get(reverse("admin:employee_salary"))
+        response = self.client.get(reverse("console:employee_salary"))
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Employee Salary")
@@ -225,7 +225,7 @@ class EmployeeSalaryTests(TestCase):
         self.client.force_login(self.admin)
 
         response = self.client.get(
-            reverse("admin:pm_calculations"),
+            reverse("console:pm_calculations"),
             {"pm": self.pm.id, "period": "month", "year": 2026, "month": 3},
         )
 
@@ -315,7 +315,7 @@ class EmployeeSalaryTests(TestCase):
 
         self.client.force_login(self.admin)
         response = self.client.get(
-            reverse("admin:pm_calculations"),
+            reverse("console:pm_calculations"),
             {"pm": self.pm.id, "period": "month", "year": 2026, "month": 3},
         )
 

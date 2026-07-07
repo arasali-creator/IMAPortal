@@ -212,7 +212,8 @@
     <i class="fa fa-plane-departure"></i> Apply Leave
   </a>
 
-  
+  {% block sidebar_extra %}{% endblock %}
+
   <a href="{% url 'dashboard' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
     <i class="fa fa-user"></i> Profile
   </a>
