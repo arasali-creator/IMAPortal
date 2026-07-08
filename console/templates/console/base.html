@@ -48,6 +48,11 @@
           <i class="fa-solid fa-calculator"></i> PM Calculations
         </a>
         {% endif %}
+        {% if request.user.role == "pm" %}
+        <a href="{% url 'console:my_payroll' %}" class="{% if request.resolver_match.url_name == 'my_payroll' %}active{% endif %}">
+          <i class="fa-solid fa-wallet"></i> My Payroll
+        </a>
+        {% endif %}
         <a href="{% url 'console:employee_salary' %}" class="{% if request.resolver_match.url_name == 'employee_salary' %}active{% endif %}">
           <i class="fa-solid fa-money-check-dollar"></i> Employee Salary
         </a>

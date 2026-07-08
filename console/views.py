@@ -32,6 +32,7 @@ from payroll.models import (
     PayrollGlobalSetting,
 )
 from payroll.utils import calculate_pm_available_balance, summarize_employee_salary, team_members_for_pm
+from payroll.views import build_pm_payroll_context
 
 from .forms import EmployeeEditForm, TeamForm
 
@@ -201,10 +202,7 @@ def employee_promote(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == "POST":
         employee.role = "pm"
-        # PMs need /admin/ access to reach the "My Payroll" page (payroll:my_summary),
-        # which is only linked from the Django admin (Unfold) sidebar.
-        employee.is_staff = True
-        employee.save(update_fields=["role", "is_staff"])
+        employee.save(update_fields=["role"])
         messages.success(request, f"{employee} promoted to Project Manager.")
     return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
 
@@ -215,8 +213,7 @@ def employee_demote(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == "POST":
         employee.role = "employee"
-        employee.is_staff = False
-        employee.save(update_fields=["role", "is_staff"])
+        employee.save(update_fields=["role"])
         messages.success(request, f"{employee} demoted to Employee.")
     return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
 
@@ -892,6 +889,17 @@ def pm_calculations_view(request):
         "months": _month_options(),
     }
     return render(request, "console/pm_calculations.html", context)
+
+
+# ---------------------------------------------------------------------------
+# My Payroll (pm only) — same numbers as the admin "My Payroll" page
+# ---------------------------------------------------------------------------
+
+@login_required
+@role_required("pm")
+def my_payroll_view(request):
+    context = build_pm_payroll_context(request, request.user)
+    return render(request, "console/my_payroll.html", context)
 
 
 # ---------------------------------------------------------------------------

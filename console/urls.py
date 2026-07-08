@@ -28,6 +28,7 @@ urlpatterns = [
     path("leaves/<int:pk>/approve/", views.leave_approve, name="leave_approve"),
     path("leaves/<int:pk>/reject/", views.leave_reject, name="leave_reject"),
     path("pm-calculations/", views.pm_calculations_view, name="pm_calculations"),
+    path("my-payroll/", views.my_payroll_view, name="my_payroll"),
     path("employee-salary/", views.employee_salary_view, name="employee_salary"),
     path("global-settings/", views.global_settings_view, name="global_settings"),
     path("company-summary/", views.company_summary_view, name="company_summary"),

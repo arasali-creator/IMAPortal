@@ -40,12 +40,12 @@ def _period_context(request):
     }
 
 
-@login_required
-def pm_summary(request):
-    user = request.user
-    if getattr(user, "role", None) != "pm":
-        return HttpResponseForbidden("Only PMs can view this page.")
+def build_pm_payroll_context(request, user):
+    """Compute a PM's own income/advance/salary summary for the given period.
 
+    Shared by the admin "My Payroll" page (pm_summary) and the console's
+    my_payroll view so both show identical numbers.
+    """
     period_ctx = _period_context(request)
     period = period_ctx["period"]
     year = period_ctx["year"]
@@ -116,8 +116,7 @@ def pm_summary(request):
         cash_online_pkr,
     )
 
-    context = admin.site.each_context(request)
-    context.update({
+    return {
         "title": "My Payroll",
         "split_percent": split_percent,
         "incomes": incomes,
@@ -142,7 +141,17 @@ def pm_summary(request):
         "available_balance_pkr": available_balance_pkr,
         "salary_data": salary_data,
         **period_ctx,
-    })
+    }
+
+
+@login_required
+def pm_summary(request):
+    user = request.user
+    if getattr(user, "role", None) != "pm":
+        return HttpResponseForbidden("Only PMs can view this page.")
+
+    context = admin.site.each_context(request)
+    context.update(build_pm_payroll_context(request, user))
     return TemplateResponse(request, "payroll/my_summary.html", context)
 
 
