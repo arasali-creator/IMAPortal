@@ -5,237 +5,134 @@
 {% block page_title %}Salary &amp; Payslips{% endblock %}
 
 {% block content %}
-<style>
-  .salary-wrap{
-    max-width:1180px;
-    margin:0 auto;
-    font-family:"Outfit",system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    color:#0f172a;
-  }
-  .salary-topbar{
-    display:grid;
-    grid-template-columns:1fr auto;
-    gap:12px;
-    align-items:center;
-    margin-bottom:12px;
-    padding:16px;
-    border-radius:18px;
-    border:1px solid rgba(15,23,42,.10);
-    background:
-      radial-gradient(700px 180px at 10% 0%, rgba(255,106,0,.10), transparent 60%),
-      linear-gradient(180deg,#ffffff 0%, #fbfbff 100%);
-    box-shadow:0 12px 30px rgba(2,6,23,.10);
-  }
-  .salary-title{margin:0;font-size:1.6rem;font-weight:900;letter-spacing:-.01em;}
-  .salary-sub{margin:6px 0 0;color:rgba(15,23,42,.65);font-weight:600;}
-  .salary-filter{
-    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-    padding:8px;border-radius:12px;background:#fff;border:1px solid rgba(15,23,42,.10);
-  }
-  .salary-filter label{font-size:.78rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:rgba(15,23,42,.55);}
-  .salary-filter select{padding:8px 10px;border-radius:10px;border:1px solid rgba(15,23,42,.10);background:#fff;font-weight:700;}
-  .salary-kpis{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;margin-bottom:16px;}
-  .salary-card{
-    grid-column:span 3;padding:16px;border-radius:16px;border:1px solid rgba(15,23,42,.08);
-    background:#fff;box-shadow:0 10px 24px rgba(2,6,23,.08);
-  }
-  .salary-card h4{margin:0 0 6px 0;font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:rgba(15,23,42,.55);}
-  .salary-card .value{font-size:1.35rem;font-weight:900;}
-  .salary-card .sub{margin-top:6px;font-size:.92rem;color:rgba(15,23,42,.55);}
-  .salary-card.featured{
-    background:radial-gradient(600px 180px at 0% 0%, rgba(255,106,0,.10), transparent 60%),linear-gradient(180deg,#ffffff 0%,#fff8f2 100%);
-    border-color:rgba(255,106,0,.22);
-  }
-  .salary-panels{display:grid;grid-template-columns:repeat(12,1fr);gap:12px;}
-  .panel{
-    grid-column:span 12;border-radius:16px;border:1px solid rgba(15,23,42,.08);
-    background:#fff;box-shadow:0 10px 24px rgba(2,6,23,.08);overflow:hidden;
-  }
-  .panel.half{grid-column:span 12;}
-  .panel-head{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:14px 16px;border-bottom:1px solid rgba(15,23,42,.08);
-  }
-  .panel-title{margin:0;font-weight:900;}
-  .badge{
-    padding:4px 10px;border-radius:999px;background:rgba(255,106,0,.08);
-    color:#ff6600;font-size:.78rem;font-weight:700;border:1px solid rgba(255,106,0,.22);
-  }
-  .table-wrap{overflow:auto;}
-  table{width:100%;border-collapse:collapse;}
-  th,td{padding:12px 14px;border-bottom:1px solid rgba(15,23,42,.08);text-align:left;font-size:.92rem;vertical-align:top;}
-  th{font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:rgba(15,23,42,.55);background:#fafbff;}
-  .num{text-align:right;font-variant-numeric:tabular-nums;}
-  .empty{padding:16px;color:rgba(15,23,42,.55);}
-  @media(max-width:1000px){.salary-card{grid-column:span 6;}}
-  @media(max-width:760px){.salary-topbar{grid-template-columns:1fr;}.salary-card{grid-column:span 12;}}
-</style>
-
-<div class="salary-wrap">
-  <div class="salary-topbar">
-    <div>
-      <h2 class="salary-title">Salary</h2>
-      <p class="salary-sub">See your salary income, deductions, salary paid, and remaining balance.</p>
-    </div>
-    <form class="salary-filter" method="get">
-      <label>Period</label>
-      <select name="period" onchange="this.form.submit()">
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-pad" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <p style="margin:0;color:var(--pf-muted);font-weight:600;font-size:.9rem;">Your salary income, deductions, payments, and remaining balance.</p>
+    <form method="get" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-left:auto;">
+      <select name="period" onchange="this.form.submit()" style="padding:9px 12px;border-radius:10px;border:1px solid var(--pf-border);font-weight:700;background:#fff;">
         <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
         <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
       </select>
-      <select name="year" onchange="this.form.submit()">
-        {% for y in year_options %}
-          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
-        {% endfor %}
+      <select name="year" onchange="this.form.submit()" style="padding:9px 12px;border-radius:10px;border:1px solid var(--pf-border);font-weight:700;background:#fff;">
+        {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
       </select>
-      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
-        {% for m, label in months %}
-          <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
+      <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()" style="padding:9px 12px;border-radius:10px;border:1px solid var(--pf-border);font-weight:700;background:#fff;">
+        {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </form>
   </div>
+</div>
 
-  <div class="salary-kpis">
-    <div class="salary-card">
-      <h4>Total Income</h4>
-      <div class="value">PKR {{ salary_data.total_income_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">Work income recorded for you</div>
-    </div>
-    <div class="salary-card">
-      <h4>Total Expenses</h4>
-      <div class="value">PKR {{ salary_data.total_expenses_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">Deductions including fines and advances</div>
-    </div>
-    <div class="salary-card">
-      <h4>Total Paid</h4>
-      <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">Salary already paid to you</div>
-    </div>
-    <div class="salary-card featured">
-      <h4>Remaining Balance</h4>
-      <div class="value">PKR {{ salary_data.total_balance_pkr|floatformat:0|intcomma }}</div>
-      <div class="sub">${{ salary_data.total_balance_usd|floatformat:2 }}</div>
-    </div>
+<div class="pf-kpi-grid">
+  <div class="pf-kpi-card blue">
+    <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="value">PKR {{ salary_data.total_income_pkr|floatformat:0|intcomma }}</div>
+    <div class="label">Total Income</div>
   </div>
+  <div class="pf-kpi-card red">
+    <div class="icon"><i class="fa-solid fa-receipt"></i></div>
+    <div class="value">PKR {{ salary_data.total_expenses_pkr|floatformat:0|intcomma }}</div>
+    <div class="label">Total Expenses</div>
+  </div>
+  <div class="pf-kpi-card green">
+    <div class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
+    <div class="label">Total Paid</div>
+  </div>
+  <div class="pf-kpi-card">
+    <div class="icon"><i class="fa-solid fa-wallet"></i></div>
+    <div class="value">PKR {{ salary_data.total_balance_pkr|floatformat:0|intcomma }}</div>
+    <div class="label">Remaining Balance &middot; ${{ salary_data.total_balance_usd|floatformat:2 }}</div>
+  </div>
+</div>
 
-  <div class="salary-panels">
-    <div class="panel half">
-      <div class="panel-head">
-        <h3 class="panel-title">Income Details</h3>
-        <div class="badge">{{ salary_data.salaries|length }} entries</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>PM</th>
-              <th>Type</th>
-              <th>Project</th>
-              <th>Units</th>
-              <th>Rate</th>
-              <th class="num">Income</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for salary in salary_data.salaries %}
-              <tr>
-                <td>{{ salary.work_date }}</td>
-                <td>{{ salary.pm.full_name|default:salary.pm.email|default:salary.pm.cnic }}</td>
-                <td>{{ salary.get_salary_type_display }}</td>
-                <td>{{ salary.project_name }}</td>
-                <td>
-                  {% if salary.salary_type == "fixed_budget" %}
-                    {{ salary.entries_email|floatformat:2 }} entries/email
-                  {% else %}
-                    {{ salary.number_of_hours|floatformat:2 }} hours
-                  {% endif %}
-                </td>
-                <td>
-                  {% if salary.salary_type == "fixed_budget" %}
-                    PKR {{ salary.per_entry_rate|floatformat:2 }}
-                  {% else %}
-                    PKR {{ salary.per_hour_rate|floatformat:2 }}
-                  {% endif %}
-                </td>
-                <td class="num">PKR {{ salary.income_amount|floatformat:0|intcomma }}</td>
-              </tr>
-            {% empty %}
-              <tr><td colspan="7" class="empty">No income entries found.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header">
+    <h3>Income Details</h3>
+    <span class="pf-badge neutral">{{ salary_data.salaries|length }} entr{{ salary_data.salaries|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="pf-table-wrap">
+    <table class="pf-table">
+      <thead><tr><th>Date</th><th>PM</th><th>Type</th><th>Project</th><th>Units</th><th>Rate</th><th>Income</th></tr></thead>
+      <tbody>
+        {% for salary in salary_data.salaries %}
+          <tr>
+            <td>{{ salary.work_date }}</td>
+            <td>{{ salary.pm.full_name|default:salary.pm.email|default:salary.pm.cnic }}</td>
+            <td>{{ salary.get_salary_type_display }}</td>
+            <td>{{ salary.project_name }}</td>
+            <td>
+              {% if salary.salary_type == "fixed_budget" %}
+                {{ salary.entries_email|floatformat:2 }} entries/email
+              {% else %}
+                {{ salary.number_of_hours|floatformat:2 }} hours
+              {% endif %}
+            </td>
+            <td>
+              {% if salary.salary_type == "fixed_budget" %}
+                PKR {{ salary.per_entry_rate|floatformat:2 }}
+              {% else %}
+                PKR {{ salary.per_hour_rate|floatformat:2 }}
+              {% endif %}
+            </td>
+            <td><strong>PKR {{ salary.income_amount|floatformat:0|intcomma }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="pf-empty">No income entries found for this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    <div class="panel half">
-      <div class="panel-head">
-        <h3 class="panel-title">Expense Details</h3>
-        <div class="badge">{{ salary_data.expenses|length }} entries</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>PM</th>
-              <th>Type</th>
-              <th>Note</th>
-              <th>Paid By</th>
-              <th class="num">Amount</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for expense in salary_data.expenses %}
-              <tr>
-                <td>{{ expense.paid_date }}</td>
-                <td>{{ expense.pm.full_name|default:expense.pm.email|default:expense.pm.cnic }}</td>
-                <td>{{ expense.get_expense_type_display }}</td>
-                <td>{{ expense.note|default:"-" }}</td>
-                <td>{{ expense.paid_by.full_name|default:expense.paid_by.email|default:"-" }}</td>
-                <td class="num">PKR {{ expense.amount_pkr|floatformat:0|intcomma }}</td>
-              </tr>
-            {% empty %}
-              <tr><td colspan="6" class="empty">No expense entries found.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-header">
+    <h3>Expense Details</h3>
+    <span class="pf-badge neutral">{{ salary_data.expenses|length }} entr{{ salary_data.expenses|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="pf-table-wrap">
+    <table class="pf-table">
+      <thead><tr><th>Date</th><th>PM</th><th>Type</th><th>Note</th><th>Paid By</th><th>Amount</th></tr></thead>
+      <tbody>
+        {% for expense in salary_data.expenses %}
+          <tr>
+            <td>{{ expense.paid_date }}</td>
+            <td>{{ expense.pm.full_name|default:expense.pm.email|default:expense.pm.cnic }}</td>
+            <td>{{ expense.get_expense_type_display }}</td>
+            <td>{{ expense.note|default:"-" }}</td>
+            <td>{{ expense.paid_by.full_name|default:expense.paid_by.email|default:"-" }}</td>
+            <td>PKR {{ expense.amount_pkr|floatformat:0|intcomma }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="pf-empty">No expense entries found for this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 
-    <div class="panel">
-      <div class="panel-head">
-        <h3 class="panel-title">Salary Paid History</h3>
-        <div class="badge">{{ salary_data.payments|length }} entries</div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>PM</th>
-              <th>Paid By</th>
-              <th>Note</th>
-              <th class="num">Amount Paid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for payment in salary_data.payments %}
-              <tr>
-                <td>{{ payment.paid_date }}</td>
-                <td>{{ payment.pm.full_name|default:payment.pm.email|default:payment.pm.cnic }}</td>
-                <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:"-" }}</td>
-                <td>{{ payment.note|default:"-" }}</td>
-                <td class="num">PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</td>
-              </tr>
-            {% empty %}
-              <tr><td colspan="5" class="empty">No salary payments found.</td></tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="pf-card">
+  <div class="pf-card-header">
+    <h3>Salary Paid History</h3>
+    <span class="pf-badge neutral">{{ salary_data.payments|length }} entr{{ salary_data.payments|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="pf-table-wrap">
+    <table class="pf-table">
+      <thead><tr><th>Date</th><th>PM</th><th>Paid By</th><th>Note</th><th>Amount Paid</th></tr></thead>
+      <tbody>
+        {% for payment in salary_data.payments %}
+          <tr>
+            <td>{{ payment.paid_date }}</td>
+            <td>{{ payment.pm.full_name|default:payment.pm.email|default:payment.pm.cnic }}</td>
+            <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:"-" }}</td>
+            <td>{{ payment.note|default:"-" }}</td>
+            <td><strong>PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="pf-empty">No salary payments found for this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 </div>
 {% endblock %}

@@ -41,7 +41,7 @@
 
           <div class="portal-nav-label">Personal</div>
           {% if request.user.is_authenticated and request.user.role == 'pm' %}
-          <a href="{% url 'payroll:my_summary' %}" class="{% if request.path == '/payroll/my-summary/' %}active{% endif %}">
+          <a href="{% url 'console:my_payroll' %}">
             <i class="fa-solid fa-wallet"></i> My Payroll
           </a>
           {% endif %}
