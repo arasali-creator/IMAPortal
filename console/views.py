@@ -14,7 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
 from accounts.decorators import role_required
-from accounts.models import Employee, Notification, PasswordResetRequest, Team
+from accounts.models import Employee, Notification, Team
 from accounts.utils import notifications_queryset_for_user, sync_notifications
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
@@ -368,25 +368,6 @@ def notification_unread_count(request):
 # ---------------------------------------------------------------------------
 # Password reset requests
 # ---------------------------------------------------------------------------
-
-@login_required
-@role_required("admin")
-def password_resets_list(request):
-    qs = PasswordResetRequest.objects.select_related("employee").order_by("-created_at")
-    return render(request, "console/password_resets_list.html", {"requests": qs})
-
-
-@login_required
-@role_required("admin")
-def password_reset_mark_resolved(request, pk):
-    reset_request = get_object_or_404(PasswordResetRequest, pk=pk)
-    if request.method == "POST":
-        reset_request.status = "resolved"
-        reset_request.resolved_at = timezone.now()
-        reset_request.save(update_fields=["status", "resolved_at"])
-        messages.success(request, "Marked resolved.")
-    return redirect("console:password_resets_list")
-
 
 # ---------------------------------------------------------------------------
 # Attendance

@@ -126,3 +126,14 @@
   </form>
 {% endif %}
 {% endblock %}
+
+{% block extra_scripts %}
+<script>
+  document.querySelectorAll(".cn-file-btn input[type=file]").forEach(function (input) {
+    input.addEventListener("change", function () {
+      const span = input.closest(".cn-file-btn").querySelector(".cn-file-name");
+      if (span) span.textContent = input.files.length ? input.files[0].name : "Replace file";
+    });
+  });
+</script>
+{% endblock %}

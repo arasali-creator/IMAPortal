@@ -1,7 +1,41 @@
 from django import forms
+from django.utils.html import format_html
+from django.utils.safestring import mark_safe
 
 from accounts.models import Employee, Team
 from projects.models import Project
+
+
+class ConsoleFileInput(forms.ClearableFileInput):
+    """Clean replacement for Django's default file widget: an upload button
+    plus a small "Remove" toggle, instead of the raw Currently/Clear/Change text."""
+
+    def render(self, name, value, attrs=None, renderer=None):
+        ctx = self.get_context(name, value, attrs)["widget"]
+        attr_html = "".join(
+            format_html(' {}="{}"', k, v) for k, v in ctx["attrs"].items() if v is not False
+        )
+        parts = [
+            '<div class="cn-file-widget">',
+            format_html(
+                '<label class="cn-file-btn"><i class="fa-solid fa-upload"></i>'
+                '<span class="cn-file-name">{}</span>'
+                '<input type="file" name="{}"{}></label>',
+                "Replace file" if ctx["is_initial"] else "Upload file",
+                ctx["name"],
+                mark_safe(attr_html),
+            ),
+        ]
+        if ctx["is_initial"] and not self.is_required:
+            parts.append(
+                format_html(
+                    '<label class="cn-file-clear"><input type="checkbox" name="{}" id="{}"><i class="fa-solid fa-trash-can"></i> Remove</label>',
+                    ctx["checkbox_name"],
+                    ctx["checkbox_id"],
+                )
+            )
+        parts.append("</div>")
+        return mark_safe("".join(parts))
 
 
 class EmployeeCreateForm(forms.ModelForm):
@@ -84,6 +118,11 @@ class EmployeeEditForm(forms.ModelForm):
             "emergency_contact_address": forms.Textarea(attrs={"rows": 2}),
             "previous_employer": forms.Textarea(attrs={"rows": 2}),
             "special_skills": forms.Textarea(attrs={"rows": 2}),
+            "profile_picture": ConsoleFileInput,
+            "cnic_front": ConsoleFileInput,
+            "cnic_back": ConsoleFileInput,
+            "degree_certificate": ConsoleFileInput,
+            "father_cnic": ConsoleFileInput,
         }
 
     def clean(self):

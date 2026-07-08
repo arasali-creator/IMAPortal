@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET, require_http_methods
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
 from .forms import EmployeeRegistrationForm, CNICLoginForm
-from .models import Employee, PasswordResetRequest
+from .models import Employee
 
 @require_http_methods(["GET", "POST"])
 def register(request):
@@ -121,19 +121,3 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Logged out successfully.')
     return redirect('login')
-
-@require_http_methods(["GET", "POST"])
-def reset_password_view(request):
-    sent = False
-    if request.method == "POST":
-        identifier = request.POST.get("cnic_or_email", "").strip()
-        if identifier:
-            employee = Employee.objects.filter(cnic=identifier).first()
-            if not employee:
-                employee = Employee.objects.filter(email__iexact=identifier).first()
-            PasswordResetRequest.objects.create(
-                employee=employee,
-                identifier=identifier,
-            )
-        sent = True
-    return render(request, "accounts/reset_password.html", {"sent": sent})

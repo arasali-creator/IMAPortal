@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset Password | IMA</title>
+  <title>{% block title %}IMA Office Portal{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
  <style>
 
@@ -231,36 +231,17 @@ input:focus {
     <!-- Left Side (Form) -->
     <div class="login-box">
       <div class="logo">
-        <img src="{% static 'images/logo.png' %}" alt="Network Logo">
-        <h3>Reset Password</h3>
-        <p>Enter your CNIC or email to receive reset instructions.</p>
+        <img src="{% static 'images/logo.png' %}" alt="IMA Logo">
+        <h3>{% block heading %}{% endblock %}</h3>
+        <p>{% block subheading %}{% endblock %}</p>
       </div>
 
-      {% if sent %}
-        <div class="success">If an account exists, we sent reset instructions.</div>
-      {% endif %}
-
-      <form method="post" class="login-form">
-        {% csrf_token %}
-
-        <div class="input-group">
-          <label for="cnic_or_email">CNIC or Email</label>
-          <input type="text" id="cnic_or_email" name="cnic_or_email" placeholder="Enter CNIC or Email" required>
-        </div>
-
-        <button type="submit" class="btn btn-primary full">Send Reset Link</button>
-
-        <div class="divider">
-          <span>OR</span>
-        </div>
-
-        <a href="{% url 'login' %}" class="btn btn-secondary full">Back to Login</a>
-      </form>
+      {% block content %}{% endblock %}
     </div>
 
     <!-- Right Side (Illustration) -->
     <div class="illustration">
-      <img src="{% static 'images/side.png' %}" alt="Reset Illustration">
+      <img src="{% static 'images/side.png' %}" alt="Illustration">
     </div>
   </div>
 </body>

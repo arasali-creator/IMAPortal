@@ -48,7 +48,7 @@ class ConsolePermissionTests(TestCase):
 
     def test_admin_only_pages_reject_non_superuser_pm(self):
         self.client.force_login(self.pm)
-        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+        for name in ("console:pm_calculations", "console:global_settings"):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 403, name)
 
@@ -56,7 +56,7 @@ class ConsolePermissionTests(TestCase):
         self.pm.is_superuser = True
         self.pm.save(update_fields=["is_superuser"])
         self.client.force_login(self.pm)
-        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+        for name in ("console:pm_calculations", "console:global_settings"):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 403, name)
 
@@ -69,7 +69,7 @@ class ConsolePermissionTests(TestCase):
 
     def test_admin_only_pages_allow_admin(self):
         self.client.force_login(self.admin)
-        for name in ("console:pm_calculations", "console:global_settings", "console:password_resets_list"):
+        for name in ("console:pm_calculations", "console:global_settings"):
             response = self.client.get(reverse(name))
             self.assertEqual(response.status_code, 200, name)
 

@@ -70,10 +70,6 @@
           <i class="fa-solid fa-sliders"></i> Global Settings
         </a>
 
-        <div class="console-nav-label">Admin</div>
-        <a href="{% url 'console:password_resets_list' %}" class="{% if request.resolver_match.url_name == 'password_resets_list' %}active{% endif %}">
-          <i class="fa-solid fa-key"></i> Password Resets
-        </a>
         {% endif %}
         <a href="{% url 'console:notifications_list' %}" class="{% if 'notification' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-bell"></i> Notifications

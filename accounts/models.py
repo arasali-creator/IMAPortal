@@ -176,27 +176,6 @@ class Employee(AbstractBaseUser, PermissionsMixin):
         return (self.full_name.split(" ")[0] if self.full_name else (self.email or str(self)))
 
 
-class PasswordResetRequest(models.Model):
-    STATUS_CHOICES = [
-        ("pending", "Pending"),
-        ("resolved", "Resolved"),
-    ]
-
-    employee = models.ForeignKey(
-        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="password_reset_requests"
-    )
-    identifier = models.CharField(max_length=255)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default="pending")
-    created_at = models.DateTimeField(auto_now_add=True)
-    resolved_at = models.DateTimeField(null=True, blank=True)
-
-    class Meta:
-        ordering = ["-created_at"]
-
-    def __str__(self):
-        return f"{self.identifier} ({self.status})"
-
-
 class Notification(models.Model):
     log_entry_id = models.PositiveIntegerField(unique=True)
     actor = models.ForeignKey(

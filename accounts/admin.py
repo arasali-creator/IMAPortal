@@ -8,7 +8,7 @@ from django.http import JsonResponse
 from django.utils.html import format_html
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Permission
-from .models import Employee, Team, PasswordResetRequest, Notification
+from .models import Employee, Team, Notification
 from .utils import sync_notifications, notifications_queryset_for_user
 from django.utils import timezone
 from datetime import timedelta
@@ -174,20 +174,6 @@ class TeamAdmin(ModelAdmin):
 
     class Media:
         css = {"all": ("css/admin/accounts.css",)}
-
-@admin.register(PasswordResetRequest)
-class PasswordResetRequestAdmin(ModelAdmin):
-    list_display = ("identifier", "employee", "status", "created_at", "resolved_at")
-    list_filter = ("status", "created_at")
-    search_fields = ("identifier", "employee__full_name", "employee__email", "employee__cnic")
-    readonly_fields = ("created_at", "resolved_at")
-
-    @admin.action(description="Mark selected as resolved")
-    def mark_resolved(self, request, queryset):
-        queryset.update(status="resolved", resolved_at=timezone.now())
-
-    actions = ["mark_resolved"]
-
 
 @admin.register(Notification)
 class NotificationAdmin(ModelAdmin):
