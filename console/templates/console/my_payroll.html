@@ -1,7 +1,159 @@
 {% extends "console/base.html" %}
+{% load humanize %}
 
 {% block page_title %}My Payroll{% endblock %}
 
 {% block content %}
-{% include "payroll/_pm_summary_content.html" %}
+<div class="cn-toolbar">
+  <p class="cn-page-lede" style="margin:0;">Your income and expense details. Current PM share: <strong>{{ split_percent }}%</strong></p>
+  <div class="spacer"></div>
+  <form method="get" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <select name="period" onchange="this.form.submit()">
+      <option value="month" {% if period == "month" %}selected{% endif %}>Monthly</option>
+      <option value="year" {% if period == "year" %}selected{% endif %}>Yearly</option>
+    </select>
+    <select name="year" onchange="this.form.submit()">
+      {% for y in year_options %}<option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>{% endfor %}
+    </select>
+    <select name="month" {% if period == "year" %}disabled{% endif %} onchange="this.form.submit()">
+      {% for m, label in months %}<option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+  </form>
+</div>
+
+<div class="cn-kpi-grid">
+  <div class="cn-kpi-tile c3">
+    <div class="icon"><i class="fa-solid fa-chart-line"></i></div>
+    <div class="label">Total Income</div>
+    <div class="value">PKR {{ total_income_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">${{ total_income_usd|floatformat:2 }}</div>
+  </div>
+  <div class="cn-kpi-tile c2">
+    <div class="icon"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+    <div class="label">Amount Paid</div>
+    <div class="value">PKR {{ cash_online_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">${{ cash_online_usd|floatformat:2 }}</div>
+  </div>
+  <div class="cn-kpi-tile c4">
+    <div class="icon"><i class="fa-solid fa-scale-balanced"></i></div>
+    <div class="label">Jobs &amp; Connects Divided</div>
+    <div class="value">PKR {{ jobs_connects_divided_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">${{ jobs_connects_divided_usd|floatformat:2 }}</div>
+  </div>
+  <div class="cn-kpi-tile c5">
+    <div class="icon"><i class="fa-solid fa-money-check-dollar"></i></div>
+    <div class="label">Salary Paid</div>
+    <div class="value">PKR {{ salary_data.total_paid_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">Paid to team members</div>
+  </div>
+  <div class="cn-kpi-tile c1">
+    <div class="icon"><i class="fa-solid fa-wallet"></i></div>
+    <div class="label">Available Balance</div>
+    <div class="value">PKR {{ available_balance_pkr|floatformat:0|intcomma }}</div>
+    <div class="sub">${{ available_balance_usd|floatformat:2 }}</div>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-arrow-trend-up" style="color:var(--cn-accent);margin-right:8px;"></i>Income Details</h3>
+    <span class="cn-badge neutral">{{ incomes|length }} entr{{ incomes|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>Source</th><th>Description</th><th>Amount USD</th><th>Amount PKR</th><th>PM Share PKR</th><th>Withdrawn By</th></tr></thead>
+      <tbody>
+        {% for income in incomes %}
+          <tr>
+            <td>{{ income.income_date|date:"M d, Y" }}</td>
+            <td>{{ income.get_source_display }}</td>
+            <td>{{ income.description|default:"-" }}</td>
+            <td>${{ income.amount_usd|floatformat:2 }}</td>
+            <td>PKR {{ income.amount_pkr|floatformat:0|intcomma }}</td>
+            <td><strong>PKR {{ income.pm_share_pkr|floatformat:0|intcomma }}</strong></td>
+            <td>{{ income.withdrawn_by.full_name|default:income.withdrawn_by.email|default:"-" }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="7" class="cn-empty">No income records found for this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-arrow-trend-down" style="color:var(--cn-accent);margin-right:8px;"></i>Expense Details</h3>
+    <span class="cn-badge neutral">{{ advances|length }} entr{{ advances|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>Type</th><th>Notes</th><th>Paid By</th><th>Amount PKR</th><th>Amount USD</th></tr></thead>
+      <tbody>
+        {% for adv in advances %}
+          <tr>
+            <td>{{ adv.advance_date|date:"M d, Y" }}</td>
+            <td>{{ adv.get_advance_type_display }}</td>
+            <td>{{ adv.notes|default:"-" }}</td>
+            <td>{{ adv.paid_by.full_name|default:adv.paid_by.email|default:"-" }}</td>
+            <td>PKR {{ adv.amount_pkr|floatformat:0|intcomma }}</td>
+            <td>${{ adv.amount_usd|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="6" class="cn-empty">No expense records found for this period.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:18px;">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-users" style="color:var(--cn-accent);margin-right:8px;"></i>Team Salary Balance</h3>
+    <span class="cn-badge neutral">{{ salary_data.employee_rows|length }} employee{{ salary_data.employee_rows|length|pluralize }}</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Employee</th><th>Salary Income</th><th>Expenses</th><th>Salary Paid</th><th>Remaining Balance</th></tr></thead>
+      <tbody>
+        {% for row in salary_data.employee_rows %}
+          <tr>
+            <td>{{ row.employee.full_name|default:row.employee.email|default:row.employee.cnic }}</td>
+            <td>PKR {{ row.income_pkr|floatformat:0|intcomma }}</td>
+            <td>PKR {{ row.expenses_pkr|floatformat:0|intcomma }}</td>
+            <td>PKR {{ row.paid_pkr|floatformat:0|intcomma }}</td>
+            <td><strong>PKR {{ row.balance_pkr|floatformat:0|intcomma }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="cn-empty">No salary balance records found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-clock-rotate-left" style="color:var(--cn-accent);margin-right:8px;"></i>Salary Payment History</h3>
+    <span class="cn-badge neutral">{{ salary_data.payments|length }} entr{{ salary_data.payments|length|pluralize:"y,ies" }}</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Date</th><th>Employee</th><th>Paid By</th><th>Note</th><th>Amount Paid</th></tr></thead>
+      <tbody>
+        {% for payment in salary_data.payments %}
+          <tr>
+            <td>{{ payment.paid_date|date:"M d, Y" }}</td>
+            <td>{{ payment.employee.full_name|default:payment.employee.email|default:payment.employee.cnic }}</td>
+            <td>{{ payment.paid_by.full_name|default:payment.paid_by.email|default:"-" }}</td>
+            <td>{{ payment.note|default:"-" }}</td>
+            <td><strong>PKR {{ payment.amount_pkr|floatformat:0|intcomma }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="cn-empty">No salary payments found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}
