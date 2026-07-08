@@ -22,7 +22,7 @@ class EmployeeRegistrationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        optional_fields = {"degree_certificate", "blood_group"}
+        optional_fields = {"degree_certificate", "blood_group", "previous_employer", "special_skills"}
         for name, field in self.fields.items():
             field.required = name not in optional_fields
 
@@ -39,7 +39,7 @@ class EmployeeRegistrationForm(forms.ModelForm):
             # Emergency
             'emergency_contact_name', 'emergency_relationship', 'emergency_contact_number', 'emergency_contact_address',
             # Additional
-            'blood_group',
+            'blood_group', 'previous_employer', 'special_skills',
         ]
         widgets = {
             'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
@@ -131,19 +131,22 @@ class CNICLoginForm(forms.Form):
         password = cleaned.get('password')
 
         if cnic and password:
-            user = authenticate(username=cnic, password=password)
+            # Look up the account directly and check the password ourselves first:
+            # authenticate() returns None for is_active=False users regardless of
+            # password, which would otherwise misreport pending accounts as
+            # "Incorrect password" instead of "pending admin approval".
+            candidate = Employee.objects.filter(cnic=cnic).first()
 
-            if user is None:
-                # user exists (checked above) but password is wrong
+            if candidate is None or not candidate.check_password(password):
                 raise forms.ValidationError(self.error_messages['invalid_password'])
 
-            if not user.is_active:
-                cleaned['user_object'] = user
+            if not candidate.is_active:
+                cleaned['user_object'] = candidate
                 cleaned['inactive'] = True
                 return cleaned
 
             # active user
-            cleaned['user_object'] = user
+            cleaned['user_object'] = authenticate(username=cnic, password=password)
             cleaned['inactive'] = False
             return cleaned
 

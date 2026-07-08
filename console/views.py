@@ -201,7 +201,10 @@ def employee_promote(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == "POST":
         employee.role = "pm"
-        employee.save(update_fields=["role"])
+        # PMs need /admin/ access to reach the "My Payroll" page (payroll:my_summary),
+        # which is only linked from the Django admin (Unfold) sidebar.
+        employee.is_staff = True
+        employee.save(update_fields=["role", "is_staff"])
         messages.success(request, f"{employee} promoted to Project Manager.")
     return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
 
@@ -212,7 +215,8 @@ def employee_demote(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == "POST":
         employee.role = "employee"
-        employee.save(update_fields=["role"])
+        employee.is_staff = False
+        employee.save(update_fields=["role", "is_staff"])
         messages.success(request, f"{employee} demoted to Employee.")
     return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
 
