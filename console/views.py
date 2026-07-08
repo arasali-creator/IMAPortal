@@ -173,6 +173,10 @@ def employee_detail(request, pk):
         qs = qs.filter(teams__project_manager=request.user).distinct()
     employee = get_object_or_404(qs, pk=pk)
 
+    # PMs can only view their team members' details, never edit them.
+    if not _is_admin(request):
+        return render(request, "console/employee_detail_readonly.html", {"employee": employee})
+
     if request.method == "POST":
         form = EmployeeEditForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():

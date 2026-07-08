@@ -1,0 +1,105 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}{{ employee.full_name|default:employee.email }}{% endblock %}
+
+{% block content %}
+<div class="cn-profile-header">
+  {% if employee.profile_picture %}
+    <span class="cn-avatar xl"><img src="{{ employee.profile_picture.url }}" alt=""></span>
+  {% else %}
+    <span class="cn-avatar xl">{{ employee.full_name|default:employee.email|slice:":1"|upper }}</span>
+  {% endif %}
+  <div>
+    <h2>{{ employee.full_name|default:employee.email }}</h2>
+    <div class="meta-row">
+      <span class="cnic">{{ employee.cnic }}</span>
+      <span class="cn-badge neutral">{{ employee.get_role_display }}</span>
+      {% if employee.is_active %}<span class="cn-badge success">Active</span>{% else %}<span class="cn-badge warning">Pending</span>{% endif %}
+      <span class="cn-badge neutral" title="Project managers have view-only access"><i class="fa-solid fa-eye"></i> View only</span>
+    </div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-id-card"></i>Login &amp; Account</h3></div>
+  <div class="body">
+    <div class="cn-field"><label>CNIC</label><div>{{ employee.cnic }}</div></div>
+    <div class="cn-field"><label>Email</label><div>{{ employee.email }}</div></div>
+    <div class="cn-field"><label>Role</label><div>{{ employee.get_role_display }}</div></div>
+    <div class="cn-field"><label>Employee Code</label><div>{{ employee.employee_code|default:"-" }}</div></div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-user"></i>Personal Info</h3></div>
+  <div class="body">
+    <div class="cn-field"><label>Full Name</label><div>{{ employee.full_name|default:"-" }}</div></div>
+    <div class="cn-field"><label>Father's Name</label><div>{{ employee.fathers_name|default:"-" }}</div></div>
+    <div class="cn-field"><label>Date of Birth</label><div>{{ employee.date_of_birth|date:"M d, Y"|default:"-" }}</div></div>
+    <div class="cn-field"><label>Gender</label><div>{{ employee.get_gender_display|default:"-" }}</div></div>
+    <div class="cn-field"><label>Marital Status</label><div>{{ employee.get_marital_status_display|default:"-" }}</div></div>
+    <div class="cn-field"><label>Contact Number</label><div>{{ employee.contact_number|default:"-" }}</div></div>
+    <div class="cn-field full"><label>Residential Address</label><div>{{ employee.residential_address|default:"-" }}</div></div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-briefcase"></i>Employment</h3></div>
+  <div class="body">
+    <div class="cn-field"><label>Date of Joining</label><div>{{ employee.date_of_joining|date:"M d, Y"|default:"-" }}</div></div>
+    <div class="cn-field"><label>Reporting Manager</label><div>{{ employee.reporting_manager_name|default:"-" }}</div></div>
+    <div class="cn-field"><label>Department</label><div>{{ employee.get_department_display|default:"-" }}</div></div>
+    <div class="cn-field"><label>Designation</label><div>{{ employee.designation|default:"-" }}</div></div>
+    <div class="cn-field"><label>Employment Type</label><div>{{ employee.get_employment_type_display|default:"-" }}</div></div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-file-image"></i>Documents</h3></div>
+  <div class="body">
+    <div class="cn-field full">
+      <div class="cn-thumb-row">
+        <div class="cn-thumb-field">
+          <label>Profile Picture</label>
+          {% if employee.profile_picture %}<img class="cn-thumb" src="{{ employee.profile_picture.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+        </div>
+        <div class="cn-thumb-field">
+          <label>CNIC Front</label>
+          {% if employee.cnic_front %}<img class="cn-thumb" src="{{ employee.cnic_front.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+        </div>
+        <div class="cn-thumb-field">
+          <label>CNIC Back</label>
+          {% if employee.cnic_back %}<img class="cn-thumb" src="{{ employee.cnic_back.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+        </div>
+        <div class="cn-thumb-field">
+          <label>Father's CNIC</label>
+          {% if employee.father_cnic %}<img class="cn-thumb" src="{{ employee.father_cnic.url }}" alt="">{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+        </div>
+        <div class="cn-thumb-field">
+          <label>Degree Certificate</label>
+          {% if employee.degree_certificate %}<div class="cn-thumb-empty"><a href="{{ employee.degree_certificate.url }}" target="_blank">View file</a></div>{% else %}<div class="cn-thumb-empty">No file</div>{% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-phone"></i>Emergency Contact</h3></div>
+  <div class="body">
+    <div class="cn-field"><label>Contact Name</label><div>{{ employee.emergency_contact_name|default:"-" }}</div></div>
+    <div class="cn-field"><label>Relationship</label><div>{{ employee.get_emergency_relationship_display|default:"-" }}</div></div>
+    <div class="cn-field"><label>Contact Number</label><div>{{ employee.emergency_contact_number|default:"-" }}</div></div>
+    <div class="cn-field full"><label>Address</label><div>{{ employee.emergency_contact_address|default:"-" }}</div></div>
+  </div>
+</div>
+
+<div class="cn-card cn-form-section" style="margin-bottom:24px;">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-circle-info"></i>Additional</h3></div>
+  <div class="body">
+    <div class="cn-field"><label>Blood Group</label><div>{{ employee.blood_group|default:"-" }}</div></div>
+    <div class="cn-field full"><label>Previous Employer</label><div>{{ employee.previous_employer|default:"-" }}</div></div>
+    <div class="cn-field full"><label>Special Skills</label><div>{{ employee.special_skills|default:"-" }}</div></div>
+  </div>
+</div>
+{% endblock %}

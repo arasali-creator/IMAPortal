@@ -1,5 +1,7 @@
 /* Employee portal design system — clean, light, minimalist. Separate identity from the admin console. */
 
+*, *::before, *::after { box-sizing: border-box; }
+
 :root {
   --pf-bg: #f6f7fb;
   --pf-card: #ffffff;

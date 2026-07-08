@@ -10,24 +10,46 @@
   </div>
 {% endif %}
 
-<div class="cn-grid">
+<div class="cn-team-grid">
   {% for team in teams %}
-    <div class="cn-tile">
-      <h3><i class="fa-solid fa-people-group" style="color:var(--cn-accent);margin-right:8px;"></i>{{ team.name }}</h3>
-      <div class="sub">PM: {{ team.project_manager.full_name|default:team.project_manager.email }}</div>
-      <div class="cn-avatar-stack" style="margin:12px 0;">
-        {% for member in team.members.all|slice:":6" %}
-          <span class="cn-avatar" title="{{ member.full_name|default:member.email }}">{{ member.full_name|default:member.email|slice:":1"|upper }}</span>
-        {% endfor %}
-        {% if team.members.count > 6 %}<span class="more">+{{ team.members.count|add:"-6" }}</span>{% endif %}
-        {% if not team.members.count %}<span class="sub" style="margin:0;">No members yet</span>{% endif %}
+    <div class="cn-team-card">
+      <div class="cn-team-head">
+        <div class="cn-team-icon"><i class="fa-solid fa-people-group"></i></div>
+        <div class="cn-team-title">
+          <h3>{{ team.name }}</h3>
+          <span class="cn-badge neutral">{{ team.members.count }} member{{ team.members.count|pluralize }}</span>
+        </div>
       </div>
+
+      <div class="cn-team-pm">
+        <span class="cn-avatar">{{ team.project_manager.full_name|default:team.project_manager.email|slice:":1"|upper }}</span>
+        <div class="who">
+          <div class="name">{{ team.project_manager.full_name|default:team.project_manager.email }}</div>
+          <div class="label">Project Manager</div>
+        </div>
+      </div>
+
+      <div class="cn-team-members">
+        {% for member in team.members.all %}
+          <a class="cn-team-member" href="{% url 'console:employee_detail' member.pk %}">
+            <span class="cn-avatar">{{ member.full_name|default:member.email|slice:":1"|upper }}</span>
+            <div class="who">
+              <div class="name">{{ member.full_name|default:member.email }}</div>
+              <div class="label">{{ member.designation|default:member.email }}</div>
+            </div>
+            <i class="fa-solid fa-chevron-right"></i>
+          </a>
+        {% empty %}
+          <div class="cn-team-empty">No members yet</div>
+        {% endfor %}
+      </div>
+
       {% if request.user.role == "admin" %}
-        <div class="tile-actions">
-          <a class="cn-btn sm" href="{% url 'console:team_edit' team.pk %}">Edit</a>
+        <div class="cn-team-actions">
+          <a class="cn-btn sm" href="{% url 'console:team_edit' team.pk %}"><i class="fa-solid fa-pen"></i> Edit</a>
           <form method="post" action="{% url 'console:team_delete' team.pk %}" onsubmit="return confirm('Delete this team?');">
             {% csrf_token %}
-            <button class="cn-btn sm danger" type="submit">Delete</button>
+            <button class="cn-btn sm danger" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
           </form>
         </div>
       {% endif %}

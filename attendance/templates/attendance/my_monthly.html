@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block page_title %}Monthly Attendance{% endblock %}
+
+{% block content %}
+<div class="pf-card" style="margin-bottom:20px;">
+  <div class="pf-card-pad" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+    <form method="get" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <label style="font-size:.78rem;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--pf-muted);">Month</label>
+      <select name="month" onchange="this.form.submit()" style="padding:9px 12px;border-radius:10px;border:1px solid var(--pf-border);font-weight:700;background:#fff;">
+        {% for m, label in months %}
+          <option value="{{ m }}" {% if m == month %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <select name="year" onchange="this.form.submit()" style="padding:9px 12px;border-radius:10px;border:1px solid var(--pf-border);font-weight:700;background:#fff;">
+        {% for y in year_options %}
+          <option value="{{ y }}" {% if y == year %}selected{% endif %}>{{ y }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    <a class="pf-btn-outline" href="{% url 'attendance:dashboard' %}" style="margin-left:auto;">&larr; Back to Attendance</a>
+  </div>
+</div>
+
+<div class="pf-kpi-grid">
+  <div class="pf-kpi-card green">
+    <div class="icon"><i class="fa-solid fa-check"></i></div>
+    <div class="value">{{ present_days }}</div>
+    <div class="label">Days Present</div>
+  </div>
+  <div class="pf-kpi-card red">
+    <div class="icon"><i class="fa-solid fa-xmark"></i></div>
+    <div class="value">{{ absent_days }}</div>
+    <div class="label">Days Absent</div>
+  </div>
+  <div class="pf-kpi-card amber">
+    <div class="icon"><i class="fa-solid fa-plane-departure"></i></div>
+    <div class="value">{{ leave_days }}</div>
+    <div class="label">Days on Leave</div>
+  </div>
+  <div class="pf-kpi-card purple">
+    <div class="icon"><i class="fa-solid fa-clock"></i></div>
+    <div class="value">{{ total_hours }}</div>
+    <div class="label">Total Hours</div>
+  </div>
+</div>
+
+<div class="pf-card">
+  <div class="pf-card-header"><h3>{{ month_label|date:"F Y" }}</h3></div>
+  <div class="pf-table-wrap">
+    <table class="pf-table">
+      <thead><tr><th>Date</th><th>Day</th><th>Status</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead>
+      <tbody>
+        {% for row in rows %}
+          <tr>
+            <td>{{ row.date|date:"M j" }}</td>
+            <td>{{ row.date|date:"D" }}</td>
+            <td>
+              {% if row.status == "present" %}<span class="pf-badge success">Present</span>
+              {% elif row.status == "absent" %}<span class="pf-badge danger">Absent</span>
+              {% elif row.status == "leave" %}<span class="pf-badge warning">On Leave</span>
+              {% elif row.status == "weekend" %}<span class="pf-badge neutral">Weekend</span>
+              {% else %}<span class="pf-badge neutral" style="opacity:.5;">&mdash;</span>{% endif %}
+            </td>
+            <td>{% if row.check_in %}{{ row.check_in|date:"h:i A" }}{% else %}-{% endif %}</td>
+            <td>{% if row.check_out %}{{ row.check_out|date:"h:i A" }}{% else %}-{% endif %}</td>
+            <td>{% if row.hours != None %}<span class="pf-badge neutral">{{ row.hours }} hrs</span>{% else %}-{% endif %}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

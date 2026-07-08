@@ -32,7 +32,10 @@
 </div>
 
 <div class="pf-card">
-  <div class="pf-card-header"><h3>Today's Records</h3></div>
+  <div class="pf-card-header">
+    <h3>Today's Records</h3>
+    <a class="pf-btn-outline primary" href="{% url 'attendance:my_monthly' %}"><i class="fa-solid fa-calendar-days"></i> Monthly View</a>
+  </div>
   <div class="pf-table-wrap">
     <table class="pf-table">
       <thead><tr><th>Check In</th><th>Check Out</th><th>Hours Worked</th></tr></thead>
