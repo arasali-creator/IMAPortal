@@ -6,17 +6,26 @@
 <form class="cn-toolbar" method="get">
   <input type="text" name="q" value="{{ q }}" placeholder="Search by name, CNIC, or email">
   <button class="cn-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+  {% if request.user.role == "admin" %}
+    <a class="cn-btn primary" href="{% url 'console:employee_create' %}" style="margin-left:auto;"><i class="fa-solid fa-user-plus"></i> Add Employee</a>
+  {% endif %}
 </form>
 
 <div class="cn-card">
   <div class="cn-table-wrap">
     <table class="cn-table">
       <thead>
-        <tr><th>Employee</th><th>CNIC</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr>
+        <tr>
+          {% if request.user.role == "admin" %}<th style="width:32px;"><input type="checkbox" onclick="document.querySelectorAll('.row-check').forEach(c => c.checked = this.checked)"></th>{% endif %}
+          <th>Employee</th><th>CNIC</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th>
+        </tr>
       </thead>
       <tbody>
         {% for employee in employees %}
           <tr>
+            {% if request.user.role == "admin" %}
+              <td><input type="checkbox" class="row-check" name="selected" value="{{ employee.pk }}" form="bulk-delete-form"></td>
+            {% endif %}
             <td>
               <a href="{% url 'console:employee_detail' employee.pk %}" class="cn-person">
                 <span class="cn-avatar">{{ employee.full_name|default:employee.email|slice:":1"|upper }}</span>
@@ -50,15 +59,30 @@
                       <button class="cn-btn sm" type="submit">Demote</button>
                     </form>
                   {% endif %}
+                  {% if employee.pk != request.user.pk %}
+                    <form method="post" action="{% url 'console:employee_delete' employee.pk %}"
+                          onsubmit="return confirm('Delete {{ employee.full_name|default:employee.email|escapejs }}? This cannot be undone.');">
+                      {% csrf_token %}
+                      <button class="cn-btn sm danger" type="submit">Delete</button>
+                    </form>
+                  {% endif %}
                 {% endif %}
               </div>
             </td>
           </tr>
         {% empty %}
-          <tr><td colspan="6" class="cn-empty">No employees found.</td></tr>
+          <tr><td colspan="{% if request.user.role == 'admin' %}7{% else %}6{% endif %}" class="cn-empty">No employees found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
+
+{% if request.user.role == "admin" %}
+  <form method="post" action="{% url 'console:employees_bulk_delete' %}" id="bulk-delete-form" style="margin-top:12px;"
+        onsubmit="return confirm('Delete the selected employees? This cannot be undone.');">
+    {% csrf_token %}
+    <button class="cn-btn danger" type="submit"><i class="fa-solid fa-trash"></i> Delete Selected</button>
+  </form>
+{% endif %}
 {% endblock %}

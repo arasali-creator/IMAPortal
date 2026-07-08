@@ -32,6 +32,8 @@
         <label style="display:flex;align-items:center;gap:8px;font-weight:700;">{{ form.is_active }} Active</label>
         <label style="display:flex;align-items:center;gap:8px;font-weight:700;">{{ form.is_staff }} Staff</label>
       </div>
+      <div class="cn-field"><label>New Password <span style="font-weight:400;color:rgba(15,23,42,.55);">(leave blank to keep current)</span></label>{{ form.new_password1 }}{{ form.new_password1.errors }}</div>
+      <div class="cn-field"><label>Confirm New Password</label>{{ form.new_password2 }}{{ form.new_password2.errors }}</div>
     </div>
   </div>
 
@@ -115,4 +117,12 @@
 
   <button class="cn-btn primary" type="submit" style="margin-bottom:24px;"><i class="fa-solid fa-check"></i> Save Changes</button>
 </form>
+
+{% if request.user.role == "admin" and employee.pk != request.user.pk %}
+  <form method="post" action="{% url 'console:employee_delete' employee.pk %}" style="margin-bottom:24px;"
+        onsubmit="return confirm('Delete {{ employee.full_name|default:employee.email|escapejs }}? This cannot be undone.');">
+    {% csrf_token %}
+    <button class="cn-btn danger" type="submit"><i class="fa-solid fa-trash"></i> Delete Employee</button>
+  </form>
+{% endif %}
 {% endblock %}

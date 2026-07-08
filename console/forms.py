@@ -3,7 +3,48 @@ from django import forms
 from accounts.models import Employee, Team
 
 
+class EmployeeCreateForm(forms.ModelForm):
+    """Console counterpart of Django admin's add-employee form."""
+
+    password1 = forms.CharField(label="Password", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
+    password2 = forms.CharField(label="Confirm Password", widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}))
+
+    class Meta:
+        model = Employee
+        fields = ["cnic", "email", "full_name", "role", "is_active"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["is_active"].initial = True
+
+    def clean(self):
+        cleaned = super().clean()
+        p1, p2 = cleaned.get("password1"), cleaned.get("password2")
+        if p1 and p2 and p1 != p2:
+            self.add_error("password2", "Passwords do not match.")
+        return cleaned
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        if commit:
+            user.save()
+        return user
+
+
 class EmployeeEditForm(forms.ModelForm):
+    new_password1 = forms.CharField(
+        label="New Password",
+        required=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+        help_text="Leave blank to keep the current password.",
+    )
+    new_password2 = forms.CharField(
+        label="Confirm New Password",
+        required=False,
+        widget=forms.PasswordInput(attrs={"autocomplete": "new-password"}),
+    )
+
     class Meta:
         model = Employee
         fields = [
@@ -43,6 +84,22 @@ class EmployeeEditForm(forms.ModelForm):
             "previous_employer": forms.Textarea(attrs={"rows": 2}),
             "special_skills": forms.Textarea(attrs={"rows": 2}),
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        p1, p2 = cleaned.get("new_password1"), cleaned.get("new_password2")
+        if p1 or p2:
+            if p1 != p2:
+                self.add_error("new_password2", "Passwords do not match.")
+        return cleaned
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if self.cleaned_data.get("new_password1"):
+            user.set_password(self.cleaned_data["new_password1"])
+        if commit:
+            user.save()
+        return user
 
 
 class TeamForm(forms.ModelForm):

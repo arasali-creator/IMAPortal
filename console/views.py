@@ -34,7 +34,7 @@ from payroll.models import (
 from payroll.utils import calculate_pm_available_balance, summarize_employee_salary, team_members_for_pm
 from payroll.views import build_pm_payroll_context
 
-from .forms import EmployeeEditForm, TeamForm
+from .forms import EmployeeCreateForm, EmployeeEditForm, TeamForm
 
 STAFF_ROLES = ("admin", "pm")
 
@@ -183,6 +183,50 @@ def employee_detail(request, pk):
         form = EmployeeEditForm(instance=employee)
 
     return render(request, "console/employee_detail.html", {"employee": employee, "form": form})
+
+
+@login_required
+@role_required("admin")
+def employee_create(request):
+    if request.method == "POST":
+        form = EmployeeCreateForm(request.POST)
+        if form.is_valid():
+            employee = form.save()
+            messages.success(request, f"{employee} created.")
+            return redirect("console:employee_detail", pk=employee.pk)
+    else:
+        form = EmployeeCreateForm()
+    return render(request, "console/employee_form.html", {"form": form})
+
+
+@login_required
+@role_required("admin")
+def employee_delete(request, pk):
+    employee = get_object_or_404(Employee, pk=pk)
+    if request.method == "POST":
+        if employee.pk == request.user.pk:
+            messages.error(request, "You cannot delete your own account.")
+        else:
+            name = str(employee)
+            employee.delete()
+            messages.success(request, f"{name} deleted.")
+    return redirect("console:employees_list")
+
+
+@login_required
+@role_required("admin")
+def employees_bulk_delete(request):
+    if request.method == "POST":
+        ids = request.POST.getlist("selected")
+        qs = Employee.objects.filter(pk__in=ids).exclude(pk=request.user.pk)
+        count = qs.count()
+        for employee in qs:
+            employee.delete()
+        if count:
+            messages.success(request, f"Deleted {count} employee(s).")
+        else:
+            messages.error(request, "No employees selected.")
+    return redirect("console:employees_list")
 
 
 @login_required

@@ -1,0 +1,30 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}Add Employee{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-user-plus"></i>New Employee</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>CNIC (13 digits)</label>{{ form.cnic }}{{ form.cnic.errors }}</div>
+      <div class="cn-field"><label>Email</label>{{ form.email }}{{ form.email.errors }}</div>
+      <div class="cn-field"><label>Full Name</label>{{ form.full_name }}{{ form.full_name.errors }}</div>
+      <div class="cn-field"><label>Role</label>{{ form.role }}{{ form.role.errors }}</div>
+      <div class="cn-field"><label>Password</label>{{ form.password1 }}{{ form.password1.errors }}</div>
+      <div class="cn-field"><label>Confirm Password</label>{{ form.password2 }}{{ form.password2.errors }}</div>
+      <div class="cn-field" style="flex-direction:row;align-items:center;gap:16px;">
+        <label style="display:flex;align-items:center;gap:8px;font-weight:700;">{{ form.is_active }} Active (can log in immediately)</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="cn-action-group" style="margin-bottom:24px;">
+    <button class="cn-btn primary" type="submit"><i class="fa-solid fa-check"></i> Create Employee</button>
+    <a class="cn-btn" href="{% url 'console:employees_list' %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}
