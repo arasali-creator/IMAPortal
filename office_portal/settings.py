@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "attendance",
     "leaves",
     "console",
+    "projects",
     "payroll.apps.PayrollConfig",
     "django.contrib.humanize",
         # ✅ Slick Reporting

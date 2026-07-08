@@ -1,6 +1,7 @@
 from django import forms
 
 from accounts.models import Employee, Team
+from projects.models import Project
 
 
 class EmployeeCreateForm(forms.ModelForm):
@@ -109,3 +110,36 @@ class TeamForm(forms.ModelForm):
         widgets = {
             "members": forms.CheckboxSelectMultiple,
         }
+
+
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = [
+            "name",
+            "description",
+            "upwork_profile_url",
+            "upwork_profile_name",
+            "hourly_rate_usd",
+            "client_joined_date",
+            "entries_required",
+            "status",
+            "members",
+        ]
+        widgets = {
+            "description": forms.Textarea(attrs={"rows": 3}),
+            "client_joined_date": forms.DateInput(attrs={"type": "date"}),
+            "members": forms.CheckboxSelectMultiple,
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # PMs can only assign their own team members; admins can assign anyone.
+        if user is not None and getattr(user, "role", None) == "pm":
+            self.fields["members"].queryset = (
+                Employee.objects.filter(role="employee", teams__project_manager=user)
+                .distinct()
+                .order_by("full_name", "email")
+            )
+        else:
+            self.fields["members"].queryset = Employee.objects.filter(role="employee").order_by("full_name", "email")

@@ -1,0 +1,42 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<form method="post">
+  {% csrf_token %}
+  {{ form.non_field_errors }}
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-diagram-project"></i>Project Details</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Project Name</label>{{ form.name }}{{ form.name.errors }}</div>
+      <div class="cn-field"><label>Status</label>{{ form.status }}{{ form.status.errors }}</div>
+      <div class="cn-field full"><label>Description</label>{{ form.description }}{{ form.description.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-handshake"></i>Client &amp; Upwork</h3></div>
+    <div class="body">
+      <div class="cn-field"><label>Upwork Profile URL</label>{{ form.upwork_profile_url }}{{ form.upwork_profile_url.errors }}</div>
+      <div class="cn-field"><label>Profile Name</label>{{ form.upwork_profile_name }}{{ form.upwork_profile_name.errors }}</div>
+      <div class="cn-field"><label>Hourly Rate from Client (USD)</label>{{ form.hourly_rate_usd }}{{ form.hourly_rate_usd.errors }}</div>
+      <div class="cn-field"><label>Date of Joining the Client</label>{{ form.client_joined_date }}{{ form.client_joined_date.errors }}</div>
+      <div class="cn-field"><label>Number of Entries to Do</label>{{ form.entries_required }}{{ form.entries_required.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-card cn-form-section">
+    <div class="cn-card-header"><h3><i class="fa-solid fa-users"></i>Assign Team Members</h3></div>
+    <div class="body">
+      <div class="cn-field full cn-checklist">{{ form.members }}{{ form.members.errors }}</div>
+    </div>
+  </div>
+
+  <div class="cn-action-group" style="margin-bottom:24px;">
+    <button class="cn-btn primary" type="submit"><i class="fa-solid fa-check"></i> Save Project</button>
+    <a class="cn-btn" href="{% if project %}{% url 'console:project_detail' project.pk %}{% else %}{% url 'console:projects_list' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+{% endblock %}

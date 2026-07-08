@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block page_title %}My Projects{% endblock %}
+
+{% block content %}
+{% if not projects %}
+  <div class="pf-card"><div class="pf-card-pad pf-empty" style="text-align:center;">No projects assigned to you yet.</div></div>
+{% endif %}
+
+<div class="pf-project-grid">
+  {% for row in projects %}
+    {% with project=row.obj %}
+    <div class="pf-card pf-project-card {% if row.running %}working{% endif %}">
+      <div class="pf-card-pad">
+        <div class="pf-project-head">
+          <h3>{{ project.name }}</h3>
+          {% if row.running %}<span class="pf-badge success"><i class="fa-solid fa-circle-play"></i> Working</span>{% endif %}
+        </div>
+        {% if project.description %}<p class="pf-project-desc">{{ project.description|linebreaksbr }}</p>{% endif %}
+
+        <div class="pf-project-stats">
+          <div class="stat">
+            <div class="label">Entries To Do</div>
+            <div class="value">{{ project.entries_required }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">My Total Time</div>
+            <div class="value">{{ row.my_total }}</div>
+          </div>
+          <div class="stat">
+            <div class="label">Sessions</div>
+            <div class="value">{{ row.sessions }}</div>
+          </div>
+        </div>
+
+        {% if row.running %}
+          <div class="pf-timer" data-started="{{ row.running_started_iso }}">
+            <div class="label">Current Session</div>
+            <div class="clock">--:--:--</div>
+          </div>
+          <form method="post" action="{% url 'projects:timer_stop' project.pk %}">
+            {% csrf_token %}
+            <button class="pf-btn secondary" type="submit" style="margin-top:12px;"><i class="fa-solid fa-stop"></i> Stop Timer</button>
+          </form>
+        {% else %}
+          <form method="post" action="{% url 'projects:timer_start' project.pk %}">
+            {% csrf_token %}
+            <button class="pf-btn" type="submit" style="margin-top:12px;"><i class="fa-solid fa-play"></i> Start Timer</button>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+    {% endwith %}
+  {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  function pfTickTimers() {
+    document.querySelectorAll(".pf-timer[data-started]").forEach(function (el) {
+      const started = new Date(el.dataset.started);
+      let secs = Math.max(0, Math.floor((Date.now() - started.getTime()) / 1000));
+      const h = String(Math.floor(secs / 3600)).padStart(2, "0");
+      const m = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+      const s = String(secs % 60).padStart(2, "0");
+      el.querySelector(".clock").textContent = h + ":" + m + ":" + s;
+    });
+  }
+  pfTickTimers();
+  setInterval(pfTickTimers, 1000);
+</script>
+{% endblock %}

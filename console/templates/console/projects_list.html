@@ -1,0 +1,56 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}Projects{% endblock %}
+
+{% block content %}
+<form class="cn-toolbar" method="get">
+  <input type="text" name="q" value="{{ q }}" placeholder="Search by project or profile name">
+  <button class="cn-btn" type="submit"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+  <a class="cn-btn primary" href="{% url 'console:project_create' %}" style="margin-left:auto;"><i class="fa-solid fa-plus"></i> New Project</a>
+</form>
+
+<div class="cn-team-grid">
+  {% for row in projects %}
+    {% with project=row.obj %}
+    <div class="cn-team-card">
+      <div class="cn-team-head">
+        <div class="cn-team-icon"><i class="fa-solid fa-diagram-project"></i></div>
+        <div class="cn-team-title">
+          <h3>{{ project.name }}</h3>
+          {% if project.status == "active" %}<span class="cn-badge success">Active</span>
+          {% elif project.status == "completed" %}<span class="cn-badge neutral">Completed</span>
+          {% else %}<span class="cn-badge warning">On Hold</span>{% endif %}
+        </div>
+      </div>
+
+      <div class="cn-project-meta">
+        <div><span class="k">PM</span><span class="v">{{ project.project_manager.full_name|default:project.project_manager.email }}</span></div>
+        {% if project.upwork_profile_name %}<div><span class="k">Profile</span><span class="v">{{ project.upwork_profile_name }}</span></div>{% endif %}
+        {% if project.hourly_rate_usd %}<div><span class="k">Rate</span><span class="v">${{ project.hourly_rate_usd }}/hr</span></div>{% endif %}
+        <div><span class="k">Entries</span><span class="v">{{ project.entries_required }}</span></div>
+        <div><span class="k">Time Logged</span><span class="v">{{ row.total_time }}</span></div>
+      </div>
+
+      <div class="cn-avatar-stack">
+        {% for member in project.members.all|slice:":6" %}
+          <span class="cn-avatar" title="{{ member.full_name|default:member.email }}">{{ member.full_name|default:member.email|slice:":1"|upper }}</span>
+        {% endfor %}
+        {% if project.members.count > 6 %}<span class="more">+{{ project.members.count|add:"-6" }}</span>{% endif %}
+        {% if not project.members.count %}<span class="cn-team-empty" style="padding:0;">No members assigned</span>{% endif %}
+      </div>
+
+      <div class="cn-team-actions">
+        <a class="cn-btn sm primary" href="{% url 'console:project_detail' project.pk %}"><i class="fa-solid fa-eye"></i> View</a>
+        <a class="cn-btn sm" href="{% url 'console:project_edit' project.pk %}"><i class="fa-solid fa-pen"></i> Edit</a>
+        <form method="post" action="{% url 'console:project_delete' project.pk %}" onsubmit="return confirm('Delete this project and all its time logs?');">
+          {% csrf_token %}
+          <button class="cn-btn sm danger" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
+        </form>
+      </div>
+    </div>
+    {% endwith %}
+  {% empty %}
+    <div class="cn-card cn-empty">No projects yet. Click “New Project” to add one.</div>
+  {% endfor %}
+</div>
+{% endblock %}

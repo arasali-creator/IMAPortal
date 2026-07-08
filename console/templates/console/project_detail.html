@@ -1,0 +1,86 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}{{ project.name }}{% endblock %}
+
+{% block content %}
+<div class="cn-toolbar">
+  <a class="cn-btn" href="{% url 'console:projects_list' %}"><i class="fa-solid fa-arrow-left"></i> All Projects</a>
+  <div class="spacer"></div>
+  <a class="cn-btn" href="{% url 'console:project_edit' project.pk %}"><i class="fa-solid fa-pen"></i> Edit</a>
+  <form method="post" action="{% url 'console:project_delete' project.pk %}" onsubmit="return confirm('Delete this project and all its time logs?');">
+    {% csrf_token %}
+    <button class="cn-btn danger" type="submit"><i class="fa-solid fa-trash"></i> Delete</button>
+  </form>
+</div>
+
+<div class="cn-card cn-form-section">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-diagram-project"></i>{{ project.name }}</h3>
+    {% if project.status == "active" %}<span class="cn-badge success">Active</span>
+    {% elif project.status == "completed" %}<span class="cn-badge neutral">Completed</span>
+    {% else %}<span class="cn-badge warning">On Hold</span>{% endif %}
+  </div>
+  <div class="body">
+    <div class="cn-field"><label>Project Manager</label><div>{{ project.project_manager.full_name|default:project.project_manager.email }}</div></div>
+    <div class="cn-field"><label>Upwork Profile</label>
+      <div>
+        {% if project.upwork_profile_url %}
+          <a href="{{ project.upwork_profile_url }}" target="_blank" rel="noopener">{{ project.upwork_profile_name|default:project.upwork_profile_url }}</a>
+        {% else %}{{ project.upwork_profile_name|default:"-" }}{% endif %}
+      </div>
+    </div>
+    <div class="cn-field"><label>Hourly Rate (Client)</label><div>{% if project.hourly_rate_usd %}${{ project.hourly_rate_usd }}/hr{% else %}-{% endif %}</div></div>
+    <div class="cn-field"><label>Client Joined</label><div>{{ project.client_joined_date|date:"M d, Y"|default:"-" }}</div></div>
+    <div class="cn-field"><label>Entries Required</label><div>{{ project.entries_required }}</div></div>
+    <div class="cn-field"><label>Total Time Logged</label><div><strong>{{ total_time }}</strong></div></div>
+    <div class="cn-field full"><label>Description</label><div>{{ project.description|default:"-"|linebreaksbr }}</div></div>
+  </div>
+</div>
+
+<div class="cn-card" style="margin-bottom:20px;">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-users"></i>Team Members &amp; Time</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Member</th><th>Status</th><th>Sessions</th><th>Total Time</th></tr></thead>
+      <tbody>
+        {% for row in member_rows %}
+          <tr>
+            <td>
+              <a href="{% url 'console:employee_detail' row.member.pk %}" class="cn-person">
+                <span class="cn-avatar">{{ row.member.full_name|default:row.member.email|slice:":1"|upper }}</span>
+                {{ row.member.full_name|default:row.member.email }}
+              </a>
+            </td>
+            <td>{% if row.running %}<span class="cn-badge success"><i class="fa-solid fa-circle-play"></i> Working now</span>{% else %}<span class="cn-badge neutral">Idle</span>{% endif %}</td>
+            <td>{{ row.sessions }}</td>
+            <td><strong>{{ row.total_time }}</strong></td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="cn-empty">No members assigned yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header"><h3><i class="fa-solid fa-clock-rotate-left"></i>Recent Work Sessions</h3></div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Member</th><th>Started</th><th>Ended</th><th>Duration</th></tr></thead>
+      <tbody>
+        {% for row in recent_logs %}
+          <tr>
+            <td>{{ row.log.employee.full_name|default:row.log.employee.email }}</td>
+            <td>{{ row.log.started_at|date:"M d, Y h:i A" }}</td>
+            <td>{% if row.log.ended_at %}{{ row.log.ended_at|date:"M d, Y h:i A" }}{% else %}<span class="cn-badge success">Running</span>{% endif %}</td>
+            <td>{{ row.duration }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="cn-empty">No work sessions yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

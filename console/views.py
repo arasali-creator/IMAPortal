@@ -34,7 +34,9 @@ from payroll.models import (
 from payroll.utils import calculate_pm_available_balance, summarize_employee_salary, team_members_for_pm
 from payroll.views import build_pm_payroll_context
 
-from .forms import EmployeeCreateForm, EmployeeEditForm, TeamForm
+from projects.models import Project, ProjectTimeLog
+
+from .forms import EmployeeCreateForm, EmployeeEditForm, ProjectForm, TeamForm
 
 STAFF_ROLES = ("admin", "pm")
 
@@ -937,6 +939,115 @@ def pm_calculations_view(request):
         "months": _month_options(),
     }
     return render(request, "console/pm_calculations.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Projects (admin sees all, pm sees own)
+# ---------------------------------------------------------------------------
+
+def _format_seconds(total):
+    hours, rem = divmod(int(total), 3600)
+    minutes = rem // 60
+    return f"{hours}h {minutes:02d}m"
+
+
+def _project_qs(request):
+    qs = Project.objects.select_related("project_manager").prefetch_related("members")
+    if not _is_admin(request):
+        qs = qs.filter(project_manager=request.user)
+    return qs
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def projects_list(request):
+    qs = _project_qs(request)
+    q = request.GET.get("q", "").strip()
+    if q:
+        qs = qs.filter(name__icontains=q) | qs.filter(upwork_profile_name__icontains=q)
+
+    projects = []
+    for project in qs:
+        projects.append({
+            "obj": project,
+            "total_time": _format_seconds(project.total_seconds_logged()),
+        })
+    return render(request, "console/projects_list.html", {"projects": projects, "q": q})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def project_create(request):
+    if request.method == "POST":
+        form = ProjectForm(request.POST, user=request.user)
+        if form.is_valid():
+            project = form.save(commit=False)
+            project.project_manager = request.user
+            project.save()
+            form.save_m2m()
+            messages.success(request, f"Project “{project.name}” created.")
+            return redirect("console:project_detail", pk=project.pk)
+    else:
+        form = ProjectForm(user=request.user)
+    return render(request, "console/project_form.html", {"form": form, "title": "New Project"})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def project_edit(request, pk):
+    project = get_object_or_404(_project_qs(request), pk=pk)
+    if request.method == "POST":
+        form = ProjectForm(request.POST, instance=project, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Project updated.")
+            return redirect("console:project_detail", pk=project.pk)
+    else:
+        form = ProjectForm(instance=project, user=request.user)
+    return render(request, "console/project_form.html", {"form": form, "title": f"Edit: {project.name}", "project": project})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def project_delete(request, pk):
+    project = get_object_or_404(_project_qs(request), pk=pk)
+    if request.method == "POST":
+        name = project.name
+        project.delete()
+        messages.success(request, f"Project “{name}” deleted.")
+    return redirect("console:projects_list")
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def project_detail(request, pk):
+    project = get_object_or_404(_project_qs(request), pk=pk)
+
+    member_rows = []
+    for member in project.members.all():
+        logs = project.time_logs.filter(employee=member)
+        seconds = sum(log.duration_seconds() for log in logs)
+        running = any(log.is_running for log in logs)
+        member_rows.append({
+            "member": member,
+            "total_time": _format_seconds(seconds),
+            "sessions": logs.count(),
+            "running": running,
+        })
+
+    recent_logs = []
+    for log in project.time_logs.select_related("employee")[:25]:
+        recent_logs.append({
+            "log": log,
+            "duration": _format_seconds(log.duration_seconds()),
+        })
+
+    return render(request, "console/project_detail.html", {
+        "project": project,
+        "member_rows": member_rows,
+        "recent_logs": recent_logs,
+        "total_time": _format_seconds(project.total_seconds_logged()),
+    })
 
 
 # ---------------------------------------------------------------------------

@@ -237,3 +237,22 @@ table.pf-table tbody tr:hover { background: rgba(15, 23, 42, 0.02); }
 #pf-lightbox.open { display: flex; }
 #pf-lightbox img, #pf-lightbox iframe { max-width: 90%; max-height: 90%; border-radius: 12px; background: #fff; }
 #pf-lightbox .close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 2.2rem; cursor: pointer; }
+
+/* ---------------------------------------------------------------- My Projects (timer) */
+
+.pf-project-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.pf-project-card { display: flex; flex-direction: column; }
+.pf-project-card.working { border: 1px solid rgba(22, 163, 74, 0.35); box-shadow: 0 12px 28px rgba(22, 163, 74, 0.12); }
+.pf-project-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.pf-project-head h3 { margin: 0; font-size: 1.05rem; font-weight: 800; }
+.pf-project-desc { color: var(--pf-muted); font-size: 0.88rem; margin: 8px 0 0; }
+.pf-project-stats { display: flex; gap: 10px; margin-top: 14px; }
+.pf-project-stats .stat { flex: 1; background: var(--pf-bg); border-radius: var(--pf-radius-sm); padding: 10px 12px; }
+.pf-project-stats .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pf-muted); font-weight: 700; }
+.pf-project-stats .value { font-size: 1.02rem; font-weight: 800; margin-top: 3px; }
+.pf-timer {
+  margin-top: 14px; padding: 14px 16px; border-radius: var(--pf-radius-sm); text-align: center;
+  background: linear-gradient(160deg, #1b1e27 0%, #0f1117 100%); color: #fff;
+}
+.pf-timer .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.5); font-weight: 700; }
+.pf-timer .clock { font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 2px; }

@@ -31,6 +31,11 @@
           <a href="{% url 'my_leave_requests' %}" class="{% if request.path == '/leaves/my-leaves/' %}active{% endif %}">
             <i class="fa-solid fa-plane-departure"></i> Leave
           </a>
+          {% if request.user.is_authenticated and request.user.role == 'employee' %}
+          <a href="{% url 'projects:my_projects' %}" class="{% if request.path == '/projects/my/' %}active{% endif %}">
+            <i class="fa-solid fa-diagram-project"></i> My Projects
+          </a>
+          {% endif %}
 
           {% block sidebar_extra %}{% endblock %}
 
