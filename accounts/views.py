@@ -12,14 +12,20 @@ from django.views.decorators.http import require_GET, require_http_methods
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
 from .forms import EmployeeRegistrationForm, CNICLoginForm
-from .models import Employee
+from .models import Employee, UserNotification
+from .notify import notify_admins
 
 @require_http_methods(["GET", "POST"])
 def register(request):
     if request.method == 'POST':
         form = EmployeeRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
-            form.save()
+            employee = form.save()
+            notify_admins(
+                "New employee registration",
+                f"{employee.full_name or employee.email} (CNIC {employee.cnic}) has registered and is awaiting approval.",
+                url=f"/console/employees/{employee.pk}/",
+            )
             return render(request, 'accounts/registration_submitted.html')
     else:
         form = EmployeeRegistrationForm()
@@ -121,3 +127,24 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'Logged out successfully.')
     return redirect('login')
+
+
+@login_required
+def my_notifications(request):
+    qs = request.user.user_notifications.all()[:100]
+    notifications = list(qs)
+    request.user.user_notifications.filter(is_read=False).update(is_read=True)
+    return render(request, "accounts/my_notifications.html", {"notifications": notifications})
+
+
+@require_GET
+@login_required
+def my_notifications_unread(request):
+    count = request.user.user_notifications.filter(is_read=False).count()
+    latest = request.user.user_notifications.filter(is_read=False).first()
+    return JsonResponse({
+        "count": count,
+        "latest_id": latest.pk if latest else 0,
+        "latest_title": latest.title if latest else "",
+        "latest_body": (latest.body[:120] if latest else ""),
+    })

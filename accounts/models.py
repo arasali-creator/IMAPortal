@@ -176,6 +176,30 @@ class Employee(AbstractBaseUser, PermissionsMixin):
         return (self.full_name.split(" ")[0] if self.full_name else (self.email or str(self)))
 
 
+class UserNotification(models.Model):
+    """Per-user notifications (approval, salary, leave, project assignment...).
+
+    Separate from `Notification`, which mirrors admin LogEntry rows for the
+    console feed. These are shown in the portal and pushed as desktop
+    notifications; most are also emailed.
+    """
+
+    recipient = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user_notifications"
+    )
+    title = models.CharField(max_length=200)
+    body = models.TextField(blank=True)
+    url = models.CharField(max_length=255, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.title} → {self.recipient}"
+
+
 class Notification(models.Model):
     log_entry_id = models.PositiveIntegerField(unique=True)
     actor = models.ForeignKey(

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block page_title %}Notifications{% endblock %}
+
+{% block content %}
+<div class="pf-card">
+  <div class="pf-card-header">
+    <h3>My Notifications</h3>
+    <span class="pf-badge neutral">{{ notifications|length }} shown</span>
+  </div>
+  <div>
+    {% for n in notifications %}
+      <div style="display:flex;gap:14px;align-items:flex-start;padding:16px 20px;border-bottom:1px solid var(--pf-border);{% if not n.is_read %}background:rgba(255,102,0,.04);{% endif %}">
+        <span class="pf-avatar" style="margin:0;flex-shrink:0;"><i class="fa-solid fa-bell" style="font-size:.8rem;"></i></span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:800;font-size:.92rem;">
+            {% if n.url %}<a href="{{ n.url }}" style="color:inherit;text-decoration:none;">{{ n.title }}</a>{% else %}{{ n.title }}{% endif %}
+          </div>
+          {% if n.body %}<div style="color:var(--pf-muted);font-size:.86rem;margin-top:3px;">{{ n.body }}</div>{% endif %}
+          <div style="color:var(--pf-muted);font-size:.74rem;margin-top:5px;">{{ n.created_at|date:"M d, Y h:i A" }}</div>
+        </div>
+        {% if not n.is_read %}<span class="pf-badge warning" style="flex-shrink:0;">New</span>{% endif %}
+      </div>
+    {% empty %}
+      <div class="pf-empty">No notifications yet.</div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

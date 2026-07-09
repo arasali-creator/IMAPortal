@@ -15,6 +15,7 @@ from django.utils import timezone
 
 from accounts.decorators import role_required
 from accounts.models import Employee, Notification, Team
+from accounts.notify import notify
 from accounts.utils import notifications_queryset_for_user, sync_notifications
 from attendance.models import Attendance
 from leaves.models import LeaveRequest
@@ -180,9 +181,17 @@ def employee_detail(request, pk):
         return render(request, "console/employee_detail_readonly.html", {"employee": employee})
 
     if request.method == "POST":
+        was_active = employee.is_active
         form = EmployeeEditForm(request.POST, request.FILES, instance=employee)
         if form.is_valid():
             form.save()
+            if not was_active and employee.is_active:
+                notify(
+                    employee,
+                    "Your account has been approved",
+                    "Your IMA Office Portal account has been approved. You can now log in with your CNIC and password.",
+                    url="/",
+                )
             messages.success(request, "Employee updated.")
             return redirect("console:employee_detail", pk=employee.pk)
     else:
@@ -240,8 +249,16 @@ def employees_bulk_delete(request):
 def employee_approve(request, pk):
     employee = get_object_or_404(Employee, pk=pk)
     if request.method == "POST":
+        was_active = employee.is_active
         employee.is_active = True
         employee.save(update_fields=["is_active"])
+        if not was_active:
+            notify(
+                employee,
+                "Your account has been approved",
+                "Your IMA Office Portal account has been approved. You can now log in with your CNIC and password.",
+                url="/",
+            )
         messages.success(request, f"{employee} approved.")
     return redirect(request.META.get("HTTP_REFERER") or "console:employees_list")
 
@@ -657,6 +674,12 @@ def leave_approve(request, pk):
     leave = get_object_or_404(LeaveRequest.objects.select_related("employee"), pk=pk)
     if request.method == "POST":
         if apply_leave_decision(request, leave, "Approved"):
+            notify(
+                leave.employee,
+                "Leave request approved",
+                f"Your leave request ({leave.start_date:%b %d} to {leave.end_date:%b %d}) has been approved.",
+                url="/leaves/my-leaves/",
+            )
             messages.success(request, "Leave approved.")
         else:
             messages.error(request, "You are not allowed to approve.")
@@ -669,6 +692,12 @@ def leave_reject(request, pk):
     leave = get_object_or_404(LeaveRequest.objects.select_related("employee"), pk=pk)
     if request.method == "POST":
         if apply_leave_decision(request, leave, "Rejected"):
+            notify(
+                leave.employee,
+                "Leave request rejected",
+                f"Your leave request ({leave.start_date:%b %d} to {leave.end_date:%b %d}) has been rejected.",
+                url="/leaves/my-leaves/",
+            )
             messages.success(request, "Leave rejected.")
         else:
             messages.error(request, "You are not allowed to reject.")
@@ -966,6 +995,13 @@ def project_create(request):
             project.project_manager = request.user
             project.save()
             form.save_m2m()
+            for member in project.members.all():
+                notify(
+                    member,
+                    "New project assigned to you",
+                    f"You have been assigned to the project “{project.name}”. Entries to do: {project.entries_required}.",
+                    url="/projects/my/",
+                )
             messages.success(request, f"Project “{project.name}” created.")
             return redirect("console:project_detail", pk=project.pk)
     else:
@@ -978,9 +1014,17 @@ def project_create(request):
 def project_edit(request, pk):
     project = get_object_or_404(_project_qs(request), pk=pk)
     if request.method == "POST":
+        previous_member_ids = set(project.members.values_list("id", flat=True))
         form = ProjectForm(request.POST, instance=project, user=request.user)
         if form.is_valid():
             form.save()
+            for member in project.members.exclude(id__in=previous_member_ids):
+                notify(
+                    member,
+                    "New project assigned to you",
+                    f"You have been assigned to the project “{project.name}”. Entries to do: {project.entries_required}.",
+                    url="/projects/my/",
+                )
             messages.success(request, "Project updated.")
             return redirect("console:project_detail", pk=project.pk)
     else:
@@ -1155,6 +1199,12 @@ def employee_salary_view(request):
             try:
                 expense.full_clean()
                 expense.save()
+                notify(
+                    expense.employee,
+                    "New expense recorded",
+                    f"An expense of PKR {expense.amount_pkr} ({expense.get_expense_type_display()}) was recorded against your salary on {expense.paid_date}.",
+                    url="/payroll/salary-summary/",
+                )
                 messages.success(request, "Expense entry added.")
             except Exception as exc:
                 messages.error(request, f"Could not save expense entry: {exc}")
@@ -1203,6 +1253,12 @@ def employee_salary_view(request):
             try:
                 payment.full_clean()
                 payment.save()
+                notify(
+                    payment.employee,
+                    "Salary payment received",
+                    f"A salary payment of PKR {payment.amount_pkr} was made to you on {payment.paid_date}.",
+                    url="/payroll/salary-summary/",
+                )
                 messages.success(request, "Salary payment added.")
             except Exception as exc:
                 messages.error(request, f"Could not save salary payment: {exc}")

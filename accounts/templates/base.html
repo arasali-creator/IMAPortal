@@ -50,6 +50,10 @@
             <i class="fa-solid fa-money-check-dollar"></i> Salary &amp; Payslips
           </a>
           {% endif %}
+          <a href="{% url 'my_notifications' %}" class="{% if request.path == '/notifications/' %}active{% endif %}">
+            <i class="fa-solid fa-bell"></i> Notifications
+            <span id="pf-notif-badge" style="display:none;margin-left:auto;background:#ff6600;color:#fff;border-radius:999px;padding:1px 8px;font-size:.7rem;font-weight:800;"></span>
+          </a>
           <a href="{% url 'profile' %}" class="{% if request.path == '/profile/' %}active{% endif %}">
             <i class="fa-solid fa-user"></i> My Profile
           </a>
@@ -101,6 +105,41 @@
         document.getElementById("portal-backdrop").classList.toggle("open");
       }
     </script>
+    {% if request.user.is_authenticated %}
+    <script>
+      (function () {
+        let lastNotifiedId = parseInt(localStorage.getItem("pfLastNotifId") || "0", 10);
+        if ("Notification" in window && Notification.permission === "default") {
+          Notification.requestPermission();
+        }
+        function poll() {
+          fetch("{% url 'my_notifications_unread' %}", { credentials: "same-origin" })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (!data) return;
+              const badge = document.getElementById("pf-notif-badge");
+              if (badge) {
+                badge.style.display = data.count > 0 ? "inline-block" : "none";
+                badge.textContent = data.count;
+              }
+              if (data.latest_id > lastNotifiedId && data.count > 0 &&
+                  "Notification" in window && Notification.permission === "granted") {
+                const n = new Notification(data.latest_title || "New notification", {
+                  body: data.latest_body || "",
+                  icon: "{% static 'images/logo.png' %}",
+                });
+                n.onclick = function () { window.focus(); window.location = "{% url 'my_notifications' %}"; };
+                lastNotifiedId = data.latest_id;
+                localStorage.setItem("pfLastNotifId", String(lastNotifiedId));
+              }
+            })
+            .catch(function () {});
+        }
+        poll();
+        setInterval(poll, 30000);
+      })();
+    </script>
+    {% endif %}
     {% block extra_scripts %}{% endblock %}
   </body>
 </html>

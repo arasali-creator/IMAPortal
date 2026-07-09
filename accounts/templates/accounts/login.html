@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Login | IMA</title>
   <link rel="stylesheet" href="{% static 'css/styles.css' %}">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
  <style>
 
 /* Reset */
@@ -271,7 +272,13 @@ input:focus {
         <!-- Password -->
         <div class="input-group">
           <label for="id_password">Password</label>
-          {{ form.password }}
+          <div style="position:relative;">
+            {{ form.password }}
+            <button type="button" id="toggle-password" aria-label="Show password"
+                    style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:#888;font-size:15px;padding:4px;">
+              <i class="fa-solid fa-eye" id="toggle-password-icon"></i>
+            </button>
+          </div>
           {% for error in form.password.errors %}
       <div style="color:red;">{{ error }}</div>
     {% endfor %}
@@ -296,5 +303,21 @@ input:focus {
       <img src="{% static 'images/side.png' %}" alt="Login Illustration">
     </div>
   </div>
+<script>
+  (function () {
+    const btn = document.getElementById("toggle-password");
+    const icon = document.getElementById("toggle-password-icon");
+    const input = document.getElementById("id_password") || document.querySelector('input[type="password"]');
+    if (btn && input) {
+      btn.addEventListener("click", function () {
+        const show = input.type === "password";
+        input.type = show ? "text" : "password";
+        icon.classList.toggle("fa-eye", !show);
+        icon.classList.toggle("fa-eye-slash", show);
+        btn.setAttribute("aria-label", show ? "Hide password" : "Show password");
+      });
+    }
+  })();
+</script>
 </body>
 </html>

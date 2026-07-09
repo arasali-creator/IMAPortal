@@ -1,7 +1,7 @@
 from django.contrib.auth import views as auth_views
 from django.urls import path
 
-from .views import register, login_view, logout_view, dashboard, profile_view, pending_view, approval_status
+from .views import register, login_view, logout_view, dashboard, profile_view, pending_view, approval_status, my_notifications, my_notifications_unread
 
 urlpatterns = [
     path('', login_view, name='login'),
@@ -22,6 +22,8 @@ urlpatterns = [
     path('password-reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(
         template_name='accounts/password_reset_confirm.html',
     ), name='password_reset_confirm'),
+    path('notifications/', my_notifications, name='my_notifications'),
+    path('notifications/unread/', my_notifications_unread, name='my_notifications_unread'),
     path('dashboard/', dashboard, name='dashboard'),
     path('profile/', profile_view, name='profile'),
     path('logout/', logout_view, name='logout'),

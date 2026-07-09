@@ -116,6 +116,33 @@
       document.getElementById("console-backdrop").classList.toggle("open");
     }
   </script>
+  <script>
+    (function () {
+      let lastNotifiedId = parseInt(localStorage.getItem("pfLastNotifId") || "0", 10);
+      if ("Notification" in window && Notification.permission === "default") {
+        Notification.requestPermission();
+      }
+      function poll() {
+        fetch("{% url 'my_notifications_unread' %}", { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : null; })
+          .then(function (data) {
+            if (!data) return;
+            if (data.latest_id > lastNotifiedId && data.count > 0 &&
+                "Notification" in window && Notification.permission === "granted") {
+              const n = new Notification(data.latest_title || "New notification", {
+                body: data.latest_body || "",
+              });
+              n.onclick = function () { window.focus(); window.location = "{% url 'my_notifications' %}"; };
+              lastNotifiedId = data.latest_id;
+              localStorage.setItem("pfLastNotifId", String(lastNotifiedId));
+            }
+          })
+          .catch(function () {});
+      }
+      poll();
+      setInterval(poll, 30000);
+    })();
+  </script>
   {% block extra_scripts %}{% endblock %}
 </body>
 </html>
