@@ -139,14 +139,15 @@ LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "dashboard"
 LOGOUT_REDIRECT_URL = "login"
 
-# Email (Zoho SMTP) — set EMAIL_HOST_PASSWORD etc. via environment/.env, never hardcode here
+# Email (Hostinger SMTP) — set EMAIL_HOST_USER/EMAIL_HOST_PASSWORD via .env, never hardcode here
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
 if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
     EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.zoho.com")
-    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
-    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "True") == "True"
+    EMAIL_HOST = os.environ.get("EMAIL_HOST", "smtp.hostinger.com")
+    EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "465"))
+    EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL", "True") == "True"
+    EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "False") == "True"
     DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", EMAIL_HOST_USER)
 else:
     EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
