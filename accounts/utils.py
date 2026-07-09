@@ -12,6 +12,27 @@ from leaves.models import LeaveRequest
 from .models import Employee, Team, Notification
 
 
+def _console_url_for(content_type, object_id):
+    """Console page for a changed object — the portal never links into /admin/."""
+    if not content_type or not object_id:
+        return ""
+    key = (content_type.app_label, content_type.model)
+    try:
+        if key == ("accounts", "employee"):
+            return reverse("console:employee_detail", args=[object_id])
+        if key == ("accounts", "team"):
+            return reverse("console:team_edit", args=[object_id])
+        if key == ("projects", "project"):
+            return reverse("console:project_detail", args=[object_id])
+        if key == ("leaves", "leaverequest"):
+            return reverse("console:leaves_list")
+        if key == ("attendance", "attendance"):
+            return reverse("console:attendance_list")
+    except Exception:
+        return ""
+    return ""
+
+
 def sync_notifications(cutoff):
     recent_entries = (
         LogEntry.objects.filter(action_time__gte=cutoff)
@@ -26,15 +47,7 @@ def sync_notifications(cutoff):
     for entry in recent_entries:
         if entry.pk in existing_ids:
             continue
-        url = ""
-        if entry.content_type and entry.object_id:
-            try:
-                url = reverse(
-                    f"admin:{entry.content_type.app_label}_{entry.content_type.model}_change",
-                    args=[entry.object_id],
-                )
-            except Exception:
-                url = ""
+        url = _console_url_for(entry.content_type, entry.object_id)
         to_create.append(
             Notification(
                 log_entry_id=entry.pk,
