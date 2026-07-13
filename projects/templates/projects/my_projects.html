@@ -38,7 +38,7 @@
           <div class="pf-budget {% if budget.exhausted %}danger{% elif budget.pct >= 85 %}warning{% endif %}">
             <div class="pf-budget-top">
               <span class="label">Project Hours</span>
-              <span class="nums">{{ budget.used }} <span class="of">of {{ budget.budget_hours }}h</span></span>
+              <span class="nums">{{ budget.used }} <span class="of">of {{ budget.budget_hours|floatformat:"-2" }}h</span></span>
             </div>
             <div class="pf-budget-bar"><span style="width: {{ budget.pct }}%;"></span></div>
             <div class="pf-budget-remaining">
@@ -61,7 +61,7 @@
           {% if budget.pending_request %}
             <div class="pf-pending-request">
               <i class="fa-solid fa-paper-plane"></i>
-              Requested {{ budget.pending_request.hours }}h extra — waiting for your project manager.
+              Requested {{ budget.pending_request.hours|floatformat:"-2" }}h extra — waiting for your project manager.
             </div>
           {% else %}
             <form method="post" action="{% url 'projects:request_extra_hours' project.pk %}" class="pf-request-form">

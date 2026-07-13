@@ -13,45 +13,34 @@
   {% for row in projects %}
     {% with project=row.obj %}
     <div class="cn-proj-card">
-      <div class="cn-proj-top">
-        <div class="cn-proj-icon {% if project.billing_type == 'fixed' %}fixed{% endif %}">
-          <i class="fa-solid {% if project.billing_type == 'fixed' %}fa-sack-dollar{% else %}fa-stopwatch{% endif %}"></i>
-        </div>
-        <div class="cn-proj-title">
-          <h3 title="{{ project.name }}">{{ project.name }}</h3>
-          <div class="cn-proj-chips">
-            {% if project.status == "active" %}<span class="cn-chip success"><i class="fa-solid fa-circle"></i> Active</span>
-            {% elif project.status == "completed" %}<span class="cn-chip neutral"><i class="fa-solid fa-circle-check"></i> Completed</span>
-            {% else %}<span class="cn-chip warning"><i class="fa-solid fa-pause"></i> On Hold</span>{% endif %}
-            <span class="cn-chip type">{{ project.get_billing_type_display }}</span>
-            {% if row.working_now %}<span class="cn-chip live"><i class="fa-solid fa-circle-play"></i> {{ row.working_now }} working</span>{% endif %}
-            {% if row.pending_requests %}<span class="cn-chip alert"><i class="fa-solid fa-hourglass-half"></i> {{ row.pending_requests }} hour request{{ row.pending_requests|pluralize }}</span>{% endif %}
-          </div>
-        </div>
-        <div class="cn-proj-price">
-          {% if project.billing_type == "fixed" %}
-            {% if project.fixed_price_usd %}<span class="amount">${{ project.fixed_price_usd }}</span><span class="unit">fixed</span>{% endif %}
-          {% elif project.hourly_rate_usd %}
-            <span class="amount">${{ project.hourly_rate_usd }}</span><span class="unit">/hour</span>
-          {% endif %}
-        </div>
+      <a class="cn-proj-name" href="{% url 'console:project_detail' project.pk %}" title="{{ project.name }}">{{ project.name }}</a>
+      <div class="cn-proj-sub">
+        {% if project.status == "active" %}<span class="dot ok"></span> Active
+        {% elif project.status == "completed" %}<span class="dot off"></span> Completed
+        {% else %}<span class="dot hold"></span> On Hold{% endif %}
+        <span class="sep">·</span> {{ project.get_billing_type_display }}
+        {% if project.billing_type == "fixed" %}
+          {% if project.fixed_price_usd %}<span class="sep">·</span> ${{ project.fixed_price_usd }}{% endif %}
+        {% elif project.hourly_rate_usd %}<span class="sep">·</span> ${{ project.hourly_rate_usd }}/hr{% endif %}
+        {% if row.working_now %}<span class="sep">·</span> <span class="live"><span class="dot ok pulse"></span> {{ row.working_now }} working now</span>{% endif %}
       </div>
 
-      <div class="cn-proj-meta">
-        <div><span class="k"><i class="fa-solid fa-user-tie"></i> PM</span><span class="v">{{ project.project_manager.full_name|default:project.project_manager.email }}</span></div>
-        {% if project.upwork_profile_name %}<div><span class="k"><i class="fa-brands fa-upwork"></i> Profile</span><span class="v">{{ project.upwork_profile_name }}</span></div>{% endif %}
-        <div><span class="k"><i class="fa-solid fa-list-check"></i> Entries</span><span class="v">{{ project.entries_required }}</span></div>
-        <div><span class="k"><i class="fa-solid fa-clock"></i> Logged</span><span class="v">{{ row.total_time }}</span></div>
+      <div class="cn-proj-rows">
+        <div><span>Project manager</span><b>{{ project.project_manager.full_name|default:project.project_manager.email }}</b></div>
+        {% if project.upwork_profile_name %}<div><span>Profile</span><b>{{ project.upwork_profile_name }}</b></div>{% endif %}
+        <div><span>Entries</span><b>{{ project.entries_required }}</b></div>
+        <div><span>Time logged</span><b>{{ row.total_time }}</b></div>
       </div>
 
       {% if row.budget %}
         <div class="cn-proj-budget {% if row.budget.exhausted %}danger{% elif row.budget.pct >= 85 %}warning{% endif %}">
+          <div class="txt"><span>{{ row.total_time }} of {{ project.allowed_hours|floatformat:"-2" }}h</span><span>{{ row.budget.pct }}%</span></div>
           <div class="bar"><span style="width: {{ row.budget.pct }}%;"></span></div>
-          <div class="txt">
-            <span>{{ row.total_time }} of {{ project.allowed_hours }}h budget</span>
-            <span class="pct">{{ row.budget.pct }}%</span>
-          </div>
         </div>
+      {% endif %}
+
+      {% if row.pending_requests %}
+        <div class="cn-proj-note"><i class="fa-solid fa-hourglass-half"></i> {{ row.pending_requests }} extra-hours request{{ row.pending_requests|pluralize }} pending</div>
       {% endif %}
 
       <div class="cn-proj-foot">
@@ -63,11 +52,11 @@
           {% if not project.members.count %}<span class="cn-proj-nomembers">No members yet</span>{% endif %}
         </div>
         <div class="cn-proj-actions">
-          <a class="cn-icon-btn" href="{% url 'console:project_detail' project.pk %}" title="View"><i class="fa-solid fa-eye"></i></a>
-          <a class="cn-icon-btn" href="{% url 'console:project_edit' project.pk %}" title="Edit"><i class="fa-solid fa-pen"></i></a>
+          <a href="{% url 'console:project_detail' project.pk %}">View</a>
+          <a href="{% url 'console:project_edit' project.pk %}">Edit</a>
           <form method="post" action="{% url 'console:project_delete' project.pk %}" onsubmit="return confirm('Delete this project and all its time logs?');">
             {% csrf_token %}
-            <button class="cn-icon-btn danger" type="submit" title="Delete"><i class="fa-solid fa-trash"></i></button>
+            <button type="submit" class="danger">Delete</button>
           </form>
         </div>
       </div>

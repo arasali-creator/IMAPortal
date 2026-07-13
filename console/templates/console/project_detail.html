@@ -46,7 +46,7 @@
         <div class="cn-budget {% if budget.exhausted %}danger{% elif budget.pct >= 85 %}warning{% endif %}">
           <div class="cn-budget-bar"><span style="width: {{ budget.pct }}%;"></span></div>
           <div class="cn-budget-meta">
-            <strong>{{ budget.used }}</strong> used of <strong>{{ budget.hours }}h</strong>
+            <strong>{{ budget.used }}</strong> used of <strong>{{ budget.hours|floatformat:"-2" }}h</strong>
             {% if budget.exhausted %}<span class="cn-badge danger">Budget reached</span>
             {% else %}· {{ budget.remaining }} remaining{% endif %}
           </div>
@@ -69,7 +69,7 @@
         {% for req in hours_requests %}
           <tr>
             <td>{{ req.employee.full_name|default:req.employee.email }}</td>
-            <td><strong>+{{ req.hours }}h</strong></td>
+            <td><strong>+{{ req.hours|floatformat:"-2" }}h</strong></td>
             <td>{{ req.reason|default:"-"|truncatechars:80 }}</td>
             <td>{{ req.created_at|date:"M d, Y h:i A" }}</td>
             <td>
