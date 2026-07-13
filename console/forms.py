@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 
 from accounts.models import Employee, Team
 from projects.models import Project
+from upwork.models import UpworkJobEntry, UpworkProfile
 
 
 class ConsoleFileInput(forms.ClearableFileInput):
@@ -195,3 +196,43 @@ class ProjectForm(forms.ModelForm):
             )
         else:
             self.fields["members"].queryset = Employee.objects.filter(role="employee").order_by("full_name", "email")
+
+
+class UpworkEntryForm(forms.ModelForm):
+    class Meta:
+        model = UpworkJobEntry
+        fields = [
+            "profile",
+            "date",
+            "jobs_applied",
+            "proposal_views",
+            "responses",
+            "offers",
+            "hired",
+            "connects_used",
+        ]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        # PMs only see (and can log against) the profiles assigned to them.
+        qs = UpworkProfile.objects.select_related("project_manager").order_by("name")
+        if user is not None and getattr(user, "role", None) == "pm":
+            qs = qs.filter(project_manager=user)
+        if self.instance.pk:
+            self.fields["profile"].queryset = qs
+        else:
+            self.fields["profile"].queryset = qs.filter(is_active=True)
+
+    def clean(self):
+        cleaned = super().clean()
+        profile, date = cleaned.get("profile"), cleaned.get("date")
+        if profile and date:
+            existing = UpworkJobEntry.objects.filter(profile=profile, date=date)
+            if self.instance.pk:
+                existing = existing.exclude(pk=self.instance.pk)
+            if existing.exists():
+                self.add_error("date", f"An entry for {profile.name} on {date} already exists. Edit that entry instead.")
+        return cleaned

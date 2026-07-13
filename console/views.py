@@ -7,8 +7,8 @@ from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Min, Max, Q
-from django.db.models.functions import TruncMonth, TruncYear
+from django.db.models import Count, Min, Max, Q, Sum
+from django.db.models.functions import TruncMonth, TruncWeek, TruncYear
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
@@ -36,8 +36,9 @@ from payroll.utils import calculate_pm_available_balance, summarize_employee_sal
 from payroll.views import build_pm_payroll_context
 
 from projects.models import ExtraHoursRequest, Project, ProjectTimeLog
+from upwork.models import UpworkJobEntry, UpworkProfile, UpworkSetting
 
-from .forms import EmployeeCreateForm, EmployeeEditForm, ProjectForm, TeamForm
+from .forms import EmployeeCreateForm, EmployeeEditForm, ProjectForm, TeamForm, UpworkEntryForm
 
 STAFF_ROLES = ("admin", "pm")
 
@@ -1666,3 +1667,218 @@ def branch_expenses_view(request):
         "today": today,
     }
     return render(request, "console/branch_expenses.html", context)
+
+
+# ---------------------------------------------------------------------------
+# Upwork job tracking
+# ---------------------------------------------------------------------------
+
+UPWORK_METRIC_SUMS = {
+    "jobs_applied": Sum("jobs_applied"),
+    "proposal_views": Sum("proposal_views"),
+    "responses": Sum("responses"),
+    "offers": Sum("offers"),
+    "hired": Sum("hired"),
+    "connects_used": Sum("connects_used"),
+    "amount_spent": Sum("amount_spent"),
+}
+
+
+def _upwork_profiles_for(user):
+    qs = UpworkProfile.objects.select_related("project_manager").order_by("name")
+    if getattr(user, "role", None) != "admin":
+        qs = qs.filter(project_manager=user)
+    return qs
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def upwork_tracking(request):
+    today = timezone.localdate()
+    view = request.GET.get("view", "daily")
+    if view not in ("daily", "weekly", "monthly", "yearly"):
+        view = "daily"
+    year = int(request.GET.get("year", today.year))
+    month = int(request.GET.get("month", today.month))
+
+    profiles = _upwork_profiles_for(request.user)
+    profile_id = request.GET.get("profile") or ""
+    entries = UpworkJobEntry.objects.filter(profile__in=profiles).select_related(
+        "profile", "profile__project_manager"
+    )
+    if profile_id:
+        entries = entries.filter(profile_id=profile_id)
+
+    # Restrict to the selected window: daily = one month, weekly/monthly = one
+    # year, yearly = everything.
+    if view == "daily":
+        entries = entries.filter(date__year=year, date__month=month)
+    elif view in ("weekly", "monthly"):
+        entries = entries.filter(date__year=year)
+
+    totals = entries.aggregate(**UPWORK_METRIC_SUMS)
+    for key, value in totals.items():
+        totals[key] = value or 0
+
+    breakdown = []
+    if view == "daily":
+        rows = entries.values("date").annotate(**UPWORK_METRIC_SUMS).order_by("-date")
+        for row in rows:
+            breakdown.append({"label": row["date"].strftime("%d %b %Y"), **row})
+    elif view == "weekly":
+        rows = entries.annotate(bucket=TruncWeek("date")).values("bucket").annotate(**UPWORK_METRIC_SUMS).order_by("-bucket")
+        for row in rows:
+            start = row["bucket"]
+            end = start + timedelta(days=6)
+            row["label"] = f"{start.strftime('%d %b')} – {end.strftime('%d %b %Y')}"
+            breakdown.append(row)
+    elif view == "monthly":
+        rows = entries.annotate(bucket=TruncMonth("date")).values("bucket").annotate(**UPWORK_METRIC_SUMS).order_by("-bucket")
+        for row in rows:
+            row["label"] = row["bucket"].strftime("%B %Y")
+            breakdown.append(row)
+    else:  # yearly
+        rows = entries.annotate(bucket=TruncYear("date")).values("bucket").annotate(**UPWORK_METRIC_SUMS).order_by("-bucket")
+        for row in rows:
+            row["label"] = row["bucket"].strftime("%Y")
+            breakdown.append(row)
+
+    profile_summary = (
+        entries.values("profile__id", "profile__name", "profile__project_manager__full_name",
+                       "profile__project_manager__email")
+        .annotate(**UPWORK_METRIC_SUMS)
+        .order_by("profile__name")
+    )
+
+    recent_entries = entries.order_by("-date", "profile__name")[:200] if view == "daily" else None
+
+    context = {
+        "view": view,
+        "year": year,
+        "month": month,
+        "year_options": _year_options(today),
+        "months": _month_options(),
+        "profiles": profiles,
+        "selected_profile_id": profile_id,
+        "totals": totals,
+        "breakdown": breakdown,
+        "profile_summary": profile_summary,
+        "recent_entries": recent_entries,
+        "connect_rate": UpworkSetting.current_rate(),
+        "is_admin": _is_admin(request),
+    }
+    return render(request, "console/upwork_tracking.html", context)
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def upwork_entry_create(request):
+    if not _upwork_profiles_for(request.user).exists():
+        messages.error(request, "No Upwork profile is assigned to you yet. Ask the admin to assign one.")
+        return redirect("console:upwork_tracking")
+
+    if request.method == "POST":
+        form = UpworkEntryForm(request.POST, user=request.user)
+        if form.is_valid():
+            entry = form.save(commit=False)
+            entry.created_by = request.user
+            entry.save()
+            messages.success(request, f"Entry for {entry.profile.name} on {entry.date} saved.")
+            return redirect("console:upwork_tracking")
+    else:
+        form = UpworkEntryForm(user=request.user, initial={"date": timezone.localdate()})
+    return render(request, "console/upwork_entry_form.html", {"form": form, "entry": None})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def upwork_entry_edit(request, pk):
+    entry = get_object_or_404(
+        UpworkJobEntry.objects.filter(profile__in=_upwork_profiles_for(request.user)), pk=pk
+    )
+    if request.method == "POST":
+        form = UpworkEntryForm(request.POST, instance=entry, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Entry for {entry.profile.name} on {entry.date} updated.")
+            return redirect("console:upwork_tracking")
+    else:
+        form = UpworkEntryForm(instance=entry, user=request.user)
+    return render(request, "console/upwork_entry_form.html", {"form": form, "entry": entry})
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def upwork_entry_delete(request, pk):
+    entry = get_object_or_404(
+        UpworkJobEntry.objects.filter(profile__in=_upwork_profiles_for(request.user)), pk=pk
+    )
+    if request.method == "POST":
+        label = f"{entry.profile.name} on {entry.date}"
+        entry.delete()
+        messages.success(request, f"Entry for {label} deleted.")
+    return redirect("console:upwork_tracking")
+
+
+@login_required
+@role_required("admin")
+def upwork_profiles(request):
+    setting = UpworkSetting.objects.order_by("-updated_at").first()
+    pms = Employee.objects.filter(role="pm").order_by("full_name", "email")
+
+    if request.method == "POST":
+        action = request.POST.get("action")
+        if action == "update_rate":
+            rate = request.POST.get("connect_rate") or "0"
+            try:
+                if setting:
+                    setting.connect_rate = Decimal(rate)
+                    setting.save()
+                else:
+                    UpworkSetting.objects.create(connect_rate=Decimal(rate))
+                messages.success(request, "Connect rate updated. Existing entries keep their old rate.")
+            except Exception as exc:
+                messages.error(request, f"Could not update rate: {exc}")
+        elif action == "create_profile":
+            name = (request.POST.get("name") or "").strip()
+            pm_id = request.POST.get("pm_id")
+            if not name or not pm_id:
+                messages.error(request, "Profile name and PM are both required.")
+            elif UpworkProfile.objects.filter(name__iexact=name).exists():
+                messages.error(request, f'A profile named "{name}" already exists.')
+            else:
+                UpworkProfile.objects.create(name=name, project_manager_id=pm_id)
+                messages.success(request, f'Profile "{name}" created.')
+        elif action == "update_profile":
+            profile = get_object_or_404(UpworkProfile, pk=request.POST.get("profile_id"))
+            name = (request.POST.get("name") or "").strip()
+            pm_id = request.POST.get("pm_id")
+            if not name or not pm_id:
+                messages.error(request, "Profile name and PM are both required.")
+            elif UpworkProfile.objects.filter(name__iexact=name).exclude(pk=profile.pk).exists():
+                messages.error(request, f'A profile named "{name}" already exists.')
+            else:
+                profile.name = name
+                profile.project_manager_id = pm_id
+                profile.is_active = request.POST.get("is_active") == "on"
+                profile.save()
+                messages.success(request, f'Profile "{profile.name}" updated.')
+        elif action == "delete_profile":
+            profile = get_object_or_404(UpworkProfile, pk=request.POST.get("profile_id"))
+            name = profile.name
+            profile.delete()
+            messages.success(request, f'Profile "{name}" and all its tracking entries deleted.')
+        return redirect("console:upwork_profiles")
+
+    profiles = (
+        UpworkProfile.objects.select_related("project_manager")
+        .annotate(entry_count=Count("entries"))
+        .order_by("name")
+    )
+    context = {
+        "setting": setting,
+        "profiles": profiles,
+        "pms": pms,
+        "default_rate": UpworkSetting.current_rate(),
+    }
+    return render(request, "console/upwork_profiles.html", context)

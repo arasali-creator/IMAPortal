@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "console",
     "projects",
     "payroll.apps.PayrollConfig",
+    "upwork",
     "django.contrib.humanize",
         # ✅ Slick Reporting
     "slick_reporting",

@@ -1,0 +1,90 @@
+{% extends "console/base.html" %}
+{% load humanize %}
+
+{% block page_title %}Upwork Profiles{% endblock %}
+
+{% block content %}
+<p class="cn-page-lede">Create Upwork profiles, assign each one to a project manager, and set the price of a connect. Each PM only sees the profiles assigned to them.</p>
+
+<div class="cn-card cn-card-pad" style="margin-bottom:18px;max-width:520px;">
+  <h3 style="margin:0 0 4px;">Connect Rate</h3>
+  <div class="cn-stat-card" style="box-shadow:none;border:none;padding:14px 0 18px;">
+    <div class="label">Current price of 1 connect</div>
+    <div class="value accent">${{ default_rate|floatformat:2 }}</div>
+  </div>
+  <form method="post" style="display:flex;gap:10px;align-items:end;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="update_rate">
+    <div class="cn-field" style="flex:1;margin-bottom:0;">
+      <label>New rate per connect (USD)</label>
+      <input type="number" name="connect_rate" step="0.01" min="0" value="{{ default_rate }}" required>
+    </div>
+    <button class="cn-btn primary" type="submit">Update</button>
+  </form>
+  <p class="cn-page-lede" style="margin:10px 0 0;font-size:0.8rem;">Changing the rate only affects entries saved from now on — existing entries keep the rate they were saved with.</p>
+</div>
+
+<div class="cn-card cn-card-pad" style="margin-bottom:18px;max-width:520px;">
+  <h3 style="margin:0 0 12px;">Add Profile</h3>
+  <form method="post" style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+    {% csrf_token %}
+    <input type="hidden" name="action" value="create_profile">
+    <div class="cn-field" style="flex:1;min-width:160px;margin-bottom:0;">
+      <label>Profile name</label>
+      <input type="text" name="name" maxlength="150" placeholder="e.g. John D. — Web Dev" required>
+    </div>
+    <div class="cn-field" style="flex:1;min-width:160px;margin-bottom:0;">
+      <label>Assign to PM</label>
+      <select name="pm_id" required>
+        <option value="">Select PM…</option>
+        {% for pm in pms %}<option value="{{ pm.id }}">{{ pm.full_name|default:pm.email }}</option>{% endfor %}
+      </select>
+    </div>
+    <button class="cn-btn primary" type="submit"><i class="fa-solid fa-plus"></i> Add</button>
+  </form>
+</div>
+
+<div class="cn-card">
+  <div class="cn-card-header">
+    <h3>Profiles</h3>
+    <span class="cn-badge neutral">{{ profiles|length }} profile{{ profiles|length|pluralize }}</span>
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Profile Name</th><th>Assigned PM</th><th>Active</th><th>Entries</th><th style="width:170px;">Actions</th></tr></thead>
+      <tbody>
+        {% for p in profiles %}
+          <tr>
+            <td><input class="cn-input" form="pf{{ p.id }}" type="text" name="name" maxlength="150" value="{{ p.name }}" required style="min-width:180px;"></td>
+            <td>
+              <select class="cn-input" form="pf{{ p.id }}" name="pm_id" required>
+                {% for pm in pms %}
+                  <option value="{{ pm.id }}" {% if pm.id == p.project_manager_id %}selected{% endif %}>{{ pm.full_name|default:pm.email }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><label style="display:flex;align-items:center;gap:6px;"><input form="pf{{ p.id }}" type="checkbox" name="is_active" {% if p.is_active %}checked{% endif %}> {% if p.is_active %}<span class="cn-badge success">Active</span>{% else %}<span class="cn-badge danger">Inactive</span>{% endif %}</label></td>
+            <td>{{ p.entry_count|intcomma }}</td>
+            <td style="white-space:nowrap;">
+              <form id="pf{{ p.id }}" method="post" style="display:inline;">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_profile">
+                <input type="hidden" name="profile_id" value="{{ p.id }}">
+                <button class="cn-btn sm" type="submit">Save</button>
+              </form>
+              <form method="post" style="display:inline;" onsubmit="return confirm('Delete “{{ p.name|escapejs }}” and ALL of its tracking entries? This cannot be undone.');">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="delete_profile">
+                <input type="hidden" name="profile_id" value="{{ p.id }}">
+                <button class="cn-btn sm danger" type="submit"><i class="fa-solid fa-trash-can"></i></button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="cn-empty">No profiles yet. Add the first one above.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

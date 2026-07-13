@@ -1,0 +1,38 @@
+{% extends "console/base.html" %}
+
+{% block page_title %}{% if entry %}Edit Upwork Entry{% else %}New Upwork Entry{% endif %}{% endblock %}
+
+{% block content %}
+<div class="cn-card cn-form-section" style="max-width:760px;">
+  <div class="cn-card-header">
+    <h3><i class="fa-brands fa-upwork" style="color:var(--cn-accent);margin-right:8px;"></i>
+      {% if entry %}Edit entry — {{ entry.profile.name }} · {{ entry.date }}{% else %}Daily Job Tracking Entry{% endif %}
+    </h3>
+  </div>
+  <form method="post" style="padding:20px;">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 16px;">
+      <div class="cn-field"><label>Upwork Profile</label>{{ form.profile }}{{ form.profile.errors }}</div>
+      <div class="cn-field"><label>Date</label>{{ form.date }}{{ form.date.errors }}</div>
+      <div class="cn-field"><label>Jobs Applied</label>{{ form.jobs_applied }}{{ form.jobs_applied.errors }}</div>
+      <div class="cn-field"><label>Proposal Views</label>{{ form.proposal_views }}{{ form.proposal_views.errors }}</div>
+      <div class="cn-field"><label>Responses</label>{{ form.responses }}{{ form.responses.errors }}</div>
+      <div class="cn-field"><label>Offers</label>{{ form.offers }}{{ form.offers.errors }}</div>
+      <div class="cn-field"><label>Hired</label>{{ form.hired }}{{ form.hired.errors }}</div>
+      <div class="cn-field"><label>Connects Used</label>{{ form.connects_used }}{{ form.connects_used.errors }}</div>
+    </div>
+    <p class="cn-page-lede" style="margin:4px 0 14px;">
+      {% if entry %}
+        Amount spent is recalculated as connects used &times; ${{ entry.connect_rate|floatformat:2 }} (the rate locked in when this entry was created).
+      {% else %}
+        Amount spent is calculated automatically: connects used &times; the current per-connect rate set by the admin.
+      {% endif %}
+    </p>
+    <div style="display:flex;gap:10px;">
+      <button class="cn-btn primary" type="submit"><i class="fa-solid fa-check"></i> Save Entry</button>
+      <a class="cn-btn" href="{% url 'console:upwork_tracking' %}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
