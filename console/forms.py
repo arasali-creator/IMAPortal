@@ -162,6 +162,7 @@ class ProjectForm(forms.ModelForm):
             "billing_type",
             "hourly_rate_usd",
             "fixed_price_usd",
+            "allowed_hours",
             "client_joined_date",
             "entries_required",
             "status",

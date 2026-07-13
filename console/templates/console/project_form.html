@@ -24,6 +24,8 @@
       <div class="cn-field"><label>Profile Name</label>{{ form.upwork_profile_name }}{{ form.upwork_profile_name.errors }}</div>
       <div class="cn-field" id="hourly-rate-field"><label>Hourly Rate from Client (USD)</label>{{ form.hourly_rate_usd }}{{ form.hourly_rate_usd.errors }}</div>
       <div class="cn-field" id="fixed-price-field"><label>Fixed Price (USD)</label>{{ form.fixed_price_usd }}{{ form.fixed_price_usd.errors }}</div>
+      <div class="cn-field"><label>Allowed Hours (Budget)</label>{{ form.allowed_hours }}{{ form.allowed_hours.errors }}
+        <small style="color:var(--cn-muted);">Team can't log more than this. Leave blank for unlimited.</small></div>
       <div class="cn-field"><label>Date of Joining the Client</label>{{ form.client_joined_date }}{{ form.client_joined_date.errors }}</div>
       <div class="cn-field"><label>Number of Entries to Do</label>{{ form.entries_required }}{{ form.entries_required.errors }}</div>
     </div>

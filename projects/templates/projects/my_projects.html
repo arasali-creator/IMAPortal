@@ -9,12 +9,13 @@
 
 <div class="pf-project-grid">
   {% for row in projects %}
-    {% with project=row.obj %}
+    {% with project=row.obj budget=row.budget %}
     <div class="pf-card pf-project-card {% if row.running %}working{% endif %}">
       <div class="pf-card-pad">
         <div class="pf-project-head">
           <h3>{{ project.name }}</h3>
-          {% if row.running %}<span class="pf-badge success"><i class="fa-solid fa-circle-play"></i> Working</span>{% endif %}
+          {% if row.running %}<span class="pf-badge success"><i class="fa-solid fa-circle-play"></i> Working</span>
+          {% elif budget.has_budget and budget.exhausted %}<span class="pf-badge danger"><i class="fa-solid fa-hourglass-end"></i> Hours used up</span>{% endif %}
         </div>
         {% if project.description %}<p class="pf-project-desc">{{ project.description|linebreaksbr }}</p>{% endif %}
 
@@ -33,15 +34,45 @@
           </div>
         </div>
 
+        {% if budget.has_budget %}
+          <div class="pf-budget {% if budget.exhausted %}danger{% elif budget.pct >= 85 %}warning{% endif %}">
+            <div class="pf-budget-top">
+              <span class="label">Project Hours</span>
+              <span class="nums">{{ budget.used }} <span class="of">of {{ budget.budget_hours }}h</span></span>
+            </div>
+            <div class="pf-budget-bar"><span style="width: {{ budget.pct }}%;"></span></div>
+            <div class="pf-budget-remaining">
+              {% if budget.exhausted %}No hours left — ask your PM for more.{% else %}{{ budget.remaining }} remaining (whole team){% endif %}
+            </div>
+          </div>
+        {% endif %}
+
         {% if row.running %}
-          <div class="pf-timer" data-started="{{ row.running_started_iso }}">
+          <div class="pf-timer" data-started="{{ row.running_started_iso }}"
+               {% if budget.has_budget %}data-remaining="{{ budget.remaining_seconds }}"{% endif %}>
             <div class="label">Current Session</div>
             <div class="clock">--:--:--</div>
           </div>
-          <form method="post" action="{% url 'projects:timer_stop' project.pk %}">
+          <form method="post" action="{% url 'projects:timer_stop' project.pk %}" class="pf-stop-form">
             {% csrf_token %}
             <button class="pf-btn secondary" type="submit" style="margin-top:12px;"><i class="fa-solid fa-stop"></i> Stop Timer</button>
           </form>
+        {% elif budget.has_budget and budget.exhausted %}
+          {% if budget.pending_request %}
+            <div class="pf-pending-request">
+              <i class="fa-solid fa-paper-plane"></i>
+              Requested {{ budget.pending_request.hours }}h extra — waiting for your project manager.
+            </div>
+          {% else %}
+            <form method="post" action="{% url 'projects:request_extra_hours' project.pk %}" class="pf-request-form">
+              {% csrf_token %}
+              <div class="row">
+                <input type="number" name="hours" min="0.5" step="0.5" placeholder="Hours" required>
+                <button class="pf-btn" type="submit"><i class="fa-solid fa-circle-plus"></i> Request Extra Hours</button>
+              </div>
+              <input type="text" name="reason" maxlength="300" placeholder="Reason (optional)">
+            </form>
+          {% endif %}
         {% else %}
           <form method="post" action="{% url 'projects:timer_start' project.pk %}">
             {% csrf_token %}
@@ -57,6 +88,7 @@
 
 {% block extra_scripts %}
 <script>
+  const pfLoadedAt = Date.now();
   function pfTickTimers() {
     document.querySelectorAll(".pf-timer[data-started]").forEach(function (el) {
       const started = new Date(el.dataset.started);
@@ -65,6 +97,16 @@
       const m = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
       const s = String(secs % 60).padStart(2, "0");
       el.querySelector(".clock").textContent = h + ":" + m + ":" + s;
+
+      // When the project's hours budget runs out mid-session, stop the timer.
+      if (el.dataset.remaining !== undefined && !el.dataset.stopped) {
+        const sinceLoad = Math.floor((Date.now() - pfLoadedAt) / 1000);
+        if (sinceLoad >= parseInt(el.dataset.remaining, 10)) {
+          el.dataset.stopped = "1";
+          const form = el.parentElement.querySelector(".pf-stop-form");
+          if (form) form.submit();
+        }
+      }
     });
   }
   pfTickTimers();

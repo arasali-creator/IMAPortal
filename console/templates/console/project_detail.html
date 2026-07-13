@@ -39,8 +39,65 @@
     <div class="cn-field"><label>Entries Required</label><div>{{ project.entries_required }}</div></div>
     <div class="cn-field"><label>Total Time Logged</label><div><strong>{{ total_time }}</strong></div></div>
     <div class="cn-field full"><label>Description</label><div>{{ project.description|default:"-"|linebreaksbr }}</div></div>
+
+    {% if budget %}
+      <div class="cn-field full">
+        <label>Hours Budget</label>
+        <div class="cn-budget {% if budget.exhausted %}danger{% elif budget.pct >= 85 %}warning{% endif %}">
+          <div class="cn-budget-bar"><span style="width: {{ budget.pct }}%;"></span></div>
+          <div class="cn-budget-meta">
+            <strong>{{ budget.used }}</strong> used of <strong>{{ budget.hours }}h</strong>
+            {% if budget.exhausted %}<span class="cn-badge danger">Budget reached</span>
+            {% else %}· {{ budget.remaining }} remaining{% endif %}
+          </div>
+        </div>
+      </div>
+    {% endif %}
   </div>
 </div>
+
+{% if hours_requests %}
+<div class="cn-card" style="margin-bottom:20px;">
+  <div class="cn-card-header">
+    <h3><i class="fa-solid fa-hourglass-half"></i>Extra Hours Requests</h3>
+    {% if pending_hours_requests %}<span class="cn-badge warning">{{ pending_hours_requests|length }} pending</span>{% endif %}
+  </div>
+  <div class="cn-table-wrap">
+    <table class="cn-table">
+      <thead><tr><th>Employee</th><th>Hours</th><th>Reason</th><th>Requested</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        {% for req in hours_requests %}
+          <tr>
+            <td>{{ req.employee.full_name|default:req.employee.email }}</td>
+            <td><strong>+{{ req.hours }}h</strong></td>
+            <td>{{ req.reason|default:"-"|truncatechars:80 }}</td>
+            <td>{{ req.created_at|date:"M d, Y h:i A" }}</td>
+            <td>
+              {% if req.status == "pending" %}<span class="cn-badge warning">Pending</span>
+              {% elif req.status == "approved" %}<span class="cn-badge success">Approved</span>
+              {% else %}<span class="cn-badge neutral">Declined</span>{% endif %}
+            </td>
+            <td>
+              {% if req.status == "pending" %}
+                <div class="cn-action-group" style="justify-content:flex-end;">
+                  <form method="post" action="{% url 'console:extra_hours_decide' req.pk %}">
+                    {% csrf_token %}<input type="hidden" name="decision" value="approve">
+                    <button class="cn-btn sm primary" type="submit"><i class="fa-solid fa-check"></i> Approve</button>
+                  </form>
+                  <form method="post" action="{% url 'console:extra_hours_decide' req.pk %}">
+                    {% csrf_token %}<input type="hidden" name="decision" value="decline">
+                    <button class="cn-btn sm danger" type="submit"><i class="fa-solid fa-xmark"></i> Decline</button>
+                  </form>
+                </div>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
 
 <div class="cn-card" style="margin-bottom:20px;">
   <div class="cn-card-header"><h3><i class="fa-solid fa-users"></i>Team Members &amp; Time</h3></div>

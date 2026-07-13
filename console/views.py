@@ -35,7 +35,7 @@ from payroll.models import (
 from payroll.utils import calculate_pm_available_balance, summarize_employee_salary, team_members_for_pm
 from payroll.views import build_pm_payroll_context
 
-from projects.models import Project, ProjectTimeLog
+from projects.models import ExtraHoursRequest, Project, ProjectTimeLog
 
 from .forms import EmployeeCreateForm, EmployeeEditForm, ProjectForm, TeamForm
 
@@ -971,16 +971,27 @@ def _project_qs(request):
 @login_required
 @role_required(*STAFF_ROLES)
 def projects_list(request):
-    qs = _project_qs(request)
+    qs = _project_qs(request).prefetch_related("time_logs", "extra_hours_requests")
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(name__icontains=q) | qs.filter(upwork_profile_name__icontains=q)
 
     projects = []
     for project in qs:
+        used = project.total_seconds_logged()
+        budget_seconds = project.budget_seconds()
+        budget = None
+        if budget_seconds is not None:
+            budget = {
+                "pct": min(100, round(used * 100 / budget_seconds)) if budget_seconds else 100,
+                "exhausted": used >= budget_seconds,
+            }
         projects.append({
             "obj": project,
-            "total_time": _format_seconds(project.total_seconds_logged()),
+            "total_time": _format_seconds(used),
+            "budget": budget,
+            "working_now": sum(1 for log in project.time_logs.all() if log.is_running),
+            "pending_requests": sum(1 for r in project.extra_hours_requests.all() if r.status == "pending"),
         })
     return render(request, "console/projects_list.html", {"projects": projects, "q": q})
 
@@ -1067,12 +1078,72 @@ def project_detail(request, pk):
             "duration": _format_seconds(log.duration_seconds()),
         })
 
+    budget = None
+    budget_seconds = project.budget_seconds()
+    if budget_seconds is not None:
+        used = project.total_seconds_logged()
+        budget = {
+            "hours": project.allowed_hours,
+            "used": _format_seconds(used),
+            "remaining": _format_seconds(max(0, budget_seconds - used)),
+            "pct": min(100, round(used * 100 / budget_seconds)) if budget_seconds else 100,
+            "exhausted": used >= budget_seconds,
+        }
+
+    hours_requests = project.extra_hours_requests.select_related("employee", "decided_by")[:15]
+
     return render(request, "console/project_detail.html", {
         "project": project,
         "member_rows": member_rows,
         "recent_logs": recent_logs,
         "total_time": _format_seconds(project.total_seconds_logged()),
+        "budget": budget,
+        "hours_requests": hours_requests,
+        "pending_hours_requests": [r for r in hours_requests if r.status == "pending"],
     })
+
+
+@login_required
+@role_required(*STAFF_ROLES)
+def extra_hours_decide(request, pk):
+    """PM/admin approves or declines an employee's extra-hours request.
+    Approving adds the hours to the project's budget."""
+    req = get_object_or_404(
+        ExtraHoursRequest.objects.select_related("project", "employee"),
+        pk=pk,
+        project__in=_project_qs(request),
+        status="pending",
+    )
+    if request.method == "POST":
+        decision = request.POST.get("decision")
+        project = req.project
+        if decision == "approve":
+            req.status = "approved"
+            if project.allowed_hours is not None:
+                project.allowed_hours += req.hours
+                project.save(update_fields=["allowed_hours"])
+            notify(
+                req.employee,
+                f"Extra hours approved on “{project.name}”",
+                f"{req.hours}h were added. The project now allows {project.allowed_hours}h in total.",
+                url="/projects/my/",
+            )
+            messages.success(request, f"Added {req.hours}h to “{project.name}” (now {project.allowed_hours}h).")
+        elif decision == "decline":
+            req.status = "declined"
+            notify(
+                req.employee,
+                f"Extra hours declined on “{project.name}”",
+                f"Your request for {req.hours}h extra was declined.",
+                url="/projects/my/",
+            )
+            messages.info(request, "Request declined.")
+        else:
+            return redirect("console:project_detail", pk=req.project_id)
+        req.decided_by = request.user
+        req.decided_at = timezone.now()
+        req.save(update_fields=["status", "decided_by", "decided_at"])
+    return redirect("console:project_detail", pk=req.project_id)
 
 
 # ---------------------------------------------------------------------------

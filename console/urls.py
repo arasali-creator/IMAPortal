@@ -19,6 +19,7 @@ urlpatterns = [
     path("projects/<int:pk>/", views.project_detail, name="project_detail"),
     path("projects/<int:pk>/edit/", views.project_edit, name="project_edit"),
     path("projects/<int:pk>/delete/", views.project_delete, name="project_delete"),
+    path("projects/hours-requests/<int:pk>/decide/", views.extra_hours_decide, name="extra_hours_decide"),
     path("teams/", views.teams_list, name="teams_list"),
     path("teams/new/", views.team_create, name="team_create"),
     path("teams/<int:pk>/edit/", views.team_edit, name="team_edit"),

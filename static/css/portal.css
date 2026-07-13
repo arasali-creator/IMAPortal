@@ -256,3 +256,31 @@ table.pf-table tbody tr:hover { background: rgba(15, 23, 42, 0.02); }
 }
 .pf-timer .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255, 255, 255, 0.5); font-weight: 700; }
 .pf-timer .clock { font-size: 1.7rem; font-weight: 900; font-variant-numeric: tabular-nums; margin-top: 2px; }
+
+/* Project hours budget */
+.pf-budget { margin-top: 14px; background: var(--pf-bg); border-radius: var(--pf-radius-sm); padding: 12px 14px; }
+.pf-budget-top { display: flex; justify-content: space-between; align-items: baseline; }
+.pf-budget-top .label { font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.07em; color: var(--pf-muted); font-weight: 700; }
+.pf-budget-top .nums { font-weight: 800; font-size: 0.9rem; }
+.pf-budget-top .of { color: var(--pf-muted); font-weight: 700; font-size: 0.78rem; }
+.pf-budget-bar { height: 8px; border-radius: 999px; background: rgba(15, 23, 42, 0.08); margin-top: 8px; overflow: hidden; }
+.pf-budget-bar span { display: block; height: 100%; border-radius: 999px; background: var(--pf-accent-grad); transition: width 0.3s ease; }
+.pf-budget.warning .pf-budget-bar span { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+.pf-budget.danger .pf-budget-bar span { background: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%); }
+.pf-budget-remaining { margin-top: 7px; font-size: 0.76rem; font-weight: 600; color: var(--pf-muted); }
+.pf-budget.danger .pf-budget-remaining { color: var(--pf-danger); font-weight: 700; }
+
+/* Extra hours request */
+.pf-request-form { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.pf-request-form .row { display: flex; gap: 8px; }
+.pf-request-form input {
+  border: 1px solid var(--pf-border, rgba(15, 23, 42, 0.12)); border-radius: var(--pf-radius-sm);
+  padding: 10px 12px; font: inherit; background: #fff; min-width: 0;
+}
+.pf-request-form .row input { width: 92px; flex-shrink: 0; }
+.pf-request-form .row .pf-btn { flex: 1; }
+.pf-pending-request {
+  margin-top: 12px; padding: 11px 14px; border-radius: var(--pf-radius-sm);
+  background: var(--pf-warning-bg); color: var(--pf-warning); font-weight: 700; font-size: 0.84rem;
+  display: flex; align-items: center; gap: 9px;
+}
