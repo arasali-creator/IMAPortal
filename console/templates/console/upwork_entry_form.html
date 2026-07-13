@@ -24,9 +24,9 @@
     </div>
     <p class="cn-page-lede" style="margin:4px 0 14px;">
       {% if entry %}
-        Amount spent is recalculated as connects used &times; ${{ entry.connect_rate|floatformat:2 }} (the rate locked in when this entry was created).
+        Amount spent is recalculated as connects used &times; PKR {{ entry.connect_rate|floatformat:2 }} (the rate locked in when this entry was created).
       {% else %}
-        Amount spent is calculated automatically: connects used &times; the current per-connect rate set by the admin.
+        Amount spent is calculated automatically: connects used &times; the current per-connect rate (PKR) set by the admin.
       {% endif %}
     </p>
     <div style="display:flex;gap:10px;">

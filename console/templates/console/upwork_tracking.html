@@ -7,7 +7,7 @@
 <div class="cn-commandbar">
   <p class="cn-page-lede" style="margin:0;">
     Daily bidding stats per Upwork profile.
-    <span class="cn-badge neutral" title="Rate used for new entries">1 connect = ${{ connect_rate|floatformat:2 }}</span>
+    <span class="cn-badge neutral" title="Rate used for new entries">1 connect = PKR {{ connect_rate|floatformat:2|intcomma }}</span>
   </p>
   <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
     <form class="period-group" method="get" action="{% url 'console:upwork_tracking' %}">
@@ -66,9 +66,9 @@
     <div class="value">{{ totals.connects_used|intcomma }}</div>
   </div>
   <div class="cn-kpi-tile dark">
-    <div class="icon"><i class="fa-solid fa-dollar-sign"></i></div>
+    <div class="icon"><i class="fa-solid fa-money-bill-wave"></i></div>
     <div class="label">Amount Spent</div>
-    <div class="value">${{ totals.amount_spent|floatformat:2|intcomma }}</div>
+    <div class="value">PKR {{ totals.amount_spent|floatformat:2|intcomma }}</div>
   </div>
 </div>
 
@@ -97,7 +97,7 @@
             <td>{{ row.offers|intcomma }}</td>
             <td>{{ row.hired|intcomma }}</td>
             <td>{{ row.connects_used|intcomma }}</td>
-            <td>${{ row.amount_spent|floatformat:2|intcomma }}</td>
+            <td>PKR {{ row.amount_spent|floatformat:2|intcomma }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="8" class="cn-empty">No entries for this period yet.</td></tr>
@@ -129,7 +129,7 @@
             <td>{{ row.offers|intcomma }}</td>
             <td>{{ row.hired|intcomma }}</td>
             <td>{{ row.connects_used|intcomma }}</td>
-            <td>${{ row.amount_spent|floatformat:2|intcomma }}</td>
+            <td>PKR {{ row.amount_spent|floatformat:2|intcomma }}</td>
           </tr>
         {% empty %}
           <tr><td colspan="{% if is_admin %}9{% else %}8{% endif %}" class="cn-empty">No entries for this period yet.</td></tr>
@@ -166,8 +166,8 @@
             <td>{{ e.offers }}</td>
             <td>{{ e.hired }}</td>
             <td>{{ e.connects_used }}</td>
-            <td>${{ e.connect_rate|floatformat:2 }}</td>
-            <td>${{ e.amount_spent|floatformat:2 }}</td>
+            <td>PKR {{ e.connect_rate|floatformat:2 }}</td>
+            <td>PKR {{ e.amount_spent|floatformat:2|intcomma }}</td>
             <td style="white-space:nowrap;">
               <a class="cn-btn sm" href="{% url 'console:upwork_entry_edit' e.pk %}"><i class="fa-solid fa-pen"></i></a>
               <form method="post" action="{% url 'console:upwork_entry_delete' e.pk %}" style="display:inline;" onsubmit="return confirm('Delete this entry?');">

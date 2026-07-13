@@ -4,11 +4,11 @@ from django.conf import settings
 from django.core.validators import MinValueValidator
 from django.db import models
 
-DEFAULT_CONNECT_RATE = Decimal("0.15")
+DEFAULT_CONNECT_RATE = Decimal("30.00")  # PKR — admin should confirm/update the real rate on the Upwork Profiles page
 
 
 class UpworkSetting(models.Model):
-    """Admin-controlled price of a single Upwork connect (USD)."""
+    """Admin-controlled price of a single Upwork connect (PKR)."""
 
     connect_rate = models.DecimalField(
         max_digits=8,
