@@ -377,6 +377,13 @@ select.cn-input {
   box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12);
 }
 
+/* Checkboxes must never get the full-width text-input treatment */
+.cn-field input[type="checkbox"] {
+  width: 16px; height: 16px; padding: 0;
+  accent-color: var(--cn-accent);
+}
+.cn-field input[type="checkbox"]:focus { box-shadow: none; }
+
 /* Django form helpers (form.as_p renders <p><label>...</label><input></p>) */
 .cn-django-form p { margin: 0 0 14px 0; display: flex; flex-direction: column; gap: 6px; }
 .cn-django-form label { font-weight: 700; font-size: 0.82rem; }
@@ -992,9 +999,32 @@ table.cn-cal .emp-name { text-align: left; font-weight: 700; padding-right: 14px
 }
 .cn-proj-actions a:hover, .cn-proj-actions button:hover { color: var(--cn-text); background: var(--cn-bg); }
 .cn-proj-actions .danger:hover { color: var(--cn-danger); background: var(--cn-danger-bg); }
-.cn-checklist ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 6px; }
-.cn-checklist li label { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.88rem; padding: 8px 10px; border: 1px solid var(--cn-border); border-radius: 10px; cursor: pointer; }
-.cn-checklist li label:hover { background: var(--cn-bg); }
+/* Member picker (Django CheckboxSelectMultiple renders nested <div>s) */
+.cn-checklist > div {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 8px;
+  max-height: 360px; overflow-y: auto; padding: 2px;
+}
+.cn-checklist ul { display: contents; list-style: none; margin: 0; padding: 0; }
+.cn-checklist li { list-style: none; min-width: 0; }
+.cn-checklist > div > div { min-width: 0; }
+.cn-checklist label {
+  display: flex; align-items: center; gap: 10px;
+  font-weight: 600; font-size: 0.85rem; color: var(--cn-text);
+  padding: 10px 12px; border: 1px solid var(--cn-border); border-radius: 10px;
+  background: #fff; cursor: pointer; user-select: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: border-color 0.13s ease, background 0.13s ease;
+}
+.cn-checklist label:hover { border-color: rgba(255, 102, 0, 0.45); }
+.cn-checklist label:has(input:checked) {
+  border-color: var(--cn-accent);
+  background: rgba(255, 102, 0, 0.06);
+}
+.cn-checklist input[type="checkbox"] {
+  width: 16px; height: 16px; margin: 0; padding: 0; flex-shrink: 0;
+  accent-color: var(--cn-accent);
+}
+.cn-checklist input[type="checkbox"]:focus { box-shadow: none; }
 
 /* File upload widget (Documents) */
 .cn-file-widget { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
