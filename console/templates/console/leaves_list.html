@@ -43,7 +43,16 @@
         {% for leave in leaves %}
           <tr>
             <td class="cn-person"><span class="cn-avatar">{{ leave.employee.full_name|default:leave.employee.email|slice:":1"|upper }}</span>{{ leave.employee }}</td>
-            <td>{{ leave.reason|truncatechars:40 }}</td>
+            <td>
+              {% if leave.reason %}
+                <button type="button" class="cn-link-btn"
+                        onclick="showLeaveReason('{{ leave.employee|escapejs }}', '{{ leave.start_date|escapejs }}', '{{ leave.end_date|escapejs }}', '{{ leave.reason|escapejs }}')">
+                  {{ leave.reason|truncatechars:40 }}
+                </button>
+              {% else %}
+                <span class="cn-empty-inline">No reason provided</span>
+              {% endif %}
+            </td>
             <td>{{ leave.start_date }} &rarr; {{ leave.end_date }}</td>
             <td>
               {% if leave.pm_status == "Approved" %}<span class="cn-badge success">{{ leave.pm_status }}</span>
@@ -112,4 +121,30 @@
     </table>
   </div>
 </div>
+
+<div id="leave-reason-modal" class="cn-modal-backdrop" onclick="closeOnBackdrop(event, 'leave-reason-modal')">
+  <div class="cn-modal-card">
+    <div class="cn-modal-head">
+      <div class="title" id="leave-reason-title">Leave Reason</div>
+      <button class="cn-btn sm" type="button" onclick="closeModal('leave-reason-modal')">Close</button>
+    </div>
+    <div class="cn-modal-body">
+      <p class="cn-page-lede" id="leave-reason-dates" style="margin:0 0 12px;"></p>
+      <p id="leave-reason-text" style="white-space:pre-wrap;line-height:1.5;"></p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function openModal(id){document.getElementById(id).classList.add('open');}
+  function closeModal(id){document.getElementById(id).classList.remove('open');}
+  function closeOnBackdrop(e,id){if(e.target.id===id){closeModal(id);}}
+
+  function showLeaveReason(employee, startDate, endDate, reason){
+    document.getElementById('leave-reason-title').textContent = employee + ' — Leave Reason';
+    document.getElementById('leave-reason-dates').textContent = startDate + ' → ' + endDate;
+    document.getElementById('leave-reason-text').textContent = reason;
+    openModal('leave-reason-modal');
+  }
+</script>
 {% endblock %}

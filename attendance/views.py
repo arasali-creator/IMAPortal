@@ -8,6 +8,7 @@ from django.utils.timezone import localtime, now
 from leaves.models import LeaveRequest
 
 from .models import Attendance
+from .utils import CELL_ICONS
 
 
 @login_required
@@ -119,6 +120,8 @@ def my_monthly(request):
         rows.append({
             "date": d,
             "status": status,
+            "icon": CELL_ICONS.get(status, ""),
+            "weekday": d.strftime("%a")[0],
             "check_in": check_in_time,
             "check_out": check_out_time,
             "hours": hours if recs else None,

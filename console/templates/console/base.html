@@ -87,7 +87,9 @@
       </nav>
 
       <div class="console-sidebar-footer">
+        {% if request.user.role != "admin" %}
         <a href="{% url 'dashboard' %}"><i class="fa-solid fa-arrow-left"></i> Back to Portal</a>
+        {% endif %}
         <a href="{% url 'logout' %}"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
       </div>
     </aside>

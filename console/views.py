@@ -18,6 +18,7 @@ from accounts.models import Employee, Notification, Team
 from accounts.notify import notify
 from accounts.utils import notifications_queryset_for_user, sync_notifications
 from attendance.models import Attendance
+from attendance.utils import CELL_ICONS
 from leaves.models import LeaveRequest
 from leaves.utils import apply_leave_decision
 from payroll.models import (
@@ -530,19 +531,40 @@ def attendance_monthly(request):
     )
     present_map = {(x["employee_id"], x["check_in__date"]): x["first_in"] for x in month_att}
 
+    leave_days_by_employee = {}
+    approved_leaves = LeaveRequest.objects.filter(
+        employee__in=employees, status="Approved", start_date__lte=month_end_d, end_date__gte=month_start_d
+    ).values("employee_id", "start_date", "end_date")
+    for lv in approved_leaves:
+        d = max(lv["start_date"], month_start_d)
+        end = min(lv["end_date"], month_end_d)
+        days_set = leave_days_by_employee.setdefault(lv["employee_id"], set())
+        while d <= end:
+            days_set.add(d)
+            d += timedelta(days=1)
+
     rows = []
     for e in employees:
         cells = []
+        leave_days = leave_days_by_employee.get(e.id, set())
         for info in days:
             dt = info["date"]
             if info["is_weekend"]:
-                cells.append({"type": "weekend", "tooltip": "Weekend"})
+                cells.append({"type": "weekend", "tooltip": "Weekend", "icon": CELL_ICONS["weekend"]})
                 continue
             first_in = present_map.get((e.id, dt))
             if first_in:
-                cells.append({"type": "present", "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}"})
+                cells.append({
+                    "type": "present",
+                    "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}",
+                    "icon": CELL_ICONS["present"],
+                })
+            elif dt in leave_days:
+                cells.append({"type": "leave", "tooltip": "On Leave", "icon": CELL_ICONS["leave"]})
+            elif dt > today:
+                cells.append({"type": "future", "tooltip": "Upcoming", "icon": CELL_ICONS["future"]})
             else:
-                cells.append({"type": "absent", "tooltip": "Absent"})
+                cells.append({"type": "absent", "tooltip": "Absent", "icon": CELL_ICONS["absent"]})
         rows.append({"employee": e, "cells": cells})
 
     prev_year, prev_month = (year - 1, 12) if month == 1 else (year, month - 1)
@@ -582,17 +604,35 @@ def attendance_employee_detail(request, employee_id):
     )
     present_map = {x["check_in__date"]: x["first_in"] for x in month_att}
 
+    leave_days = set()
+    for lv in LeaveRequest.objects.filter(
+        employee_id=employee_id, status="Approved", start_date__lte=month_end_d, end_date__gte=month_start_d
+    ):
+        d = max(lv.start_date, month_start_d)
+        end = min(lv.end_date, month_end_d)
+        while d <= end:
+            leave_days.add(d)
+            d += timedelta(days=1)
+
     cells = []
     for info in days:
         dt = info["date"]
         if info["is_weekend"]:
-            cells.append({"type": "weekend", "tooltip": "Weekend"})
+            cells.append({"type": "weekend", "tooltip": "Weekend", "icon": CELL_ICONS["weekend"]})
             continue
         first_in = present_map.get(dt)
         if first_in:
-            cells.append({"type": "present", "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}"})
+            cells.append({
+                "type": "present",
+                "tooltip": f"Present · In {timezone.localtime(first_in).strftime('%I:%M %p')}",
+                "icon": CELL_ICONS["present"],
+            })
+        elif dt in leave_days:
+            cells.append({"type": "leave", "tooltip": "On Leave", "icon": CELL_ICONS["leave"]})
+        elif dt > today:
+            cells.append({"type": "future", "tooltip": "Upcoming", "icon": CELL_ICONS["future"]})
         else:
-            cells.append({"type": "absent", "tooltip": "Absent"})
+            cells.append({"type": "absent", "tooltip": "Absent", "icon": CELL_ICONS["absent"]})
 
     recent_qs = Attendance.objects.filter(employee_id=employee_id).order_by("-check_in")[:25]
 

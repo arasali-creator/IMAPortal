@@ -13,9 +13,10 @@
 </div>
 
 <div class="cn-legend">
-  <span><span class="cn-cal-cell present"></span> Present</span>
-  <span><span class="cn-cal-cell absent"></span> Absent</span>
-  <span><span class="cn-cal-cell weekend"></span> Weekend</span>
+  <span><span class="cn-cal-cell present"><i class="fa-solid fa-check"></i></span> Present</span>
+  <span><span class="cn-cal-cell absent"><i class="fa-solid fa-xmark"></i></span> Absent</span>
+  <span><span class="cn-cal-cell leave"><i class="fa-solid fa-plane-departure"></i></span> On Leave</span>
+  <span><span class="cn-cal-cell weekend"><i class="fa-solid fa-umbrella-beach"></i></span> Weekend</span>
 </div>
 
 <div class="cn-card">
@@ -31,7 +32,7 @@
         {% for row in rows %}
           <tr>
             <td class="emp-name"><a href="{% url 'console:attendance_employee_detail' row.employee.id %}?year={{ year }}&month={{ month }}">{{ row.employee.full_name|default:row.employee.email }}</a></td>
-            {% for cell in row.cells %}<td title="{{ cell.tooltip }}"><span class="cn-cal-cell {{ cell.type }}"></span></td>{% endfor %}
+            {% for cell in row.cells %}<td title="{{ cell.tooltip }}"><span class="cn-cal-cell {{ cell.type }}"><i class="fa-solid {{ cell.icon }}"></i></span></td>{% endfor %}
           </tr>
         {% empty %}
           <tr><td colspan="{{ days|length|add:1 }}" class="cn-empty">No employees to show.</td></tr>

@@ -45,8 +45,28 @@
   </div>
 </div>
 
-<div class="pf-card">
+<div class="pf-card" style="margin-bottom:20px;">
   <div class="pf-card-header"><h3>{{ month_label|date:"F Y" }}</h3></div>
+  <div class="pf-card-pad">
+    <div class="pf-legend">
+      <span><span class="pf-cal-cell present"><i class="fa-solid fa-check"></i></span> Present</span>
+      <span><span class="pf-cal-cell absent"><i class="fa-solid fa-xmark"></i></span> Absent</span>
+      <span><span class="pf-cal-cell leave"><i class="fa-solid fa-plane-departure"></i></span> On Leave</span>
+      <span><span class="pf-cal-cell weekend"><i class="fa-solid fa-umbrella-beach"></i></span> Weekend</span>
+    </div>
+    <div class="pf-cal-grid">
+      {% for row in rows %}
+        <div class="pf-cal-day" title="{{ row.date|date:'M j' }} — {% if row.status == 'present' %}Present{% elif row.status == 'absent' %}Absent{% elif row.status == 'leave' %}On Leave{% elif row.status == 'weekend' %}Weekend{% else %}Upcoming{% endif %}">
+          <span class="pf-cal-cell {{ row.status }}">{% if row.icon %}<i class="fa-solid {{ row.icon }}"></i>{% endif %}</span>
+          <span class="num">{{ row.date|date:"j" }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="pf-card">
+  <div class="pf-card-header"><h3>Daily Detail</h3></div>
   <div class="pf-table-wrap">
     <table class="pf-table">
       <thead><tr><th>Date</th><th>Day</th><th>Status</th><th>Check In</th><th>Check Out</th><th>Hours</th></tr></thead>
