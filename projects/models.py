@@ -9,12 +9,18 @@ class Project(models.Model):
         ("completed", "Completed"),
         ("on_hold", "On Hold"),
     ]
+    BILLING_CHOICES = [
+        ("hourly", "Hourly"),
+        ("fixed", "Fixed Price"),
+    ]
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     upwork_profile_url = models.URLField(max_length=300, blank=True)
     upwork_profile_name = models.CharField(max_length=150, blank=True)
+    billing_type = models.CharField("Project type", max_length=10, choices=BILLING_CHOICES, default="hourly")
     hourly_rate_usd = models.DecimalField("Hourly rate from client (USD)", max_digits=8, decimal_places=2, null=True, blank=True)
+    fixed_price_usd = models.DecimalField("Fixed price (USD)", max_digits=10, decimal_places=2, null=True, blank=True)
     client_joined_date = models.DateField("Date of joining the client", null=True, blank=True)
     entries_required = models.PositiveIntegerField("Number of entries to do", default=0)
     status = models.CharField(max_length=12, choices=STATUS_CHOICES, default="active")

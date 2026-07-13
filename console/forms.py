@@ -159,7 +159,9 @@ class ProjectForm(forms.ModelForm):
             "description",
             "upwork_profile_url",
             "upwork_profile_name",
+            "billing_type",
             "hourly_rate_usd",
+            "fixed_price_usd",
             "client_joined_date",
             "entries_required",
             "status",
@@ -170,6 +172,16 @@ class ProjectForm(forms.ModelForm):
             "client_joined_date": forms.DateInput(attrs={"type": "date"}),
             "members": forms.CheckboxSelectMultiple,
         }
+
+    def clean(self):
+        cleaned = super().clean()
+        billing = cleaned.get("billing_type")
+        # Keep only the price field that matches the billing type.
+        if billing == "hourly":
+            cleaned["fixed_price_usd"] = None
+        elif billing == "fixed":
+            cleaned["hourly_rate_usd"] = None
+        return cleaned
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)

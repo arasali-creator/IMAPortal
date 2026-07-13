@@ -26,7 +26,10 @@
       <div class="cn-project-meta">
         <div><span class="k">PM</span><span class="v">{{ project.project_manager.full_name|default:project.project_manager.email }}</span></div>
         {% if project.upwork_profile_name %}<div><span class="k">Profile</span><span class="v">{{ project.upwork_profile_name }}</span></div>{% endif %}
-        {% if project.hourly_rate_usd %}<div><span class="k">Rate</span><span class="v">${{ project.hourly_rate_usd }}/hr</span></div>{% endif %}
+        <div><span class="k">Type</span><span class="v">{{ project.get_billing_type_display }}</span></div>
+        {% if project.billing_type == "fixed" %}
+          {% if project.fixed_price_usd %}<div><span class="k">Price</span><span class="v">${{ project.fixed_price_usd }}</span></div>{% endif %}
+        {% elif project.hourly_rate_usd %}<div><span class="k">Rate</span><span class="v">${{ project.hourly_rate_usd }}/hr</span></div>{% endif %}
         <div><span class="k">Entries</span><span class="v">{{ project.entries_required }}</span></div>
         <div><span class="k">Time Logged</span><span class="v">{{ row.total_time }}</span></div>
       </div>

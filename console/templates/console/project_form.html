@@ -12,6 +12,7 @@
     <div class="body">
       <div class="cn-field"><label>Project Name</label>{{ form.name }}{{ form.name.errors }}</div>
       <div class="cn-field"><label>Status</label>{{ form.status }}{{ form.status.errors }}</div>
+      <div class="cn-field"><label>Project Type</label>{{ form.billing_type }}{{ form.billing_type.errors }}</div>
       <div class="cn-field full"><label>Description</label>{{ form.description }}{{ form.description.errors }}</div>
     </div>
   </div>
@@ -21,7 +22,8 @@
     <div class="body">
       <div class="cn-field"><label>Upwork Profile URL</label>{{ form.upwork_profile_url }}{{ form.upwork_profile_url.errors }}</div>
       <div class="cn-field"><label>Profile Name</label>{{ form.upwork_profile_name }}{{ form.upwork_profile_name.errors }}</div>
-      <div class="cn-field"><label>Hourly Rate from Client (USD)</label>{{ form.hourly_rate_usd }}{{ form.hourly_rate_usd.errors }}</div>
+      <div class="cn-field" id="hourly-rate-field"><label>Hourly Rate from Client (USD)</label>{{ form.hourly_rate_usd }}{{ form.hourly_rate_usd.errors }}</div>
+      <div class="cn-field" id="fixed-price-field"><label>Fixed Price (USD)</label>{{ form.fixed_price_usd }}{{ form.fixed_price_usd.errors }}</div>
       <div class="cn-field"><label>Date of Joining the Client</label>{{ form.client_joined_date }}{{ form.client_joined_date.errors }}</div>
       <div class="cn-field"><label>Number of Entries to Do</label>{{ form.entries_required }}{{ form.entries_required.errors }}</div>
     </div>
@@ -39,4 +41,20 @@
     <a class="cn-btn" href="{% if project %}{% url 'console:project_detail' project.pk %}{% else %}{% url 'console:projects_list' %}{% endif %}">Cancel</a>
   </div>
 </form>
+
+<script>
+(function () {
+  var typeField = document.getElementById("id_billing_type");
+  var hourlyField = document.getElementById("hourly-rate-field");
+  var fixedField = document.getElementById("fixed-price-field");
+  if (!typeField || !hourlyField || !fixedField) return;
+  function togglePriceFields() {
+    var fixed = typeField.value === "fixed";
+    hourlyField.style.display = fixed ? "none" : "";
+    fixedField.style.display = fixed ? "" : "none";
+  }
+  typeField.addEventListener("change", togglePriceFields);
+  togglePriceFields();
+})();
+</script>
 {% endblock %}

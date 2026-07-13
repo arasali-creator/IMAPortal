@@ -5,8 +5,8 @@ from .models import Project, ProjectTimeLog
 
 @admin.register(Project)
 class ProjectAdmin(admin.ModelAdmin):
-    list_display = ("name", "project_manager", "upwork_profile_name", "hourly_rate_usd", "entries_required", "status", "created_at")
-    list_filter = ("status", "project_manager")
+    list_display = ("name", "project_manager", "upwork_profile_name", "billing_type", "hourly_rate_usd", "fixed_price_usd", "entries_required", "status", "created_at")
+    list_filter = ("status", "billing_type", "project_manager")
     search_fields = ("name", "upwork_profile_name", "description")
     filter_horizontal = ("members",)
 

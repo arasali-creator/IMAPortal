@@ -29,7 +29,12 @@
         {% else %}{{ project.upwork_profile_name|default:"-" }}{% endif %}
       </div>
     </div>
-    <div class="cn-field"><label>Hourly Rate (Client)</label><div>{% if project.hourly_rate_usd %}${{ project.hourly_rate_usd }}/hr{% else %}-{% endif %}</div></div>
+    <div class="cn-field"><label>Project Type</label><div>{{ project.get_billing_type_display }}</div></div>
+    {% if project.billing_type == "fixed" %}
+      <div class="cn-field"><label>Fixed Price</label><div>{% if project.fixed_price_usd %}${{ project.fixed_price_usd }}{% else %}-{% endif %}</div></div>
+    {% else %}
+      <div class="cn-field"><label>Hourly Rate (Client)</label><div>{% if project.hourly_rate_usd %}${{ project.hourly_rate_usd }}/hr{% else %}-{% endif %}</div></div>
+    {% endif %}
     <div class="cn-field"><label>Client Joined</label><div>{{ project.client_joined_date|date:"M d, Y"|default:"-" }}</div></div>
     <div class="cn-field"><label>Entries Required</label><div>{{ project.entries_required }}</div></div>
     <div class="cn-field"><label>Total Time Logged</label><div><strong>{{ total_time }}</strong></div></div>
