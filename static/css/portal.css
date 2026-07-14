@@ -50,10 +50,8 @@ body.portal-body {
 }
 
 .portal-brand { display: flex; align-items: center; gap: 10px; padding: 6px 10px 20px; }
-.portal-brand .mark {
-  width: 34px; height: 34px; border-radius: 10px; background: var(--pf-accent-grad);
-  color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.95rem;
-  box-shadow: 0 8px 16px rgba(255, 102, 0, 0.3); flex-shrink: 0;
+.portal-brand .logo {
+  height: 36px; width: auto; max-width: 116px; object-fit: contain; flex-shrink: 0;
 }
 .portal-brand .title { font-weight: 800; font-size: 0.95rem; color: var(--pf-text); }
 

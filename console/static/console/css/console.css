@@ -68,19 +68,12 @@ a { color: inherit; }
   padding: 6px 10px 22px;
 }
 
-.console-brand .mark {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
-  background: var(--cn-accent-grad);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 800;
-  font-size: 1.05rem;
+.console-brand .logo {
+  height: 40px;
+  width: auto;
+  max-width: 128px;
+  object-fit: contain;
   flex-shrink: 0;
-  box-shadow: 0 8px 18px rgba(255, 102, 0, 0.35);
 }
 
 .console-brand .text { line-height: 1.2; }
