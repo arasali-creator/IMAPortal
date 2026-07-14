@@ -53,7 +53,6 @@ body.portal-body {
 .portal-brand .logo {
   height: 36px; width: auto; max-width: 116px; object-fit: contain; flex-shrink: 0;
 }
-.portal-brand .title { font-weight: 800; font-size: 0.95rem; color: var(--pf-text); }
 
 .portal-nav-label {
   font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.09em; color: rgba(17, 24, 39, 0.35);
