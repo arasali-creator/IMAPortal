@@ -51,7 +51,7 @@
         </a>
         {% if request.user.role == "admin" or request.user.role == "pm" %}
         <a href="{% url 'console:upwork_profiles' %}" class="{% if request.resolver_match.url_name == 'upwork_profiles' %}active{% endif %}">
-          <i class="fa-brands fa-upwork"></i> Upwork Profiles
+          <i class="fa-solid fa-id-card"></i> Upwork Profiles
         </a>
         {% endif %}
 
