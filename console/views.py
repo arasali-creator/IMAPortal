@@ -1861,14 +1861,18 @@ def upwork_entry_delete(request, pk):
 
 
 @login_required
-@role_required("admin")
+@role_required(*STAFF_ROLES)
 def upwork_profiles(request):
+    is_admin = _is_admin(request)
     setting = UpworkSetting.objects.order_by("-updated_at").first()
     pms = Employee.objects.filter(role="pm").order_by("full_name", "email")
 
     if request.method == "POST":
         action = request.POST.get("action")
         if action == "update_rate":
+            if not is_admin:
+                messages.error(request, "Only an admin can change the connect rate.")
+                return redirect("console:upwork_profiles")
             rate = request.POST.get("connect_rate") or "0"
             try:
                 if setting:
@@ -1881,7 +1885,7 @@ def upwork_profiles(request):
                 messages.error(request, f"Could not update rate: {exc}")
         elif action == "create_profile":
             name = (request.POST.get("name") or "").strip()
-            pm_id = request.POST.get("pm_id")
+            pm_id = request.POST.get("pm_id") if is_admin else request.user.id
             if not name or not pm_id:
                 messages.error(request, "Profile name and PM are both required.")
             elif UpworkProfile.objects.filter(name__iexact=name).exists():
@@ -1890,9 +1894,9 @@ def upwork_profiles(request):
                 UpworkProfile.objects.create(name=name, project_manager_id=pm_id)
                 messages.success(request, f'Profile "{name}" created.')
         elif action == "update_profile":
-            profile = get_object_or_404(UpworkProfile, pk=request.POST.get("profile_id"))
+            profile = get_object_or_404(_upwork_profiles_for(request.user), pk=request.POST.get("profile_id"))
             name = (request.POST.get("name") or "").strip()
-            pm_id = request.POST.get("pm_id")
+            pm_id = request.POST.get("pm_id") if is_admin else profile.project_manager_id
             if not name or not pm_id:
                 messages.error(request, "Profile name and PM are both required.")
             elif UpworkProfile.objects.filter(name__iexact=name).exclude(pk=profile.pk).exists():
@@ -1904,14 +1908,14 @@ def upwork_profiles(request):
                 profile.save()
                 messages.success(request, f'Profile "{profile.name}" updated.')
         elif action == "delete_profile":
-            profile = get_object_or_404(UpworkProfile, pk=request.POST.get("profile_id"))
+            profile = get_object_or_404(_upwork_profiles_for(request.user), pk=request.POST.get("profile_id"))
             name = profile.name
             profile.delete()
             messages.success(request, f'Profile "{name}" and all its tracking entries deleted.')
         return redirect("console:upwork_profiles")
 
     profiles = (
-        UpworkProfile.objects.select_related("project_manager")
+        _upwork_profiles_for(request.user)
         .annotate(entry_count=Count("entries"))
         .order_by("name")
     )
@@ -1920,5 +1924,6 @@ def upwork_profiles(request):
         "profiles": profiles,
         "pms": pms,
         "default_rate": UpworkSetting.current_rate(),
+        "is_admin": is_admin,
     }
     return render(request, "console/upwork_profiles.html", context)

@@ -49,7 +49,7 @@
         <a href="{% url 'console:upwork_tracking' %}" class="{% if 'upwork_tracking' in request.resolver_match.url_name or 'upwork_entry' in request.resolver_match.url_name %}active{% endif %}">
           <i class="fa-solid fa-briefcase"></i> Job Tracking
         </a>
-        {% if request.user.role == "admin" %}
+        {% if request.user.role == "admin" or request.user.role == "pm" %}
         <a href="{% url 'console:upwork_profiles' %}" class="{% if request.resolver_match.url_name == 'upwork_profiles' %}active{% endif %}">
           <i class="fa-brands fa-upwork"></i> Upwork Profiles
         </a>

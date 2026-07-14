@@ -4,9 +4,13 @@
 {% block page_title %}Upwork Profiles{% endblock %}
 
 {% block content %}
-<p class="cn-page-lede">Create Upwork profiles, assign each one to a project manager, and set the price of a connect. Each PM only sees the profiles assigned to them.</p>
+<p class="cn-page-lede">
+  {% if is_admin %}Create Upwork profiles, assign each one to a project manager, and set the price of a connect. Each PM only sees the profiles assigned to them.
+  {% else %}Create Upwork profiles for yourself to track. Each profile is assigned to you and only visible to you and the admin.{% endif %}
+</p>
 
 <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(340px, 1fr));gap:18px;margin-bottom:18px;align-items:start;">
+  {% if is_admin %}
   <div class="cn-card cn-card-pad">
     <h3 style="margin:0 0 4px;">Connect Rate</h3>
     <div class="cn-stat-card" style="box-shadow:none;border:none;padding:14px 0 18px;">
@@ -24,6 +28,7 @@
     </form>
     <p class="cn-page-lede" style="margin:10px 0 0;font-size:0.8rem;">Changing the rate only affects entries saved from now on — existing entries keep the rate they were saved with.</p>
   </div>
+  {% endif %}
 
   <div class="cn-card cn-card-pad">
     <h3 style="margin:0 0 12px;">Add Profile</h3>
@@ -34,6 +39,7 @@
         <label>Profile name</label>
         <input type="text" name="name" maxlength="150" placeholder="e.g. John D. — Web Dev" required>
       </div>
+      {% if is_admin %}
       <div class="cn-field" style="flex:1;min-width:160px;margin-bottom:0;">
         <label>Assign to PM</label>
         <select name="pm_id" required>
@@ -41,6 +47,7 @@
           {% for pm in pms %}<option value="{{ pm.id }}">{{ pm.full_name|default:pm.email }}</option>{% endfor %}
         </select>
       </div>
+      {% endif %}
       <button class="cn-btn primary" type="submit"><i class="fa-solid fa-plus"></i> Add</button>
     </form>
   </div>
@@ -59,11 +66,15 @@
           <tr>
             <td><input class="cn-input" form="pf{{ p.id }}" type="text" name="name" maxlength="150" value="{{ p.name }}" required style="min-width:180px;"></td>
             <td>
+              {% if is_admin %}
               <select class="cn-input" form="pf{{ p.id }}" name="pm_id" required>
                 {% for pm in pms %}
                   <option value="{{ pm.id }}" {% if pm.id == p.project_manager_id %}selected{% endif %}>{{ pm.full_name|default:pm.email }}</option>
                 {% endfor %}
               </select>
+              {% else %}
+                {{ p.project_manager.full_name|default:p.project_manager.email }}
+              {% endif %}
             </td>
             <td><label style="display:flex;align-items:center;gap:6px;"><input form="pf{{ p.id }}" type="checkbox" name="is_active" {% if p.is_active %}checked{% endif %}> {% if p.is_active %}<span class="cn-badge success">Active</span>{% else %}<span class="cn-badge danger">Inactive</span>{% endif %}</label></td>
             <td>{{ p.entry_count|intcomma }}</td>
